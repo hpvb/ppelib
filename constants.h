@@ -1,6 +1,11 @@
 #include <stdint.h>
 
 #define PE_SIGNATURE 0x3c
+#define COFF_HEADER_SIZE 20
+
+#define PE32_MAGIC 0x10b
+#define PE32PLUS_MAGIC 0x20b
+#define PE32_ROM_MAGIC 0x107
 
 enum machine_type {
 	IMAGE_FILE_MACHINE_UNKNOWN = 0x0,
