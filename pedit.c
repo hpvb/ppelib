@@ -155,6 +155,13 @@ const directory_field_t optional_header_directories[] = {
 };
 
 typedef struct pefile {
+	size_t coff_header_offset;
+	size_t optional_header_offset;
+	size_t optional_header_size;
+
+	size_t optional_header_standard_offset;
+	size_t optional_header_windows_offset;
+
 	uint8_t* stub;
 	struct_field_t coff_header[8];
 	uint16_t magic;
@@ -492,6 +499,34 @@ int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* p
 	return 0;
 }
 
+uint32_t calculate_checksum(pefile_t *pe, uint8_t* file, size_t size) {
+	struct_field_t* checksum_field = get_field("CheckSum", pe->optional_header_windows);
+
+	size_t checksum_offset = checksum_field->offset;
+	checksum_offset += pe->optional_header_windows_offset;
+
+	uint64_t checksum = 0;
+
+	for (size_t i = 0; i < size; i += 4) {
+		uint32_t byte = *(uint32_t*)(file + i);
+
+		if (i == checksum_offset)
+			continue;
+
+		checksum = (checksum & 0xFFFFFFFF) + byte + (checksum >> 32);
+		if (checksum > 0x100000000)
+			checksum = (checksum & 0xFFFFFFFF) + (checksum >> 32);
+	}
+
+	checksum = (checksum & 0xFFFF) + (checksum >> 16);
+	checksum += checksum >> 16;
+	checksum = checksum & 0xFFFF;
+
+	checksum += size;
+
+	return checksum;
+}
+
 int main(int argc, char* argv[]) {
 	if (! argc) return 1;
 
@@ -504,35 +539,37 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	uint32_t coff_header_offset = pe_header_offset + 4;
+	pe.coff_header_offset = pe_header_offset + 4;
 
-	if (size < coff_header_offset + COFF_HEADER_SIZE) {
+	if (size < pe.coff_header_offset + COFF_HEADER_SIZE) {
 		fprintf(stderr, "File size too small\n");
 		return 1;
 	}
 	
-	parse_header(file + coff_header_offset, coff_header_fields, pe.coff_header);
+	parse_header(file + pe.coff_header_offset, coff_header_fields, pe.coff_header);
 	print_coff_header(pe.coff_header);
 
-	uint32_t pe_optional_header_offset = coff_header_offset + COFF_HEADER_SIZE;
-	uint16_t pe_optional_header_size = get_field_short("SizeOfOptionalHeader", pe.coff_header);
+	pe.optional_header_offset = pe.coff_header_offset + COFF_HEADER_SIZE;
+	pe.optional_header_size = get_field_short("SizeOfOptionalHeader", pe.coff_header);
 
-	if (! pe_optional_header_size) {
+	if (! pe.optional_header_size) {
 		fprintf(stderr, "No optional headers\n");
 		return 1;
 	}
 
-	if (size < pe_optional_header_offset + pe_optional_header_size) {
+	if (size < pe.optional_header_offset + pe.optional_header_size) {
 		fprintf(stderr, "File size too small\n");
 		return 1;
 	}
 
-	pe.magic = read_short(file + pe_optional_header_offset);
+	pe.magic = read_short(file + pe.optional_header_offset);
 
 	if (pe.magic == PE32_MAGIC) {
-		uint8_t* header_standard = file + pe_optional_header_offset;
+		uint8_t* header_standard = file + pe.optional_header_offset;
 		uint8_t* header_windows = header_standard + PE_OPTIONAL_HEADER_STANDARD_SIZE;
 		uint8_t* header_directories = header_windows + PE_OPTIONAL_HEADER_WINDOWS_SIZE;
+
+		pe.optional_header_windows_offset = pe.optional_header_offset + PE_OPTIONAL_HEADER_STANDARD_SIZE;
 
 		pe.optional_header_standard = malloc(sizeof(struct_field_t) * (PE_OPTIONAL_HEADER_STANDARD_ENTRIES + 1));
 		pe.optional_header_windows = malloc(sizeof(struct_field_t) * (PE_OPTIONAL_HEADER_WINDOWS_ENTRIES + 1));
@@ -541,7 +578,7 @@ int main(int argc, char* argv[]) {
 		parse_header(header_windows, pe_optional_header_windows_fields, pe.optional_header_windows);
 
 		uint32_t optional_directories_count = get_field_int("NumberOfRvaAndSizes", pe.optional_header_windows);
-		uint32_t optional_directories_space = (pe_optional_header_size - PE_OPTIONAL_HEADER_STANDARD_SIZE - PE_OPTIONAL_HEADER_WINDOWS_SIZE) / 8;
+		uint32_t optional_directories_space = (pe.optional_header_size - PE_OPTIONAL_HEADER_STANDARD_SIZE - PE_OPTIONAL_HEADER_WINDOWS_SIZE) / 8;
 
 		if (optional_directories_count != optional_directories_space) {
 			fprintf(stderr, "Number of data directories does not match. Header: %i, space %i\n", optional_directories_count, optional_directories_space);
@@ -552,9 +589,11 @@ int main(int argc, char* argv[]) {
 		parse_directories(header_directories, optional_directories_count, optional_header_directories, pe.optional_header_directories);
 
 	} else if (pe.magic == PE32PLUS_MAGIC) {
-		uint8_t* header_standard = file + pe_optional_header_offset;
+		uint8_t* header_standard = file + pe.optional_header_offset;
 		uint8_t* header_windows = header_standard + PEPLUS_OPTIONAL_HEADER_STANDARD_SIZE;
 		uint8_t* header_directories = header_windows + PEPLUS_OPTIONAL_HEADER_WINDOWS_SIZE;
+
+		pe.optional_header_windows_offset = pe.optional_header_offset + PEPLUS_OPTIONAL_HEADER_STANDARD_SIZE;
 
 		pe.optional_header_standard = malloc(sizeof(struct_field_t) * (PEPLUS_OPTIONAL_HEADER_STANDARD_ENTRIES + 1));
 		pe.optional_header_windows = malloc(sizeof(struct_field_t) * (PEPLUS_OPTIONAL_HEADER_WINDOWS_ENTRIES + 1));
@@ -563,7 +602,7 @@ int main(int argc, char* argv[]) {
 		parse_header(header_windows, peplus_optional_header_windows_fields, pe.optional_header_windows);
 
 		uint32_t optional_directories_count = get_field_int("NumberOfRvaAndSizes", pe.optional_header_windows);
-		uint32_t optional_directories_space = (pe_optional_header_size - PEPLUS_OPTIONAL_HEADER_STANDARD_SIZE - PEPLUS_OPTIONAL_HEADER_WINDOWS_SIZE) / 8;
+		uint32_t optional_directories_space = (pe.optional_header_size - PEPLUS_OPTIONAL_HEADER_STANDARD_SIZE - PEPLUS_OPTIONAL_HEADER_WINDOWS_SIZE) / 8;
 
 		if (optional_directories_count != optional_directories_space) {
 			fprintf(stderr, "Number of data directories does not match. Header: %i, space %i\n", optional_directories_count, optional_directories_space);
@@ -582,10 +621,10 @@ int main(int argc, char* argv[]) {
 	print_optional_header_windows(pe.optional_header_windows);
 	print_optional_header_directories(pe.optional_header_directories);
 
-	uint8_t* sections = file + pe_optional_header_offset + pe_optional_header_size;
+	uint8_t* sections = file + pe.optional_header_offset + pe.optional_header_size;
         uint16_t number_of_sections = get_field_short("NumberOfSections", pe.coff_header);
 
-	if (size < pe_optional_header_offset + pe_optional_header_size + (number_of_sections * PE_SECTION_SIZE)) {
+	if (size < pe.optional_header_offset + pe.optional_header_size + (number_of_sections * PE_SECTION_SIZE)) {
 		fprintf(stderr, "Not enough room for %i sections\n", number_of_sections);
 		return 1;
 	}
@@ -597,12 +636,14 @@ int main(int argc, char* argv[]) {
 		print_section_header(pe.sections[i].fields);
 	}
 	
-	pe.stub = malloc(pe_header_offset);
+	pe.stub = malloc(pe.coff_header_offset);
 	if (! pe.stub) {
 		fprintf(stderr, "Failed to allocate memory\n");
 		return 1;
 	}
-	memcpy(pe.stub, file, pe_header_offset);	
+	memcpy(pe.stub, file, pe.coff_header_offset);
+
+	printf("Calculated CheckSum: %i\n", calculate_checksum(&pe, file, size));
 
 	free(file);
 	free(pe.optional_header_standard);
