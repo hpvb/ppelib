@@ -160,8 +160,8 @@ typedef struct pefile {
 	size_t coff_header_offset;
 	size_t optional_header_offset;
 	size_t optional_header_size;
-
 	size_t optional_header_windows_offset;
+	size_t end_of_sections;
 
 	uint8_t* stub;
 	struct_field_t coff_header[8];
@@ -170,6 +170,9 @@ typedef struct pefile {
 	struct_field_t *optional_header_windows;
 	directory_field_t *optional_header_directories;
 	section_t *sections;
+
+	uint8_t* trailing_data;
+	size_t trailing_data_size;
 } pefile_t;
 
 uint8_t read_char(const uint8_t* buffer) {
@@ -371,8 +374,9 @@ int write_header(uint8_t* buffer, const struct_field_t* header) {
 	return size;
 }
 
-void parse_sections(const uint8_t* buffer, size_t offset, uint16_t number, section_t* dest) {
+size_t parse_sections(const uint8_t* buffer, size_t offset, uint16_t number, section_t* dest) {
 	const uint8_t* sections = buffer + offset;
+	size_t largest_offset = 0;
 
 	for (uint32_t i = 0; i < number; ++i) {
 		parse_header(sections + (i * PE_SECTION_SIZE), section_header_fields, dest[i].fields);
@@ -380,10 +384,16 @@ void parse_sections(const uint8_t* buffer, size_t offset, uint16_t number, secti
 
 		size_t SizeOfRawData = get_field_int("SizeOfRawData", dest[i].fields);
 		size_t PointerToRawData = get_field_int("PointerToRawData", dest[i].fields);
+		size_t offset = PointerToRawData + SizeOfRawData;
+
+		if (offset > largest_offset) 
+			largest_offset = offset;
 
 		dest[i].contents = malloc(SizeOfRawData);
 		memcpy(dest[i].contents, buffer + PointerToRawData, SizeOfRawData);
 	}
+
+	return largest_offset;
 }
 
 size_t write_sections(uint8_t* buffer, size_t offset, uint16_t number, const section_t* sections) {
@@ -624,11 +634,14 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 		size = sections_size;
 	}
 
+	size += pe->trailing_data_size;
+
 	printf("Size of coff_header        : %li\n", coff_header_size);
 	printf("Size of standard_header    : %li\n", optional_header_standard_size);
 	printf("Size of windows_header     : %li\n", optional_header_windows_size);
 	printf("Size of directories_header : %li\n", opional_header_directories_size);
 	printf("Size of sections           : %li\n", sections_size);
+	printf("Size of trailing data      : %li\n", pe->trailing_data_size);
 	printf("Total size                 : %li\n", size);
 
 	buffer = realloc(buffer, size);
@@ -643,33 +656,31 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 	write += pe->pe_header_offset;
 
 	// Write PE header
-	buffer = realloc(buffer, size);
 	memcpy(buffer + write, "PE\0", 4);
 	write += 4;
 
 	// Write COFF header
-	buffer = realloc(buffer, size);
 	write_header(buffer + write, pe->coff_header);
 	write += coff_header_size;
 
 	// Write Optional header
-	buffer = realloc(buffer, size);
 	write_header(buffer + write, pe->optional_header_standard);
 	write += optional_header_standard_size;
 
 	// Write Windows header
-	buffer = realloc(buffer, size);
 	write_header(buffer + write, pe->optional_header_windows);
 	write += optional_header_windows_size;
 
 	// Write directories
-	buffer = realloc(buffer, size);
 	write_directories(buffer + write, directories, pe->optional_header_directories);
 	write += opional_header_directories_size;
 
 	// Write sections
 	write_sections(buffer, sections_offset, number_of_sections, pe->sections);
 
+	// Write trailing data
+	memcpy(buffer + pe->end_of_sections, pe->trailing_data, pe->trailing_data_size);
+	
 	FILE *f = fopen(filename, "w+");
 	fwrite(buffer, 1, size, f);
 
@@ -811,7 +822,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	pe.sections = malloc(sizeof(section_t) * number_of_sections);
-	parse_sections(file, sections_offset, number_of_sections, pe.sections);
+	size_t end_of_sections = parse_sections(file, sections_offset, number_of_sections, pe.sections);
+	pe.end_of_sections = end_of_sections;
 
 	for (uint32_t i = 0; i < number_of_sections; ++i) {
 		print_section_header(pe.sections[i].fields);
@@ -823,6 +835,13 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	memcpy(pe.stub, file, pe.pe_header_offset);
+
+	if (size > end_of_sections) {
+		pe.trailing_data_size = size - end_of_sections;
+		pe.trailing_data = malloc(pe.trailing_data_size);
+
+		memcpy(pe.trailing_data, file + end_of_sections, pe.trailing_data_size);
+	}
 
 	printf("Calculated CheckSum: %i\n", calculate_checksum(&pe, file, size));
 
@@ -838,4 +857,5 @@ int main(int argc, char* argv[]) {
 	free(pe.optional_header_directories);
 	free(pe.sections);
 	free(pe.stub);
+	free(pe.trailing_data);
 }
