@@ -7,6 +7,7 @@
 #include "constants.h"
 
 #define CHECK_BIT(var,val) ((var) & (val))
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 typedef struct struct_field {
 	size_t offset;
@@ -109,7 +110,8 @@ const struct_field_t peplus_optional_header_windows_fields[] = {
 
 typedef struct section {
 	struct_field_t fields[11];
-	uint8_t* content;
+	uint8_t* contents;
+	size_t contents_size;
 } section_t;
 
 const struct_field_t section_header_fields[] = {
@@ -155,11 +157,11 @@ const directory_field_t optional_header_directories[] = {
 };
 
 typedef struct pefile {
+	size_t pe_header_offset;
 	size_t coff_header_offset;
 	size_t optional_header_offset;
 	size_t optional_header_size;
 
-	size_t optional_header_standard_offset;
 	size_t optional_header_windows_offset;
 
 	uint8_t* stub;
@@ -175,16 +177,32 @@ uint8_t read_char(const uint8_t* buffer) {
 	return *buffer;
 }
 
+void write_char(uint8_t* buffer, uint8_t val) {
+	buffer[0] = val;
+}
+
 uint16_t read_short(const uint8_t* buffer) {
 	return *(uint16_t*)buffer;
+}
+
+void write_short(uint8_t* buffer, uint16_t val) {
+	((uint16_t*)buffer)[0] = val;
 }
 
 uint32_t read_int(const uint8_t* buffer) {
 	return *(uint32_t*)buffer;
 }
 
+void write_int(uint8_t* buffer, uint32_t val) {
+	((uint32_t*)buffer)[0] = val;
+}
+
 uint64_t read_long(const uint8_t* buffer) {
 	return *(uint64_t*)buffer;
+}
+
+void write_long(uint8_t* buffer, uint64_t val) {
+	((uint64_t*)buffer)[0] = val;
 }
 
 const char* map_lookup(uint32_t value, map_entry_t* map) {
@@ -199,8 +217,8 @@ const char* map_lookup(uint32_t value, map_entry_t* map) {
 	return NULL;
 }
 
-struct_field_t* get_field(const char* name, struct_field_t* header) {
-	struct_field_t* field = header;
+const struct_field_t* get_field(const char* name, const struct_field_t* header) {
+	const struct_field_t* field = header;
 
 	while (field->size) {
 		if (strcmp(field->name, name) == 0) {
@@ -227,40 +245,40 @@ directory_field_t* get_directory(const char* name, directory_field_t* header) {
 	return NULL;
 }
 
-uint8_t get_field_char(const char* name, struct_field_t* header) {
-	struct_field_t* field = get_field(name, header);
+uint8_t get_field_char(const char* name, const struct_field_t* header) {
+	const struct_field_t* field = get_field(name, header);
 	if (field) {
 		return field->value.c_val;
 	}
 	return 0;
 }
 
-uint16_t get_field_short(const char* name, struct_field_t* header) {
-	struct_field_t* field = get_field(name, header);
+uint16_t get_field_short(const char* name, const struct_field_t* header) {
+	const struct_field_t* field = get_field(name, header);
 	if (field) {
 		return field->value.s_val;
 	}
 	return 0;
 }
 
-uint32_t get_field_int(const char* name, struct_field_t* header) {
-	struct_field_t* field = get_field(name, header);
+uint32_t get_field_int(const char* name, const struct_field_t* header) {
+	const struct_field_t* field = get_field(name, header);
 	if (field) {
 		return field->value.i_val;
 	}
 	return 0;
 }
 
-uint64_t get_field_long(const char* name, struct_field_t* header) {
-	struct_field_t* field = get_field(name, header);
+uint64_t get_field_long(const char* name, const struct_field_t* header) {
+	const struct_field_t* field = get_field(name, header);
 	if (field) {
 		return field->value.l_val;
 	}
 	return 0;
 }
 
-uint8_t* get_field_string(const char* name, struct_field_t* header) {
-	struct_field_t* field = get_field(name, header);
+const uint8_t* get_field_string(const char* name, const struct_field_t* header) {
+	const struct_field_t* field = get_field(name, header);
 	if (field) {
 		return field->value.string;
 	}
@@ -283,6 +301,26 @@ void parse_directories(const uint8_t* buffer, uint32_t entries, const directory_
 	}	
 
 	dest[i].size = 0;
+}
+
+int write_directories(uint8_t* buffer, uint32_t entries, const directory_field_t* directory) {
+	const directory_field_t* field = directory;
+	uint32_t i = 0;
+	size_t size = 0;
+
+	while (field->size && i < entries) {
+		size += field->size;
+
+		if (buffer) {
+			write_int(buffer + (i * 8), field->virtual_address);
+			write_int(buffer + (i * 8) + 4, field->directory_size);
+		}
+
+		++field;
+		++i;
+	}	
+
+	return size;
 }
 
 void parse_header(const uint8_t* buffer, const struct_field_t* header, struct_field_t* dest) {
@@ -309,10 +347,71 @@ void parse_header(const uint8_t* buffer, const struct_field_t* header, struct_fi
 	dest[i].size = 0;
 }
 
-void parse_sections(const uint8_t* buffer, uint16_t number, section_t* dest) {
-	for (uint32_t i = 0; i < number; ++i) {
-		parse_header(buffer + (i * PE_SECTION_SIZE), section_header_fields, dest[i].fields);
+int write_header(uint8_t* buffer, const struct_field_t* header) {
+	const struct_field_t* field = header;
+	size_t size = 0;
+
+	while (field->size) {
+		if (field->size == 18)
+			size += 8;
+		else
+			size += field->size;
+
+		if (buffer) {
+			if (field->size == 1) write_char(buffer + field->offset, field->value.c_val);
+			else if (field->size == 2) write_short(buffer + field->offset, field->value.s_val);
+			else if (field->size == 4) write_int(buffer + field->offset, field->value.i_val);
+			else if (field->size == 8) write_long(buffer + field->offset, field->value.l_val);
+			else if (field->size == 18) memcpy(buffer + field->offset, field->value.string, 8);
+			else fprintf(stderr, "Unknown field size?\n");
+		}
+
+		++field;
 	}
+
+	return size;
+}
+
+void parse_sections(const uint8_t* buffer, size_t offset, uint16_t number, section_t* dest) {
+	const uint8_t* sections = buffer + offset;
+
+	for (uint32_t i = 0; i < number; ++i) {
+		parse_header(sections + (i * PE_SECTION_SIZE), section_header_fields, dest[i].fields);
+
+		size_t SizeOfRawData = get_field_int("SizeOfRawData", dest[i].fields);
+		size_t VirtualSize = get_field_int("VirtualSize", dest[i].fields);
+		size_t PointerToRawData = get_field_int("PointerToRawData", dest[i].fields);
+
+		dest[i].contents_size = MIN(SizeOfRawData, VirtualSize);
+		dest[i].contents = malloc(dest[i].contents_size);
+		memcpy(dest[i].contents, buffer + PointerToRawData, dest[i].contents_size);
+	}
+}
+
+size_t write_sections(uint8_t* buffer, size_t offset, uint16_t number, const section_t* sections) {
+	uint8_t* section_headers = buffer + offset;
+
+	if (! buffer) {
+		size_t largest_offset = 0;
+
+		for (uint32_t i = 0; i < number; ++i) {
+			size_t PointerToRawData = get_field_int("PointerToRawData", sections[i].fields);
+			size_t offset = PointerToRawData + sections[i].contents_size;
+			if (offset > largest_offset) 
+				largest_offset = offset;
+		}
+
+		return largest_offset;
+	}
+
+	for (uint32_t i = 0; i < number; ++i) {
+		const size_t PointerToRawData = get_field_int("PointerToRawData", sections[i].fields);
+
+		write_header(section_headers + (i * PE_SECTION_SIZE), sections[i].fields);
+		memcpy(buffer + PointerToRawData, sections[i].contents, sections[i].contents_size);
+	}
+
+	return 0;
 }
 
 void print_field_name(const char* name, struct_field_t* header) {
@@ -499,8 +598,81 @@ int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* p
 	return 0;
 }
 
+int write_pe_file(const char* filename, const pefile_t* pe) {
+	uint8_t* buffer = NULL;
+	size_t size = 0;
+	size_t write = 0;
+	size_t header_size = 0;
+
+	// Write stub
+	size += pe->pe_header_offset;
+	buffer = realloc(buffer, size);
+	if (! buffer) {
+		fprintf(stderr, "Failed to allocate\n");
+		return 1;
+	}
+	memcpy(buffer, pe->stub, pe->pe_header_offset);
+	write = size;
+
+	// Write PE header
+	size += 4;
+	buffer = realloc(buffer, size);
+	memcpy(buffer + write, "PE\0", 4);
+	write = size;
+
+	// Write COFF header
+	header_size = write_header(NULL, pe->coff_header);
+	size += header_size;
+	buffer = realloc(buffer, size);
+	write_header(buffer + write, pe->coff_header);
+	write = size;
+
+	// Write Optional header
+	header_size = write_header(NULL, pe->optional_header_standard);
+	size += header_size;
+	buffer = realloc(buffer, size);
+	write_header(buffer + write, pe->optional_header_standard);
+	write = size;
+
+	// Write Windows header
+	header_size = write_header(NULL, pe->optional_header_windows);
+	size += header_size;
+	buffer = realloc(buffer, size);
+	write_header(buffer + write, pe->optional_header_windows);
+	write = size;
+
+	// Write directories
+	uint16_t directories = get_field_int("NumberOfRvaAndSizes", pe->optional_header_windows);
+	header_size = write_directories(NULL, directories, pe->optional_header_directories);
+	size += header_size;
+	buffer = realloc(buffer, size);
+	write_directories(buffer + write, directories, pe->optional_header_directories);
+	write = size;
+
+	// Write sections
+	uint16_t number_of_sections = get_field_short("NumberOfSections", pe->coff_header);
+	size_t sections_offset = pe->optional_header_offset + pe->optional_header_size;
+	size_t sections_size = write_sections(NULL, sections_offset, number_of_sections, pe->sections);
+
+	// Theoretically all the sections could be before the header
+	if (sections_size > size) {
+		size += sections_size;
+		buffer = realloc(buffer, size);
+	}
+
+	write_sections(buffer, sections_offset, number_of_sections, pe->sections);
+
+	FILE *f = fopen(filename, "w+");
+	fwrite(buffer, 1, size, f);
+
+	fclose(f);
+	free(buffer);
+
+	return size;
+}
+
 uint32_t calculate_checksum(pefile_t *pe, uint8_t* file, size_t size) {
-	struct_field_t* checksum_field = get_field("CheckSum", pe->optional_header_windows);
+	const struct_field_t* checksum_field = get_field("CheckSum", pe->optional_header_windows);
 
 	size_t checksum_offset = checksum_field->offset;
 	checksum_offset += pe->optional_header_windows_offset;
@@ -539,6 +711,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
+	pe.pe_header_offset = pe_header_offset;
 	pe.coff_header_offset = pe_header_offset + 4;
 
 	if (size < pe.coff_header_offset + COFF_HEADER_SIZE) {
@@ -621,7 +794,7 @@ int main(int argc, char* argv[]) {
 	print_optional_header_windows(pe.optional_header_windows);
 	print_optional_header_directories(pe.optional_header_directories);
 
-	uint8_t* sections = file + pe.optional_header_offset + pe.optional_header_size;
+	size_t sections_offset = pe.optional_header_offset + pe.optional_header_size;
         uint16_t number_of_sections = get_field_short("NumberOfSections", pe.coff_header);
 
 	if (size < pe.optional_header_offset + pe.optional_header_size + (number_of_sections * PE_SECTION_SIZE)) {
@@ -630,20 +803,26 @@ int main(int argc, char* argv[]) {
 	}
 
 	pe.sections = malloc(sizeof(section_t) * number_of_sections);
-	parse_sections(sections, number_of_sections, pe.sections);
+	parse_sections(file, sections_offset, number_of_sections, pe.sections);
 
 	for (uint32_t i = 0; i < number_of_sections; ++i) {
 		print_section_header(pe.sections[i].fields);
 	}
 	
-	pe.stub = malloc(pe.coff_header_offset);
+	pe.stub = malloc(pe.pe_header_offset);
 	if (! pe.stub) {
 		fprintf(stderr, "Failed to allocate memory\n");
 		return 1;
 	}
-	memcpy(pe.stub, file, pe.coff_header_offset);
+	memcpy(pe.stub, file, pe.pe_header_offset);
 
 	printf("Calculated CheckSum: %i\n", calculate_checksum(&pe, file, size));
+
+	write_pe_file("out.exe", &pe);
+
+	for (uint16_t i = 0; i < number_of_sections; ++i) {
+		free(pe.sections[i].contents);
+	}
 
 	free(file);
 	free(pe.optional_header_standard);
