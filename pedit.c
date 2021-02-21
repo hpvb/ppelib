@@ -111,7 +111,6 @@ const struct_field_t peplus_optional_header_windows_fields[] = {
 typedef struct section {
 	struct_field_t fields[11];
 	uint8_t* contents;
-	size_t contents_size;
 } section_t;
 
 const struct_field_t section_header_fields[] = {
@@ -377,14 +376,13 @@ void parse_sections(const uint8_t* buffer, size_t offset, uint16_t number, secti
 
 	for (uint32_t i = 0; i < number; ++i) {
 		parse_header(sections + (i * PE_SECTION_SIZE), section_header_fields, dest[i].fields);
+		printf("Parsing section: %s\n", get_field_string("Name", dest[i].fields));
 
 		size_t SizeOfRawData = get_field_int("SizeOfRawData", dest[i].fields);
-		size_t VirtualSize = get_field_int("VirtualSize", dest[i].fields);
 		size_t PointerToRawData = get_field_int("PointerToRawData", dest[i].fields);
 
-		dest[i].contents_size = MIN(SizeOfRawData, VirtualSize);
-		dest[i].contents = malloc(dest[i].contents_size);
-		memcpy(dest[i].contents, buffer + PointerToRawData, dest[i].contents_size);
+		dest[i].contents = malloc(SizeOfRawData);
+		memcpy(dest[i].contents, buffer + PointerToRawData, SizeOfRawData);
 	}
 }
 
@@ -396,7 +394,9 @@ size_t write_sections(uint8_t* buffer, size_t offset, uint16_t number, const sec
 
 		for (uint32_t i = 0; i < number; ++i) {
 			size_t PointerToRawData = get_field_int("PointerToRawData", sections[i].fields);
-			size_t offset = PointerToRawData + sections[i].contents_size;
+			size_t SizeOfRawData = get_field_int("SizeOfRawData", sections[i].fields);
+			size_t offset = PointerToRawData + SizeOfRawData;
+
 			if (offset > largest_offset) 
 				largest_offset = offset;
 		}
@@ -406,9 +406,10 @@ size_t write_sections(uint8_t* buffer, size_t offset, uint16_t number, const sec
 
 	for (uint32_t i = 0; i < number; ++i) {
 		const size_t PointerToRawData = get_field_int("PointerToRawData", sections[i].fields);
+		const size_t SizeOfRawData = get_field_int("SizeOfRawData", sections[i].fields);
 
 		write_header(section_headers + (i * PE_SECTION_SIZE), sections[i].fields);
-		memcpy(buffer + PointerToRawData, sections[i].contents, sections[i].contents_size);
+		memcpy(buffer + PointerToRawData, sections[i].contents, SizeOfRawData);
 	}
 
 	return 0;
@@ -602,64 +603,71 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 	uint8_t* buffer = NULL;
 	size_t size = 0;
 	size_t write = 0;
-	size_t header_size = 0;
+
+	uint16_t directories = get_field_int("NumberOfRvaAndSizes", pe->optional_header_windows);
+	uint16_t number_of_sections = get_field_short("NumberOfSections", pe->coff_header);
 
 	// Write stub
 	size += pe->pe_header_offset;
+	size += 4;
+	size_t coff_header_size = write_header(NULL, pe->coff_header);
+	size_t optional_header_standard_size = write_header(NULL, pe->optional_header_standard);
+	size_t optional_header_windows_size =  write_header(NULL, pe->optional_header_windows);
+	size_t opional_header_directories_size = write_directories(NULL, directories, pe->optional_header_directories);
+	size_t sections_offset = pe->optional_header_offset + pe->optional_header_size;
+
+	size += coff_header_size + optional_header_standard_size + optional_header_windows_size + opional_header_directories_size;
+	size_t sections_size = write_sections(NULL, sections_offset, number_of_sections, pe->sections);
+
+	// Theoretically all the sections could be before the header
+	if (sections_size > size) {
+		size = sections_size;
+	}
+
+	printf("Size of coff_header        : %li\n", coff_header_size);
+	printf("Size of standard_header    : %li\n", optional_header_standard_size);
+	printf("Size of windows_header     : %li\n", optional_header_windows_size);
+	printf("Size of directories_header : %li\n", opional_header_directories_size);
+	printf("Size of sections           : %li\n", sections_size);
+	printf("Total size                 : %li\n", size);
+
 	buffer = realloc(buffer, size);
 	if (! buffer) {
 		fprintf(stderr, "Failed to allocate\n");
 		return 1;
 	}
+	memset(buffer, 0, size);
+	//memset(buffer, 0xFF, size);
+
 	memcpy(buffer, pe->stub, pe->pe_header_offset);
-	write = size;
+	write += pe->pe_header_offset;
 
 	// Write PE header
-	size += 4;
 	buffer = realloc(buffer, size);
 	memcpy(buffer + write, "PE\0", 4);
-	write = size;
+	write += 4;
 
 	// Write COFF header
-	header_size = write_header(NULL, pe->coff_header);
-	size += header_size;
 	buffer = realloc(buffer, size);
 	write_header(buffer + write, pe->coff_header);
-	write = size;
+	write += coff_header_size;
 
 	// Write Optional header
-	header_size = write_header(NULL, pe->optional_header_standard);
-	size += header_size;
 	buffer = realloc(buffer, size);
 	write_header(buffer + write, pe->optional_header_standard);
-	write = size;
+	write += optional_header_standard_size;
 
 	// Write Windows header
-	header_size = write_header(NULL, pe->optional_header_windows);
-	size += header_size;
 	buffer = realloc(buffer, size);
 	write_header(buffer + write, pe->optional_header_windows);
-	write = size;
+	write += optional_header_windows_size;
 
 	// Write directories
-	uint16_t directories = get_field_int("NumberOfRvaAndSizes", pe->optional_header_windows);
-	header_size = write_directories(NULL, directories, pe->optional_header_directories);
-	size += header_size;
 	buffer = realloc(buffer, size);
 	write_directories(buffer + write, directories, pe->optional_header_directories);
-	write = size;
+	write += opional_header_directories_size;
 
 	// Write sections
-	uint16_t number_of_sections = get_field_short("NumberOfSections", pe->coff_header);
-	size_t sections_offset = pe->optional_header_offset + pe->optional_header_size;
-	size_t sections_size = write_sections(NULL, sections_offset, number_of_sections, pe->sections);
-
-	// Theoretically all the sections could be before the header
-	if (sections_size > size) {
-		size += sections_size;
-		buffer = realloc(buffer, size);
-	}
-
 	write_sections(buffer, sections_offset, number_of_sections, pe->sections);
 
 	FILE *f = fopen(filename, "w+");
