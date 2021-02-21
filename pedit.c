@@ -333,7 +333,7 @@ void parse_header(const uint8_t* buffer, const struct_field_t* header, struct_fi
 		dest[i].offset = field->offset;
 		dest[i].size = field->size;
 		dest[i].name = field->name;
-		dest[i].value.l_val = 0;
+		memset(dest[i].value.string, 0, sizeof(dest[i].value));
 
 		if (field->size == 1) dest[i].value.c_val = read_char(buffer + field->offset);
 		else if (field->size == 2) dest[i].value.s_val = read_short(buffer + field->offset);
