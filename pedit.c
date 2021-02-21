@@ -17,6 +17,7 @@ typedef struct struct_field {
 		uint16_t s_val;
 		uint32_t i_val;
 		uint64_t l_val;
+		uint8_t string[9];
 	} value;
 } struct_field_t;
 
@@ -106,6 +107,25 @@ const struct_field_t peplus_optional_header_windows_fields[] = {
 	{ 0, 0, "", {0}}
 };
 
+typedef struct section {
+	struct_field_t fields[11];
+	uint8_t* content;
+} section_t;
+
+const struct_field_t section_header_fields[] = {
+	{ 0, 18, "Name", {0}}, // Bit of a hack perhaps but it's also 8 bytes wide and it's the only case.
+	{ 8,  4, "VirtualSize", {0}},
+	{ 12, 4, "VirtualAddress", {0}},
+	{ 16, 4, "SizeOfRawData", {0}},
+	{ 20, 4, "PointerToRawData", {0}},
+	{ 24, 4, "PointerToRelocations", {0}},
+	{ 28, 4, "PointerToLinenumbers", {0}},
+	{ 32, 2, "NumberOfRelocations", {0}},
+	{ 34, 2, "NumberOfLinenumbers", {0}},
+	{ 36, 4, "Characteristics", {0}},
+	{ 0, 0, "", {0}},
+};
+
 typedef struct directory_field {
 	size_t offset;
 	size_t size;
@@ -141,6 +161,7 @@ typedef struct pefile {
 	struct_field_t *optional_header_standard;
 	struct_field_t *optional_header_windows;
 	directory_field_t *optional_header_directories;
+	section_t *sections;
 } pefile_t;
 
 uint8_t read_char(const uint8_t* buffer) {
@@ -185,6 +206,20 @@ struct_field_t* get_field(const char* name, struct_field_t* header) {
 	return NULL;
 }
 
+directory_field_t* get_directory(const char* name, directory_field_t* header) {
+	directory_field_t* field = header;
+
+	while (field->size) {
+		if (strcmp(field->name, name) == 0) {
+			return field;
+		}
+		++field;
+	}
+
+	fprintf(stderr, "Directory %s not found\n", name);
+	return NULL;
+}
+
 uint8_t get_field_char(const char* name, struct_field_t* header) {
 	struct_field_t* field = get_field(name, header);
 	if (field) {
@@ -217,6 +252,14 @@ uint64_t get_field_long(const char* name, struct_field_t* header) {
 	return 0;
 }
 
+uint8_t* get_field_string(const char* name, struct_field_t* header) {
+	struct_field_t* field = get_field(name, header);
+	if (field) {
+		return field->value.string;
+	}
+	return 0;
+}
+
 void parse_directories(const uint8_t* buffer, uint32_t entries, const directory_field_t* directory, directory_field_t* dest) {
 	const directory_field_t* field = directory;
 	uint32_t i = 0;
@@ -245,27 +288,24 @@ void parse_header(const uint8_t* buffer, const struct_field_t* header, struct_fi
 		dest[i].name = field->name;
 		dest[i].value.l_val = 0;
 
-		switch (field->size) {
-			case 1:
-				dest[i].value.c_val = read_char(buffer + field->offset);
-				break;
-			case 2:
-				dest[i].value.s_val = read_short(buffer + field->offset);
-				break;
-			case 4:
-				dest[i].value.i_val = read_int(buffer + field->offset);
-				break;
-			case 8:
-				dest[i].value.l_val = read_long(buffer + field->offset);
-				break;
-			default:
-				fprintf(stderr, "Unknown field size %li\n", field->size);
-		}
+		if (field->size == 1) dest[i].value.c_val = read_char(buffer + field->offset);
+		else if (field->size == 2) dest[i].value.s_val = read_short(buffer + field->offset);
+		else if (field->size == 4) dest[i].value.i_val = read_int(buffer + field->offset);
+		else if (field->size == 8) dest[i].value.l_val = read_long(buffer + field->offset);
+		else if (field->size == 18) memcpy(&dest[i].value.string, buffer + field->offset, 8);
+		else fprintf(stderr, "Unknown field size?\n");
+
 		++field;
 		++i;
 	}
 
 	dest[i].size = 0;
+}
+
+void parse_sections(const uint8_t* buffer, uint16_t number, section_t* dest) {
+	for (uint32_t i = 0; i < number; ++i) {
+		parse_header(buffer + (i * PE_SECTION_SIZE), section_header_fields, dest[i].fields);
+	}
 }
 
 void print_field_name(const char* name, struct_field_t* header) {
@@ -372,6 +412,31 @@ void print_optional_header_directories(directory_field_t* header) {
 		printf("%s: RVA: 0x%08X, size: %i\n", d->name, d->virtual_address, d->directory_size);
 		++d;
 	}
+	printf("\n");
+}
+
+void print_section_header(struct_field_t* header) {
+	uint16_t section_characteristics = get_field_short("Characteristics", header);
+
+	printf("Section:\n");
+	printf("Name: %s\n", get_field_string("Name", header));
+	print_field_name("VirtualSize", header);
+	print_field_name_hex("VirtualAddress", header);
+	print_field_name("SizeOfRawData", header);
+	print_field_name_hex("PointerToRawData", header);
+	print_field_name_hex("PointerToRelocations", header);
+	print_field_name_hex("PointerToLinenumbers", header);
+	print_field_name("NumberOfRelocations", header);
+	print_field_name("NumberOfLinenumbers", header);
+	printf("Characteristics: ");
+	map_entry_t* map = section_flags_map;
+	while (map->string) {
+		if (CHECK_BIT(section_characteristics, map->value)) {
+			printf("%s ", map->string);
+		}
+		++map;
+	}
+	printf("\n");
 	printf("\n");
 }
 
@@ -517,6 +582,21 @@ int main(int argc, char* argv[]) {
 	print_optional_header_windows(pe.optional_header_windows);
 	print_optional_header_directories(pe.optional_header_directories);
 
+	uint8_t* sections = file + pe_optional_header_offset + pe_optional_header_size;
+        uint16_t number_of_sections = get_field_short("NumberOfSections", pe.coff_header);
+
+	if (size < pe_optional_header_offset + pe_optional_header_size + (number_of_sections * PE_SECTION_SIZE)) {
+		fprintf(stderr, "Not enough room for %i sections\n", number_of_sections);
+		return 1;
+	}
+
+	pe.sections = malloc(sizeof(section_t) * number_of_sections);
+	parse_sections(sections, number_of_sections, pe.sections);
+
+	for (uint32_t i = 0; i < number_of_sections; ++i) {
+		print_section_header(pe.sections[i].fields);
+	}
+	
 	pe.stub = malloc(pe_header_offset);
 	if (! pe.stub) {
 		fprintf(stderr, "Failed to allocate memory\n");
@@ -528,5 +608,6 @@ int main(int argc, char* argv[]) {
 	free(pe.optional_header_standard);
 	free(pe.optional_header_windows);
 	free(pe.optional_header_directories);
+	free(pe.sections);
 	free(pe.stub);
 }
