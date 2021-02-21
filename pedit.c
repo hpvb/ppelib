@@ -106,12 +106,41 @@ const struct_field_t peplus_optional_header_windows_fields[] = {
 	{ 0, 0, "", {0}}
 };
 
+typedef struct directory_field {
+	size_t offset;
+	size_t size;
+	const char* name;
+	uint32_t virtual_address;
+	uint32_t directory_size;
+} directory_field_t;
+
+const directory_field_t optional_header_directories[] = {
+	{ 0, 8, "Export Table", 0, 0},
+	{ 8, 8, "Import Table", 0, 0},
+	{ 16, 8, "Resource Table", 0, 0},
+	{ 24, 8, "Exception Table", 0, 0},
+	{ 32, 8, "Certificate Table", 0, 0},
+	{ 40, 8, "Base Relocation Table", 0, 0},
+	{ 48, 8, "Debug", 0, 0},
+	{ 56, 8, "Architecture", 0, 0},
+	{ 64, 8, "Global Ptr", 0, 0},
+	{ 72, 8, "TLS Table", 0, 0},
+	{ 80, 8, "Load Config Table", 0, 0},
+	{ 88, 8, "Bound Import", 0, 0},
+	{ 96, 8, "IAT", 0, 0},
+	{ 104, 8, "Delay Import Descriptor", 0, 0},
+	{ 112, 8, "CLR Runtime Header", 0, 0},
+	{ 120, 8, "Reserved", 0, 0},
+	{ 0, 0, "", 0, 0},
+};
+
 typedef struct pefile {
 	uint8_t* stub;
 	struct_field_t coff_header[8];
 	uint16_t magic;
 	struct_field_t *optional_header_standard;
 	struct_field_t *optional_header_windows;
+	directory_field_t *optional_header_directories;
 } pefile_t;
 
 uint8_t read_char(const uint8_t* buffer) {
@@ -186,6 +215,24 @@ uint64_t get_field_long(const char* name, struct_field_t* header) {
 		return field->value.l_val;
 	}
 	return 0;
+}
+
+void parse_directories(const uint8_t* buffer, uint32_t entries, const directory_field_t* directory, directory_field_t* dest) {
+	const directory_field_t* field = directory;
+	uint32_t i = 0;
+
+	while (field->size && i < entries) {
+		dest[i].offset = field->offset;
+		dest[i].size = field->size;
+		dest[i].name = field->name;
+		dest[i].virtual_address = read_int(buffer + field->offset);
+		dest[i].directory_size = read_int(buffer + field->offset + sizeof(uint32_t));
+
+		++field;
+		++i;
+	}	
+
+	dest[i].size = 0;
 }
 
 void parse_header(const uint8_t* buffer, const struct_field_t* header, struct_field_t* dest) {
@@ -317,6 +364,17 @@ void print_optional_header_windows(struct_field_t* header) {
 	printf("\n");
 }
 
+void print_optional_header_directories(directory_field_t* header) {
+	directory_field_t* d = header;
+
+	printf("Optional data directories:\n");
+	while (d->size) {
+		printf("%s: RVA: 0x%08X, size: %i\n", d->name, d->virtual_address, d->directory_size);
+		++d;
+	}
+	printf("\n");
+}
+
 int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* pe_header_offset) {
 	FILE *f = fopen(filename, "r");
 
@@ -372,7 +430,7 @@ int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* p
 int main(int argc, char* argv[]) {
 	if (! argc) return 1;
 
-	pefile_t pe;
+	pefile_t pe = {0};
 	uint8_t* file;
 	size_t size;
 	uint32_t pe_header_offset;
@@ -403,18 +461,53 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "File size too small\n");
 		return 1;
 	}
+
 	pe.magic = read_short(file + pe_optional_header_offset);
 
 	if (pe.magic == PE32_MAGIC) {
+		uint8_t* header_standard = file + pe_optional_header_offset;
+		uint8_t* header_windows = header_standard + PE_OPTIONAL_HEADER_STANDARD_SIZE;
+		uint8_t* header_directories = header_windows + PE_OPTIONAL_HEADER_WINDOWS_SIZE;
+
 		pe.optional_header_standard = malloc(sizeof(struct_field_t) * (PE_OPTIONAL_HEADER_STANDARD_ENTRIES + 1));
 		pe.optional_header_windows = malloc(sizeof(struct_field_t) * (PE_OPTIONAL_HEADER_WINDOWS_ENTRIES + 1));
-		parse_header(file + pe_optional_header_offset, pe_optional_header_standard_fields, pe.optional_header_standard);
-		parse_header(file + pe_optional_header_offset + PE_OPTIONAL_HEADER_STANDARD_SIZE, pe_optional_header_windows_fields, pe.optional_header_windows);
+
+		parse_header(header_standard, pe_optional_header_standard_fields, pe.optional_header_standard);
+		parse_header(header_windows, pe_optional_header_windows_fields, pe.optional_header_windows);
+
+		uint32_t optional_directories_count = get_field_int("NumberOfRvaAndSizes", pe.optional_header_windows);
+		uint32_t optional_directories_space = (pe_optional_header_size - PE_OPTIONAL_HEADER_STANDARD_SIZE - PE_OPTIONAL_HEADER_WINDOWS_SIZE) / 8;
+
+		if (optional_directories_count != optional_directories_space) {
+			fprintf(stderr, "Number of data directories does not match. Header: %i, space %i\n", optional_directories_count, optional_directories_space);
+			return 1;
+		}
+
+		pe.optional_header_directories = malloc(sizeof(directory_field_t) * (optional_directories_count + 1));
+		parse_directories(header_directories, optional_directories_count, optional_header_directories, pe.optional_header_directories);
+
 	} else if (pe.magic == PE32PLUS_MAGIC) {
+		uint8_t* header_standard = file + pe_optional_header_offset;
+		uint8_t* header_windows = header_standard + PEPLUS_OPTIONAL_HEADER_STANDARD_SIZE;
+		uint8_t* header_directories = header_windows + PEPLUS_OPTIONAL_HEADER_WINDOWS_SIZE;
+
 		pe.optional_header_standard = malloc(sizeof(struct_field_t) * (PEPLUS_OPTIONAL_HEADER_STANDARD_ENTRIES + 1));
 		pe.optional_header_windows = malloc(sizeof(struct_field_t) * (PEPLUS_OPTIONAL_HEADER_WINDOWS_ENTRIES + 1));
-		parse_header(file + pe_optional_header_offset, peplus_optional_header_standard_fields, pe.optional_header_standard);
-		parse_header(file + pe_optional_header_offset + PEPLUS_OPTIONAL_HEADER_STANDARD_SIZE, peplus_optional_header_windows_fields, pe.optional_header_windows);
+
+		parse_header(header_standard, peplus_optional_header_standard_fields, pe.optional_header_standard);
+		parse_header(header_windows, peplus_optional_header_windows_fields, pe.optional_header_windows);
+
+		uint32_t optional_directories_count = get_field_int("NumberOfRvaAndSizes", pe.optional_header_windows);
+		uint32_t optional_directories_space = (pe_optional_header_size - PEPLUS_OPTIONAL_HEADER_STANDARD_SIZE - PEPLUS_OPTIONAL_HEADER_WINDOWS_SIZE) / 8;
+
+		if (optional_directories_count != optional_directories_space) {
+			fprintf(stderr, "Number of data directories does not match. Header: %i, space %i\n", optional_directories_count, optional_directories_space);
+			return 1;
+		}
+
+		pe.optional_header_directories = malloc(sizeof(directory_field_t) * (optional_directories_count + 1));
+		parse_directories(header_directories, optional_directories_count, optional_header_directories, pe.optional_header_directories);
+
 	} else {
 		fprintf(stderr, "Do not know how to handle this type of PE\n");
 		return 1;
@@ -422,6 +515,7 @@ int main(int argc, char* argv[]) {
 
 	print_optional_header_standard(pe.optional_header_standard);
 	print_optional_header_windows(pe.optional_header_windows);
+	print_optional_header_directories(pe.optional_header_directories);
 
 	pe.stub = malloc(pe_header_offset);
 	if (! pe.stub) {
@@ -433,5 +527,6 @@ int main(int argc, char* argv[]) {
 	free(file);
 	free(pe.optional_header_standard);
 	free(pe.optional_header_windows);
+	free(pe.optional_header_directories);
 	free(pe.stub);
 }
