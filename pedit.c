@@ -118,6 +118,24 @@ const struct_field_t resource_directory_table_fields[] = {
 	{ 0, 0, "", {0}}
 };
 
+enum directory_entry_type {
+	DIRECTORY_TYPE_NAME,
+	DIRECTORY_TYPE_ID
+};
+
+typedef struct directory_entry {
+	enum directory_entry_type type;
+	struct_field_t fields[5];
+} directory_entry_t;
+
+const struct_field_t resource_directory_entry_fields[] = {
+	{ 0, 4, "Name Offset", {0}},
+	{ 0, 4, "Integer ID", {0}},
+	{ 4, 4, "Data Entry Offset", {0}},
+	{ 4, 4, "Subdirectory Offset", {0}},
+	{ 0, 0, "", {0}}
+};
+
 typedef struct section {
 	struct_field_t fields[11];
 	uint8_t* contents;
@@ -615,6 +633,52 @@ void print_resources(pefile_t *pe) {
 	print_field_name("NumberNameEntries", fields);
 	print_field_name("NumberIDEntries", fields);
 	printf("\n");
+
+	uint32_t numb_name_entries = get_field_short("NumberNameEntries", fields);
+	uint32_t numb_id_entries = get_field_short("NumberIDEntries", fields);
+	uint32_t numb_entries = numb_name_entries + numb_id_entries;
+	uint8_t* entries_buffer = buffer + RESOURCE_DIRECTORY_TABLE_SIZE;
+
+	directory_entry_t* entries = malloc(sizeof(directory_entry_t) * numb_entries);
+
+	for (uint32_t i = 0; i < numb_name_entries; ++i) {
+		parse_header(entries_buffer + (i * RESOURCE_DIRECTORY_ENTRY_SIZE), resource_directory_entry_fields, entries[i].fields);
+		entries[i].type = DIRECTORY_TYPE_NAME;
+	}
+
+	for (uint32_t i = numb_name_entries; i < numb_entries; ++i) {
+		parse_header(entries_buffer + (i * RESOURCE_DIRECTORY_ENTRY_SIZE), resource_directory_entry_fields, entries[i].fields);
+		entries[i].type = DIRECTORY_TYPE_ID;
+	}
+
+	for (uint32_t i = 0; i < numb_entries; ++i) {
+		if (entries[i].type == DIRECTORY_TYPE_NAME) {
+			uint32_t offset = get_field_int("Name Offset", entries[i].fields) ^ 0x80000000;
+			uint16_t size = *(uint16_t*)(buffer + offset);
+
+			wchar_t* string = calloc(1, (size + 1) * sizeof(wchar_t));
+			for (int i = 0; i < size; ++i) {
+				string[i] = *(uint16_t*)(buffer + offset + 2 + (i * 2));
+			}
+
+			printf("0x%08X: %ls\n", offset, string);
+
+			free(string);
+		}
+
+		if (entries[i].type == DIRECTORY_TYPE_ID) {
+			const char* type = map_lookup(get_field_int("Integer ID", entries[i].fields), resource_types_map);
+			printf("Type: %s\n", type);
+		}
+
+		print_field_name_hex("Name Offset", entries[i].fields);
+		print_field_name_hex("Integer ID", entries[i].fields);
+		print_field_name_hex("Data Entry Offset", entries[i].fields);
+		print_field_name_hex("Subdirectory Offset", entries[i].fields);
+		printf("\n");
+	}
+
+	free(entries);
 }
 
 int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* pe_header_offset) {
