@@ -108,6 +108,16 @@ const struct_field_t peplus_optional_header_windows_fields[] = {
 	{ 0, 0, "", {0}}
 };
 
+const struct_field_t resource_directory_table_fields[] = {
+	{ 0, 4, "Characteristics", {0}},
+	{ 4, 4, "TimeDateStamp", {0}},
+	{ 8, 2, "MajorVersion", {0}},
+	{ 10, 2, "MinorVersion", {0}},
+	{ 12, 2, "NumberNameEntries", {0}},
+	{ 14, 2, "NumberIDEntries", {0}},
+	{ 0, 0, "", {0}}
+};
+
 typedef struct section {
 	struct_field_t fields[11];
 	uint8_t* contents;
@@ -557,6 +567,56 @@ void print_section_header(struct_field_t* header) {
 	printf("\n");
 }
 
+uint8_t* get_resource_table(pefile_t *pe) {
+	directory_field_t* resource_table = get_directory("Resource Table", pe->optional_header_directories);
+	if (! resource_table || resource_table->directory_size == 0) {
+		return NULL;
+	}
+
+	size_t resource_rva = resource_table->virtual_address;
+	size_t resource_size = resource_table->directory_size;
+
+	uint16_t number_of_sections = get_field_short("NumberOfSections", pe->coff_header);
+	section_t* section = NULL;
+	size_t VirtualAddress;
+
+	for (uint16_t i = 0; i < number_of_sections; ++i) {
+		size_t SizeOfRawData = get_field_int("SizeOfRawData", pe->sections[i].fields);
+		VirtualAddress = get_field_int("VirtualAddress", pe->sections[i].fields);
+
+		if (VirtualAddress <= resource_rva && (VirtualAddress + SizeOfRawData) >= resource_rva + resource_size) {
+			section = &pe->sections[i];
+			break;
+		}
+	}
+
+	if (! section) {
+		return NULL;
+	}
+
+	return section->contents + (resource_rva - VirtualAddress);
+}
+
+void print_resources(pefile_t *pe) {
+	struct_field_t fields[7];
+	uint8_t* buffer = get_resource_table(pe);
+
+	if (! buffer) {
+		printf("No resource table found\n");
+		return;
+	}
+
+	parse_header(buffer, resource_directory_table_fields, fields);
+	printf("\n");
+	print_field_name("Characteristics", fields);
+	print_field_name("TimeDateStamp", fields);
+	print_field_name("MajorVersion", fields);
+	print_field_name("MinorVersion", fields);
+	print_field_name("NumberNameEntries", fields);
+	print_field_name("NumberIDEntries", fields);
+	printf("\n");
+}
+
 int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* pe_header_offset) {
 	FILE *f = fopen(filename, "r");
 
@@ -845,7 +905,8 @@ int main(int argc, char* argv[]) {
 
 	printf("Calculated CheckSum: %i\n", calculate_checksum(&pe, file, size));
 
-	write_pe_file("out.exe", &pe);
+	//write_pe_file("out.exe", &pe);
+	print_resources(&pe);
 
 	for (uint16_t i = 0; i < number_of_sections; ++i) {
 		free(pe.sections[i].contents);
