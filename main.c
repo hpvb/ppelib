@@ -93,6 +93,8 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 	size_t section_offset = pe->pe_header_offset + coff_header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = serialize_section(&pe->sections[i], NULL, section_offset + (i * PE_SECTION_HEADER_SIZE));
+		section_size = TO_NEAREST(section_size, pe->header.file_alignment);
+
 		if (section_size > end_of_sections) {
 			end_of_sections = section_size;
 		}
@@ -176,6 +178,8 @@ int main(int argc, char* argv[]) {
 
 	for (uint32_t i = 0; i < pe.header.number_of_sections; ++i) {
 		size_t section_size = deserialize_section(file, pe.section_offset + (i * PE_SECTION_HEADER_SIZE), size, &pe.sections[i]);
+		section_size = TO_NEAREST(section_size, pe.header.file_alignment);
+
 		if (section_size > pe.end_of_sections) {
 			pe.end_of_sections = section_size;
 		}

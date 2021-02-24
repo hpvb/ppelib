@@ -5,6 +5,8 @@
 #include <stddef.h>
 
 #define CHECK_BIT(var,val) ((var) & (val))
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define TO_NEAREST(num, size) num + size - 1 - (num + size - 1) % size
 
 typedef struct map_entry {
         const char* string;

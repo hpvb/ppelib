@@ -240,13 +240,25 @@ for field in section_header:
     offset = offset + field["pe_size"]
 
 pointer_field = inflection.underscore("PointerToRawData")
-size_field = inflection.underscore("SizeOfRawData")
+virtualsize_field = inflection.underscore("VirtualSize")
+rawsize_field = inflection.underscore("SizeOfRawData")
+
 with open('templates/pelib-section.h') as file_:
     template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
     with open('../pelib-section.h', 'w') as outfile:
-        outfile.write(template.render(fields=fields, pointer_field=pointer_field, size_field=size_field))
+        outfile.write(template.render(
+            fields=fields,
+            pointer_field=pointer_field,
+            virtualsize_field=virtualsize_field,
+            rawsize_field=rawsize_field,
+        ))
 
 with open('templates/pelib-section.c') as file_:
     template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
     with open('../pelib-section.c', 'w') as outfile:
-        outfile.write(template.render(fields=fields, pointer_field=pointer_field, size_field=size_field))
+        outfile.write(template.render(
+            fields=fields,
+            pointer_field=pointer_field,
+            virtualsize_field=virtualsize_field,
+            rawsize_field=rawsize_field,
+        ))
