@@ -136,6 +136,14 @@ const struct_field_t resource_directory_entry_fields[] = {
 	{ 0, 0, "", {0}}
 };
 
+const struct_field_t resource_directory_data_entry_fields[] = {
+	{ 0, 4, "Data RVA", {0}},
+	{ 4, 4, "Size", {0}},
+	{ 8, 4, "Codepage", {0}},
+	{ 12, 4, "Reserved", {0}},
+	{ 0, 0, "", {0}}
+};
+
 typedef struct section {
 	struct_field_t fields[11];
 	uint8_t* contents;
@@ -182,6 +190,36 @@ const directory_field_t optional_header_directories[] = {
 	{ 120, 8, "Reserved", 0, 0},
 	{ 0, 0, "", 0, 0},
 };
+
+typedef struct resource_directory_data_entry {
+	uint32_t size;
+	uint32_t codepage;
+	uint8_t* data;
+} resource_directory_data_entry_t;
+
+typedef struct resource_directory_id_entry {
+	uint32_t id;
+	struct resource_directory_table* subdirectory;
+	struct resource_directory_data_entry* data;
+} resource_directory_id_entry_t;
+
+typedef struct resource_directory_named_entry {
+	wchar_t* name;
+	struct resource_directory_table* subdirectory;
+	struct resource_directory_data_entry* data;
+} resource_directory_named_entry_t;
+
+typedef struct resource_directory_table {
+	uint32_t characteristics;
+	uint32_t time_date_stamp;
+	uint16_t major_version;
+	uint16_t minor_version;
+	uint16_t numb_name_entries;
+	uint16_t numb_id_entries;
+
+	struct resource_directory_entry* named_entries;
+	struct resource_directory_id_entry* id_entries;
+} resource_directory_table_t;
 
 typedef struct pefile {
 	size_t pe_header_offset;

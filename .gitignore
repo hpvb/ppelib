@@ -1,4 +1,6 @@
 pedit
+main
+vgcore*
 *.exe
 *.dll
 *.swp

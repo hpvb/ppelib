@@ -1,7 +1,14 @@
+#ifndef PELIB_CONSTANTS_H
+#define PELIB_CONSTANTS_H
+
 #include <stdint.h>
+#include <stddef.h>
+
+#include "utils.h"
 
 #define PE_SIGNATURE 0x3c
 #define COFF_HEADER_SIZE 20
+#define PE_HEADER_DATA_DIRECTORIES_SIZE 8
 
 #define PE_SECTION_SIZE 40
 
@@ -50,12 +57,14 @@ enum machine_type {
 	IMAGE_FILE_MACHINE_WCEMIPSV2 = 0x169,
 };
 
-typedef struct map_entry {
-	const char* string;
-	uint32_t value;
-} map_entry_t;
+static map_entry_t magic_type_map[] = {
+	{"PE32", PE32_MAGIC},
+	{"PE32+", PE32PLUS_MAGIC},
+	{"PE32 ROM", PE32_ROM_MAGIC},
+	{NULL, 0}
+};
 
-map_entry_t machine_type_map[] = {
+static map_entry_t machine_type_map[] = {
 	{"IMAGE_FILE_MACHINE_UNKNOWN", 0x0},
 	{"IMAGE_FILE_MACHINE_AM33", 0x1d3},
 	{"IMAGE_FILE_MACHINE_AMD64", 0x8664},
@@ -103,7 +112,7 @@ enum characteristics {
 	IMAGE_FILE_BYTES_REVERSED_HI = 0x8000,
 };
 
-map_entry_t characteristics_map[] = {
+static map_entry_t characteristics_map[] = {
 	{"IMAGE_FILE_RELOCS_STRIPPED", 0x0001},
 	{"IMAGE_FILE_EXECUTABLE_IMAGE", 0x0002},
 	{"IMAGE_FILE_LINE_NUMS_STRIPPED", 0x0004},
@@ -140,7 +149,7 @@ enum windows_subsystem {
 	IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16,
 };
 
-map_entry_t windows_subsystem_map[] = {
+static map_entry_t windows_subsystem_map[] = {
 	{"IMAGE_SUBSYSTEM_UNKNOWN", 0},
 	{"IMAGE_SUBSYSTEM_NATIVE", 1},
 	{"IMAGE_SUBSYSTEM_WINDOWS_GUI", 2},
@@ -175,7 +184,7 @@ enum dll_characteristics {
 	IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000,
 };
 
-map_entry_t dll_characteristics_map[] = {
+static map_entry_t dll_characteristics_map[] = {
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED1", 0x0001},
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED2", 0x0002},
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED3", 0x0004},
@@ -237,7 +246,7 @@ enum section_flags {
 	IMAGE_SCN_MEM_WRITE = 0x80000000,
 };
 
-map_entry_t section_flags_map[] = {
+static map_entry_t section_flags_map[] = {
 	{"IMAGE_SCN_RESERVED1", 0x00000000},
 	{"IMAGE_SCN_RESERVED2", 0x00000001},
 	{"IMAGE_SCN_RESERVED3", 0x00000002},
@@ -305,7 +314,7 @@ enum resource_types {
 	RT_MANIFEST = 24,
 };
 
-map_entry_t resource_types_map[] = {
+static map_entry_t resource_types_map[] = {
 	{"RT_CURSOR", 1},
 	{"RT_BITMAP", 2},
 	{"RT_ICON", 3},
@@ -328,3 +337,35 @@ map_entry_t resource_types_map[] = {
 	{"RT_HTML", 23},
 	{"RT_MANIFEST", 24},
 };
+
+enum charset_types {
+	ASCII = 0x0,
+	Japan = 0x3a4,
+	Korea = 0x3b5,
+	Taiwan = 0x3b6,
+	Unicode = 0x4b0,
+	Latin2 = 0x4e2,
+	Cyrillic = 0x4e3,
+	Multilingual = 0x4e4,
+	Greek = 0x4e5,
+	Turkish = 0x4e6,
+	Hebrew = 0x4e7,
+	Arabic = 0x4e8,
+};
+
+static map_entry_t charsets_types_map[] = {
+	{"ASCII", 0x0},
+	{"Japan", 0x3a4},
+	{"Korea", 0x3b5},
+	{"Taiwan", 0x3b6},
+	{"Unicode", 0x4b0},
+	{"Latin2", 0x4e2},
+	{"Cyrillic", 0x4e3},
+	{"Multilingual", 0x4e4},
+	{"Greek", 0x4e5},
+	{"Turkish", 0x4e6},
+	{"Hebrew", 0x4e7},
+	{"Arabic", 0x4e8},
+};
+
+#endif

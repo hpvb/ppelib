@@ -1,0 +1,26 @@
+#ifndef PELIB_UTILS_H
+#define PELIB_UTILS_H
+
+#include <stdint.h>
+#include <stddef.h>
+
+#define CHECK_BIT(var,val) ((var) & (val))
+
+typedef struct map_entry {
+        const char* string;
+        uint32_t value;
+} map_entry_t;
+
+
+uint8_t read_uint8_t(const uint8_t* buffer);
+void write_uint8_t(uint8_t* buffer, uint8_t val);
+uint16_t read_uint16_t(const uint8_t* buffer);
+void write_uint16_t(uint8_t* buffer, uint16_t val);
+uint32_t read_uint32_t(const uint8_t* buffer);
+void write_uint32_t(uint8_t* buffer, uint32_t val);
+uint64_t read_uint64_t(const uint8_t* buffer);
+void write_uint64_t(uint8_t* buffer, uint64_t val);
+
+const char* map_lookup(uint32_t value, map_entry_t* map);
+
+#endif
