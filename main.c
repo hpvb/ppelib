@@ -93,7 +93,6 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 	size_t section_offset = pe->pe_header_offset + coff_header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = serialize_section(&pe->sections[i], NULL, section_offset + (i * PE_SECTION_HEADER_SIZE));
-		section_size = TO_NEAREST(section_size, pe->header.file_alignment);
 
 		if (section_size > end_of_sections) {
 			end_of_sections = section_size;
@@ -147,6 +146,22 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 	return size;
 }
 
+void recalculate(pefile_t* pe) {
+	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
+	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size + (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
+	pe->header.size_of_headers = TO_NEAREST(size_of_headers, pe->header.file_alignment);
+
+	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
+		if (pe->sections[i].size_of_raw_data && pe->sections[i].virtual_size <= pe->sections[i].size_of_raw_data) {
+			pe->sections[i].size_of_raw_data = TO_NEAREST(pe->sections[i].virtual_size, pe->header.file_alignment);
+		}
+	}
+
+	size_t virtual_sections_end = pe->sections[pe->header.number_of_sections - 1].virtual_address + pe->sections[pe->header.number_of_sections - 1].virtual_size;
+	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
+	//print_pe_header(&pe->header);
+}
+
 int main(int argc, char* argv[]) {
 	if (! argc) return 1;
 
@@ -178,7 +193,6 @@ int main(int argc, char* argv[]) {
 
 	for (uint32_t i = 0; i < pe.header.number_of_sections; ++i) {
 		size_t section_size = deserialize_section(file, pe.section_offset + (i * PE_SECTION_HEADER_SIZE), size, &pe.sections[i]);
-		section_size = TO_NEAREST(section_size, pe.header.file_alignment);
 
 		if (section_size > pe.end_of_sections) {
 			pe.end_of_sections = section_size;
@@ -202,6 +216,7 @@ int main(int argc, char* argv[]) {
                 memcpy(pe.trailing_data, file + pe.end_of_sections, pe.trailing_data_size);
         }
 
+	recalculate(&pe);
 	write_pe_file("out.exe", &pe);
 
 	free(file);
