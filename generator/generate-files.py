@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from jinja2 import Template
+from jinja2 import Template, Environment, FileSystemLoader
 from itertools import tee
 import inflection
 import sys
@@ -73,6 +73,19 @@ pe_header_directories = [
     "DelayImportDescriptor",
     "CLRRuntimeHeader",
     "Reserved",
+]
+
+section_header = [
+    { "name": "Name", "pe_size": 8, "format": {"string": True}},
+    { "name": "VirtualSize", "pe_size": 4},
+    { "name": "VirtualAddress", "pe_size": 4, "format": {"hex": True}},
+    { "name": "SizeOfRawData", "pe_size": 4},
+    { "name": "PointerToRawData", "pe_size": 4, "format": {"hex": True}},
+    { "name": "PointerToRelocations", "pe_size": 4, "format": {"hex": True}},
+    { "name": "PointerToLinenumbers", "pe_size": 4, "format": {"hex": True}},
+    { "name": "NumberOfRelocations", "pe_size": 2},
+    { "name": "NumberOfLinenumbers", "pe_size": 2},
+    { "name": "Characteristics", "pe_size": 4, "format": {"bitfield": "section_flags_map"}},
 ]
 
 fields = []
@@ -192,12 +205,12 @@ for directory in pe_header_directories:
     })
 
 with open('templates/pelib-header.h') as file_:
-    template = Template(file_.read())
+    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
     with open('../pelib-header.h', 'w') as outfile:
         outfile.write(template.render(fields=fields, directories=directories))
 
 with open('templates/pelib-header.c') as file_:
-    template = Template(file_.read())
+    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
     with open('../pelib-header.c', 'w') as outfile:
         outfile.write(template.render(
             pe_magic_field=inflection.underscore('Magic'),
@@ -209,3 +222,31 @@ with open('templates/pelib-header.c') as file_:
             directories=directories
         ))
 
+fields = []
+offset = 0
+for field in section_header:
+    t = type_map[field["pe_size"]]
+    field_name = inflection.underscore(field["name"])
+    f = {
+        "name": field_name,
+        "human_name": field["name"],
+        "pe_size": field["pe_size"],
+        "pe_type": t,
+        "offset" : offset,
+    }
+    if "format" in field:
+        f["format"] = field["format"]
+    fields.append(f)
+    offset = offset + field["pe_size"]
+
+pointer_field = inflection.underscore("PointerToRawData")
+size_field = inflection.underscore("SizeOfRawData")
+with open('templates/pelib-section.h') as file_:
+    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
+    with open('../pelib-section.h', 'w') as outfile:
+        outfile.write(template.render(fields=fields, pointer_field=pointer_field, size_field=size_field))
+
+with open('templates/pelib-section.c') as file_:
+    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
+    with open('../pelib-section.c', 'w') as outfile:
+        outfile.write(template.render(fields=fields, pointer_field=pointer_field, size_field=size_field))

@@ -1,0 +1,23 @@
+{%- macro print_field(field, varname) -%}
+{%- if 'format' in field %}
+{%- if 'enum' in field['format'] %}
+printf("{{field.human_name}}: %s\n", map_lookup({{varname}}->{{field.name}}, {{field['format']['enum']}}));
+{%- elif 'hex' in field['format'] %}
+printf("{{field.human_name}}: 0x%08X\n", {{varname}}->{{field.name}});
+{%- elif 'bitfield' in field['format'] %}
+printf("{{field.human_name}} (0x%08lX): ", {{varname}}->{{field.name}});
+map_entry_t* {{field.name}}_map_i = {{field['format']['bitfield']}};
+while ({{field.name}}_map_i->string) {
+  if (CHECK_BIT({{varname}}->{{field.name}}, {{field.name}}_map_i->value)) {
+    printf("%s ", {{field.name}}_map_i->string);
+  }
+  ++{{field.name}}_map_i;
+}
+printf("\n");
+{%- elif 'string' in field['format'] %}
+printf("{{field.human_name}}: %s\n", {{varname}}->{{field.name}});
+{%- endif %}
+{%- else %}
+printf("{{field.human_name}}: %li\n", {{varname}}->{{field.name}});
+{%- endif %}
+{%- endmacro %}

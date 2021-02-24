@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "constants.h"
+#include "utils.h"
 
 enum data_directory {
 {%- for d in directories %}
@@ -36,8 +36,8 @@ typedef struct pelib_header {
   pelib_data_directory_t* unknown_data_directories;
 } pelib_header_t;
 
-uint32_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer);
-uint32_t deserialize_pe_header(const uint8_t* buffer, const size_t size, pelib_header_t* header);
+size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t offset);
+size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t size, pelib_header_t* header);
 void print_pe_header(const pelib_header_t* header);
 
 #endif /* PELIB_HEADER_H */

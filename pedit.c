@@ -445,7 +445,7 @@ size_t parse_sections(const uint8_t* buffer, size_t offset, uint16_t number, sec
 	size_t largest_offset = 0;
 
 	for (uint32_t i = 0; i < number; ++i) {
-		parse_header(sections + (i * PE_SECTION_SIZE), section_header_fields, dest[i].fields);
+		parse_header(sections + (i * PE_SECTION_HEADER_SIZE), section_header_fields, dest[i].fields);
 		printf("Parsing section: %s\n", get_field_string("Name", dest[i].fields));
 
 		size_t SizeOfRawData = get_field_int("SizeOfRawData", dest[i].fields);
@@ -484,7 +484,7 @@ size_t write_sections(uint8_t* buffer, size_t offset, uint16_t number, const sec
 		const size_t PointerToRawData = get_field_int("PointerToRawData", sections[i].fields);
 		const size_t SizeOfRawData = get_field_int("SizeOfRawData", sections[i].fields);
 
-		write_header(section_headers + (i * PE_SECTION_SIZE), sections[i].fields);
+		write_header(section_headers + (i * PE_SECTION_HEADER_SIZE), sections[i].fields);
 		memcpy(buffer + PointerToRawData, sections[i].contents, SizeOfRawData);
 	}
 
@@ -599,7 +599,7 @@ void print_optional_header_directories(directory_field_t* header) {
 }
 
 void print_section_header(struct_field_t* header) {
-	uint16_t section_characteristics = get_field_short("Characteristics", header);
+	uint32_t section_characteristics = get_field_int("Characteristics", header);
 
 	printf("Section:\n");
 	printf("Name: %s\n", get_field_string("Name", header));
@@ -611,7 +611,7 @@ void print_section_header(struct_field_t* header) {
 	print_field_name_hex("PointerToLinenumbers", header);
 	print_field_name("NumberOfRelocations", header);
 	print_field_name("NumberOfLinenumbers", header);
-	printf("Characteristics: ");
+	printf("Characteristics (0x%08lX): ", section_characteristics);
 	map_entry_t* map = section_flags_map;
 	while (map->string) {
 		if (CHECK_BIT(section_characteristics, map->value)) {
@@ -978,7 +978,7 @@ int main(int argc, char* argv[]) {
 	size_t sections_offset = pe.optional_header_offset + pe.optional_header_size;
         uint16_t number_of_sections = get_field_short("NumberOfSections", pe.coff_header);
 
-	if (size < pe.optional_header_offset + pe.optional_header_size + (number_of_sections * PE_SECTION_SIZE)) {
+	if (size < pe.optional_header_offset + pe.optional_header_size + (number_of_sections * PE_SECTION_HEADER_SIZE)) {
 		fprintf(stderr, "Not enough room for %i sections\n", number_of_sections);
 		return 1;
 	}
