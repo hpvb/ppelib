@@ -9,11 +9,12 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 type_map = {
+    -1 : "uint8_t*",
     1  : "uint8_t",
     2  : "uint16_t",
     4  : "uint32_t",
     8  : "uint64_t",
-    's': "char[9]",
+    's': "uint8_t[9]",
 }
 
 pe_header = [
@@ -86,6 +87,13 @@ section_header = [
     { "name": "NumberOfRelocations", "pe_size": 2},
     { "name": "NumberOfLinenumbers", "pe_size": 2},
     { "name": "Characteristics", "pe_size": 4, "format": {"bitfield": "section_flags_map"}},
+]
+
+certificate_table = [
+    { "name": "Length", "pe_size": 4 },
+    { "name": "Revision", "pe_size": 2, "format": {"enum": "certificate_revision_map"}},
+    { "name": "CertificateType", "pe_size": 2, "format": {"enum": "certificate_type_map"}},
+    { "name": "Certificate", "pe_size": -1, "format": {"variable_size": True}},
 ]
 
 fields = []
@@ -261,4 +269,39 @@ with open('templates/pelib-section.c') as file_:
             pointer_field=pointer_field,
             virtualsize_field=virtualsize_field,
             rawsize_field=rawsize_field,
+        ))
+
+fields = []
+offset = 0
+for field in certificate_table:
+    t = type_map[field["pe_size"]]
+    field_name = inflection.underscore(field["name"])
+    f = {
+        "name": field_name,
+        "human_name": field["name"],
+        "pe_size": field["pe_size"],
+        "pe_type": t,
+        "offset" : offset,
+    }
+    if "format" in field:
+        f["format"] = field["format"]
+    fields.append(f)
+    offset = offset + field["pe_size"]
+
+length_field = inflection.underscore("Length")
+
+with open('templates/pelib-certificate_table.h') as file_:
+    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
+    with open('../pelib-certificate_table.h', 'w') as outfile:
+        outfile.write(template.render(
+            fields=fields,
+            length_field=length_field
+        ))
+
+with open('templates/pelib-certificate_table.c') as file_:
+    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
+    with open('../pelib-certificate_table.c', 'w') as outfile:
+        outfile.write(template.render(
+            fields=fields,
+            length_field=length_field
         ))

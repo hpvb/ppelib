@@ -6,6 +6,7 @@
 
 #include "pelib-header.h"
 #include "pelib-section.h"
+#include "pelib-certificate_table.h"
 #include "utils.h"
 #include "constants.h"
 
@@ -28,6 +29,8 @@ typedef struct pefile {
        	pelib_header_t header;
 	pelib_section_t** sections;
 	data_directory_t* data_directories;
+
+	pelib_certificate_table_t certificate_table;
 
         uint8_t* stub;
 	size_t trailing_data_size;
@@ -64,6 +67,7 @@ int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* p
 
 	if (memcmp(signature, "PE\0", 4) != 0) {
 		fprintf(stderr, "Not a PE file. Got 0x%X 0x%X 0x%X 0x%X, expected 0x%X 0x%X 0x%X 0x%X\n", signature[0], signature[1], signature[2], signature[3], 'P', 'E', 0, 0);
+		return 1;
 	}
 
 	fseek(f, 0, SEEK_END);
@@ -144,7 +148,10 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 
 	// Write trailing data
 	memcpy(buffer + end_of_sections, pe->trailing_data, pe->trailing_data_size);
-	
+
+	// Write certificates
+	serialize_certificate_table(&pe->certificate_table, buffer);
+
 	FILE *f = fopen(filename, "w+");
 	fwrite(buffer, 1, size, f);
 
@@ -188,6 +195,7 @@ void recalculate(pefile_t* pe) {
 				base_of_code = section->virtual_address;
 			}
 
+			// This appears to hold emperically true.
 			if (strcmp(".bind", section->name) != 0) {
 				size_of_code += TO_NEAREST(section->virtual_size, pe->header.file_alignment);
 			}
@@ -214,11 +222,14 @@ void recalculate(pefile_t* pe) {
 	}
 
 	pe->header.base_of_code = base_of_code;
-	pe->header.base_of_data = base_of_data;
+	// The actual value of these of PE images in the wild varies a lot.
+	// There doesn't appear to be an actual correct way of calculating these
+	
+	//pe->header.base_of_data = base_of_data;
 
-	pe->header.size_of_initialized_data = TO_NEAREST(size_of_initialized_data, pe->header.file_alignment);
-	pe->header.size_of_uninitialized_data = TO_NEAREST(size_of_uninitialized_data, pe->header.file_alignment);
-	pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);
+	//pe->header.size_of_initialized_data = TO_NEAREST(size_of_initialized_data, pe->header.file_alignment);
+	//pe->header.size_of_uninitialized_data = TO_NEAREST(size_of_uninitialized_data, pe->header.file_alignment);
+	//pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);
 
 	size_t virtual_sections_end = pe->sections[pe->header.number_of_sections - 1]->virtual_address + pe->sections[pe->header.number_of_sections - 1]->virtual_size;
 	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
@@ -237,6 +248,16 @@ void recalculate(pefile_t* pe) {
 			pe->header.data_directories[i].size = directory_size;
 		}
 	}
+
+	if (pe->certificate_table.size) {
+		size_t size = 0;
+		for (uint32_t i = 0; i < pe->certificate_table.size; ++i) {
+			size += pe->certificate_table.certificates[i].length;
+		}
+
+		pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address = pe->certificate_table.offset;
+		pe->header.data_directories[DIR_CERTIFICATE_TABLE].size = size;
+ 	}
 }
 
 int main(int argc, char* argv[]) {
@@ -303,6 +324,10 @@ int main(int argc, char* argv[]) {
 		printf("\n");
 	}
 
+	deserialize_certificate_table(file, &pe.header, size, &pe.certificate_table);
+	print_certificate_table(&pe.certificate_table);
+	printf("\n");
+
 	pe.start_of_sections = pe.sections[0]->virtual_address;
 
 	//void* t = pe.sections[4];
@@ -328,10 +353,14 @@ int main(int argc, char* argv[]) {
 
 	free(file);
 	free(pe.stub);
-	for (uint32_t i = 0; i < pe.header.number_of_sections; ++i) {
+	for (size_t i = 0; i < pe.header.number_of_sections; ++i) {
 		free(pe.sections[i]->contents);
 		free(pe.sections[i]);
 	}
+	for (size_t i = 0; i < pe.certificate_table.size; ++i) {
+		free(pe.certificate_table.certificates[i].certificate);
+        }
+	free(pe.certificate_table.certificates);
 	free(pe.data_directories);
 	free(pe.header.data_directories);
 	free(pe.sections);

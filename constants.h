@@ -164,6 +164,7 @@ static map_entry_t windows_subsystem_map[] = {
 	{"IMAGE_SUBSYSTEM_EFI_ROM", 13},
 	{"IMAGE_SUBSYSTEM_XBOX", 14},
 	{"IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION", 16},
+	{NULL, 0}
 };
 
 enum dll_characteristics {
@@ -200,6 +201,7 @@ static map_entry_t dll_characteristics_map[] = {
 	{"IMAGE_DLLCHARACTERISTICS_WDM_DRIVER", 0x2000},
 	{"IMAGE_DLLCHARACTERISTICS_GUARD_CF", 0x4000},
 	{"IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE", 0x8000},
+	{NULL, 0}
 };
 
 enum section_flags {
@@ -288,6 +290,7 @@ static map_entry_t section_flags_map[] = {
 	{"IMAGE_SCN_MEM_EXECUTE", 0x20000000},
 	{"IMAGE_SCN_MEM_READ", 0x40000000},
 	{"IMAGE_SCN_MEM_WRITE", 0x80000000},
+	{NULL, 0}
 };
 
 enum resource_types {
@@ -336,6 +339,7 @@ static map_entry_t resource_types_map[] = {
 	{"RT_ANIICON", 22},
 	{"RT_HTML", 23},
 	{"RT_MANIFEST", 24},
+	{NULL, 0}
 };
 
 enum charset_types {
@@ -366,6 +370,32 @@ static map_entry_t charsets_types_map[] = {
 	{"Turkish", 0x4e6},
 	{"Hebrew", 0x4e7},
 	{"Arabic", 0x4e8},
+	{NULL, 0}
 };
 
+enum certificate_revision {
+	WIN_CERT_REVISION_1_0 = 0x0100,
+	WIN_CERT_REVISION_2_0 = 0x0200,
+};
+
+static map_entry_t certificate_revision_map[] = {
+	{"WIN_CERT_REVISION_1_0", 0x0100},
+	{"WIN_CERT_REVISION_2_0", 0x0200},
+	{NULL, 0}
+};
+
+enum certificate_type {
+	WIN_CERT_TYPE_X509 = 1,
+	WIN_CERT_TYPE_PKCS_SIGNED_DATA = 2,
+	WIN_CERT_TYPE_RESERVED_1 = 3,
+	WIN_CERT_TYPE_TS_STACK_SIGNED = 4,
+};
+
+static map_entry_t certificate_type_map[] = {
+	{"WIN_CERT_TYPE_X509", 1},
+	{"WIN_CERT_TYPE_PKCS_SIGNED_DATA", 2},
+	{"WIN_CERT_TYPE_RESERVED_1", 3},
+	{"WIN_CERT_TYPE_TS_STACK_SIGNED", 4},
+	{NULL, 0}
+};
 #endif
