@@ -86,7 +86,7 @@ size_t deserialize_certificate_table(const uint8_t* buffer, pelib_header_t* head
 void print_certificate_table(const pelib_certificate_table_t* certificate_table) {
   printf("Certificate table: \n");
   for (size_t i = 0; i < certificate_table->size; ++i) {
-    printf("Certificate: %i\n", i);
+    printf("Certificate: %li\n", i);
     pelib_certificate_t* certificate = &certificate_table->certificates[i];
 
 {%- for field in fields -%}

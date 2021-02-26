@@ -12,7 +12,7 @@ enum data_directory_type {
 {%- endfor %}
 };
 
-static const char* data_directory_names[] = {
+static const char* const data_directory_names[] = {
 {%- for d in directories %}
 	"{{d.human_name}}",
 {%- endfor %}

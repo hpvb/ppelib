@@ -34,8 +34,8 @@ void write_uint64_t(uint8_t* buffer, uint64_t val) {
         ((uint64_t*)buffer)[0] = val;
 }
 
-const char* map_lookup(uint32_t value, map_entry_t* map) {
-        map_entry_t* m = map;
+const char* map_lookup(uint32_t value, const map_entry_t* map) {
+        const map_entry_t* m = map;
         while (m->string) {
                 if (m->value == value) {
                         return m->string;

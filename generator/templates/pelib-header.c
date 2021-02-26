@@ -138,9 +138,9 @@ void print_pe_header(const pelib_header_t* header) {
   printf("Data directories:\n");
   for (uint32_t i = 0; i < header->{{pe_rvas_field}}; ++i) {
     if (i < {{directories|length}}) {
-      printf("%s: RVA: 0x%08lX, size: %li\n", data_directory_names[i], header->data_directories[i].virtual_address, header->data_directories[i].size);
+      printf("%s: RVA: 0x%08X, size: %i\n", data_directory_names[i], header->data_directories[i].virtual_address, header->data_directories[i].size);
     } else {
-      printf("Unknown: RVA: 0x%08lX, size: %li\n", header->data_directories[i].virtual_address, header->data_directories[i].size);
+      printf("Unknown: RVA: 0x%08X, size: %i\n", header->data_directories[i].virtual_address, header->data_directories[i].size);
     }
   }
 }

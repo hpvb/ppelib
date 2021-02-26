@@ -4,9 +4,13 @@ from jinja2 import Template, Environment, FileSystemLoader
 from itertools import tee
 import inflection
 import sys
+import os
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
+
+mydir = os.path.dirname(os.path.abspath(__file__))
+outdir = sys.argv[1]
 
 type_map = {
     -1 : "uint8_t*",
@@ -212,14 +216,14 @@ for directory in pe_header_directories:
         "human_name": directory
     })
 
-with open('templates/pelib-header.h') as file_:
-    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
-    with open('../pelib-header.h', 'w') as outfile:
+with open(f'{mydir}/templates/pelib-header.h') as file_:
+    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+    with open(f'{outdir}/../src/pelib-header.h', 'w') as outfile:
         outfile.write(template.render(fields=fields, directories=directories))
 
-with open('templates/pelib-header.c') as file_:
-    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
-    with open('../pelib-header.c', 'w') as outfile:
+with open(f'{mydir}/templates/pelib-header.c') as file_:
+    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+    with open(f'{outdir}/../src/pelib-header.c', 'w') as outfile:
         outfile.write(template.render(
             pe_magic_field=inflection.underscore('Magic'),
             pe_rvas_field=inflection.underscore('NumberOfRvaAndSizes'),
@@ -251,9 +255,9 @@ pointer_field = inflection.underscore("PointerToRawData")
 virtualsize_field = inflection.underscore("VirtualSize")
 rawsize_field = inflection.underscore("SizeOfRawData")
 
-with open('templates/pelib-section.h') as file_:
-    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
-    with open('../pelib-section.h', 'w') as outfile:
+with open(f'{mydir}/templates/pelib-section.h') as file_:
+    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+    with open(f'{outdir}/../src/pelib-section.h', 'w') as outfile:
         outfile.write(template.render(
             fields=fields,
             pointer_field=pointer_field,
@@ -261,9 +265,9 @@ with open('templates/pelib-section.h') as file_:
             rawsize_field=rawsize_field,
         ))
 
-with open('templates/pelib-section.c') as file_:
-    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
-    with open('../pelib-section.c', 'w') as outfile:
+with open(f'{mydir}/templates/pelib-section.c') as file_:
+    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+    with open(f'{outdir}/../src/pelib-section.c', 'w') as outfile:
         outfile.write(template.render(
             fields=fields,
             pointer_field=pointer_field,
@@ -290,17 +294,17 @@ for field in certificate_table:
 
 length_field = inflection.underscore("Length")
 
-with open('templates/pelib-certificate_table.h') as file_:
-    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
-    with open('../pelib-certificate_table.h', 'w') as outfile:
+with open(f'{mydir}/templates/pelib-certificate_table.h') as file_:
+    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+    with open(f'{outdir}/../src/pelib-certificate_table.h', 'w') as outfile:
         outfile.write(template.render(
             fields=fields,
             length_field=length_field
         ))
 
-with open('templates/pelib-certificate_table.c') as file_:
-    template = Environment(loader=FileSystemLoader("templates/")).from_string(file_.read())
-    with open('../pelib-certificate_table.c', 'w') as outfile:
+with open(f'{mydir}/templates/pelib-certificate_table.c') as file_:
+    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+    with open(f'{outdir}/../src/pelib-certificate_table.c', 'w') as outfile:
         outfile.write(template.render(
             fields=fields,
             length_field=length_field

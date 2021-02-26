@@ -25,6 +25,6 @@ void write_uint32_t(uint8_t* buffer, uint32_t val);
 uint64_t read_uint64_t(const uint8_t* buffer);
 void write_uint64_t(uint8_t* buffer, uint64_t val);
 
-const char* map_lookup(uint32_t value, map_entry_t* map);
+const char* map_lookup(uint32_t value, const map_entry_t* map);
 
 #endif

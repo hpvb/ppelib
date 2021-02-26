@@ -57,14 +57,14 @@ enum machine_type {
 	IMAGE_FILE_MACHINE_WCEMIPSV2 = 0x169,
 };
 
-static map_entry_t magic_type_map[] = {
+static const map_entry_t magic_type_map[] = {
 	{"PE32", PE32_MAGIC},
 	{"PE32+", PE32PLUS_MAGIC},
 	{"PE32 ROM", PE32_ROM_MAGIC},
 	{NULL, 0}
 };
 
-static map_entry_t machine_type_map[] = {
+static const map_entry_t machine_type_map[] = {
 	{"IMAGE_FILE_MACHINE_UNKNOWN", 0x0},
 	{"IMAGE_FILE_MACHINE_AM33", 0x1d3},
 	{"IMAGE_FILE_MACHINE_AMD64", 0x8664},
@@ -112,7 +112,7 @@ enum characteristics {
 	IMAGE_FILE_BYTES_REVERSED_HI = 0x8000,
 };
 
-static map_entry_t characteristics_map[] = {
+static const map_entry_t characteristics_map[] = {
 	{"IMAGE_FILE_RELOCS_STRIPPED", 0x0001},
 	{"IMAGE_FILE_EXECUTABLE_IMAGE", 0x0002},
 	{"IMAGE_FILE_LINE_NUMS_STRIPPED", 0x0004},
@@ -149,7 +149,7 @@ enum windows_subsystem {
 	IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16,
 };
 
-static map_entry_t windows_subsystem_map[] = {
+static const map_entry_t windows_subsystem_map[] = {
 	{"IMAGE_SUBSYSTEM_UNKNOWN", 0},
 	{"IMAGE_SUBSYSTEM_NATIVE", 1},
 	{"IMAGE_SUBSYSTEM_WINDOWS_GUI", 2},
@@ -185,7 +185,7 @@ enum dll_characteristics {
 	IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000,
 };
 
-static map_entry_t dll_characteristics_map[] = {
+static const map_entry_t dll_characteristics_map[] = {
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED1", 0x0001},
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED2", 0x0002},
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED3", 0x0004},
@@ -248,7 +248,7 @@ enum section_flags {
 	IMAGE_SCN_MEM_WRITE = 0x80000000,
 };
 
-static map_entry_t section_flags_map[] = {
+static const map_entry_t section_flags_map[] = {
 	{"IMAGE_SCN_RESERVED1", 0x00000000},
 	{"IMAGE_SCN_RESERVED2", 0x00000001},
 	{"IMAGE_SCN_RESERVED3", 0x00000002},
@@ -317,7 +317,7 @@ enum resource_types {
 	RT_MANIFEST = 24,
 };
 
-static map_entry_t resource_types_map[] = {
+static const map_entry_t resource_types_map[] = {
 	{"RT_CURSOR", 1},
 	{"RT_BITMAP", 2},
 	{"RT_ICON", 3},
@@ -357,7 +357,7 @@ enum charset_types {
 	Arabic = 0x4e8,
 };
 
-static map_entry_t charsets_types_map[] = {
+static const map_entry_t charsets_types_map[] = {
 	{"ASCII", 0x0},
 	{"Japan", 0x3a4},
 	{"Korea", 0x3b5},
@@ -378,7 +378,7 @@ enum certificate_revision {
 	WIN_CERT_REVISION_2_0 = 0x0200,
 };
 
-static map_entry_t certificate_revision_map[] = {
+static const map_entry_t certificate_revision_map[] = {
 	{"WIN_CERT_REVISION_1_0", 0x0100},
 	{"WIN_CERT_REVISION_2_0", 0x0200},
 	{NULL, 0}
@@ -391,7 +391,7 @@ enum certificate_type {
 	WIN_CERT_TYPE_TS_STACK_SIGNED = 4,
 };
 
-static map_entry_t certificate_type_map[] = {
+static const map_entry_t certificate_type_map[] = {
 	{"WIN_CERT_TYPE_X509", 1},
 	{"WIN_CERT_TYPE_PKCS_SIGNED_DATA", 2},
 	{"WIN_CERT_TYPE_RESERVED_1", 3},
