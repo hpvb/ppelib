@@ -118,6 +118,12 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 
 	size += pe->trailing_data_size;
 
+	size_t certificates_size = serialize_certificate_table(&pe->certificate_table, NULL);
+
+	if (certificates_size > size) {
+		size = certificates_size;
+	}
+
 	printf("Size of coff_header        : %li\n", coff_header_size);
 	printf("Size of sections           : %li\n", end_of_sections);
 	printf("Size of trailing data      : %li\n", pe->trailing_data_size);

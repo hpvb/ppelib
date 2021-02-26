@@ -1,6 +1,13 @@
+.cproject
+.project
+.pydevproject
 pedit
 main
 vgcore*
 *.exe
 *.dll
 *.swp
+*.sh
+/tests/
+/failed/
+/build/
