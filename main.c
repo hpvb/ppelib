@@ -6,10 +6,17 @@
 
 #include "pelib-header.h"
 #include "pelib-section.h"
+#include "utils.h"
 #include "constants.h"
 
-#define CHECK_BIT(var,val) ((var) & (val))
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+typedef struct data_directory {
+	pelib_section_t* section;
+	uint32_t offset;
+	uint32_t size;
+
+	uint32_t orig_rva;
+	uint32_t orig_size;
+} data_directory_t;
 
 typedef struct pefile {
         size_t pe_header_offset;
@@ -18,13 +25,13 @@ typedef struct pefile {
         size_t end_of_sections;
 
        	pelib_header_t header;
-	pelib_section_t* sections;
+	pelib_section_t** sections;
+	data_directory_t* data_directories;
 
         uint8_t* stub;
 	size_t trailing_data_size;
 	uint8_t* trailing_data;
 } pefile_t;
-
 
 int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* pe_header_offset) {
 	FILE *f = fopen(filename, "r");
@@ -92,7 +99,7 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 
 	size_t section_offset = pe->pe_header_offset + coff_header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
-		size_t section_size = serialize_section(&pe->sections[i], NULL, section_offset + (i * PE_SECTION_HEADER_SIZE));
+		size_t section_size = serialize_section(pe->sections[i], NULL, section_offset + (i * PE_SECTION_HEADER_SIZE));
 
 		if (section_size > end_of_sections) {
 			end_of_sections = section_size;
@@ -131,7 +138,7 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 
 	// Write sections
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
-		serialize_section(&pe->sections[i], buffer, section_offset + 4 + (i * PE_SECTION_HEADER_SIZE));
+		serialize_section(pe->sections[i], buffer, section_offset + 4 + (i * PE_SECTION_HEADER_SIZE));
 	}
 
 	// Write trailing data
@@ -151,15 +158,52 @@ void recalculate(pefile_t* pe) {
 	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size + (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
 	pe->header.size_of_headers = TO_NEAREST(size_of_headers, pe->header.file_alignment);
 
+	size_t next_section_virtual = 0x1000;
+	size_t next_section_physical = pe->header.size_of_headers;
+	uint32_t base_of_code = 0;
+	uint32_t base_of_data = 0;
+
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
-		if (pe->sections[i].size_of_raw_data && pe->sections[i].virtual_size <= pe->sections[i].size_of_raw_data) {
-			pe->sections[i].size_of_raw_data = TO_NEAREST(pe->sections[i].virtual_size, pe->header.file_alignment);
+		if (pe->sections[i]->size_of_raw_data && pe->sections[i]->virtual_size <= pe->sections[i]->size_of_raw_data) {
+			pe->sections[i]->size_of_raw_data = TO_NEAREST(pe->sections[i]->virtual_size, pe->header.file_alignment);
+		}
+
+		pe->sections[i]->virtual_address = next_section_virtual;
+
+		if (pe->sections[i]->size_of_raw_data) {
+			pe->sections[i]->pointer_to_raw_data = next_section_physical;
+		}
+
+		next_section_virtual = TO_NEAREST(pe->sections[i]->virtual_size, pe->header.section_alignment) + next_section_virtual;
+		next_section_physical = TO_NEAREST(pe->sections[i]->size_of_raw_data, pe->header.file_alignment) + next_section_physical;
+
+		if (! base_of_code && CHECK_BIT(pe->sections[i]->characteristics, IMAGE_SCN_CNT_CODE)) {
+			base_of_code = pe->sections[i]->virtual_address;
+		}
+
+		if (! base_of_data && ! CHECK_BIT(pe->sections[i]->characteristics, IMAGE_SCN_CNT_CODE)) {
+			base_of_data = pe->sections[i]->virtual_address;
 		}
 	}
 
-	size_t virtual_sections_end = pe->sections[pe->header.number_of_sections - 1].virtual_address + pe->sections[pe->header.number_of_sections - 1].virtual_size;
+	pe->header.base_of_code = base_of_code;
+	pe->header.base_of_data = base_of_data;
+
+	size_t virtual_sections_end = pe->sections[pe->header.number_of_sections - 1]->virtual_address + pe->sections[pe->header.number_of_sections - 1]->virtual_size;
 	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
-	//print_pe_header(&pe->header);
+
+	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
+		if (! pe->data_directories[i].section) {
+			pe->header.data_directories[i].virtual_address = 0;
+			pe->header.data_directories[i].size = 0;
+		} else {
+			uint32_t directory_va = pe->data_directories[i].section->virtual_address + pe->data_directories[i].offset;
+			uint32_t directory_size = pe->data_directories[i].size;
+
+			pe->header.data_directories[i].virtual_address = directory_va;
+			pe->header.data_directories[i].size = directory_size;
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -188,19 +232,40 @@ int main(int argc, char* argv[]) {
 	print_pe_header(&pe.header);
 	printf("\n");
 
-	pe.sections = malloc(sizeof(pelib_section_t) * pe.header.number_of_sections);
+	pe.sections = malloc(sizeof(pelib_section_t*) * pe.header.number_of_sections);
+	pe.data_directories = calloc(sizeof(data_directory_t) * pe.header.number_of_rva_and_sizes, 1);
 	pe.end_of_sections = 0;
 
 	for (uint32_t i = 0; i < pe.header.number_of_sections; ++i) {
-		size_t section_size = deserialize_section(file, pe.section_offset + (i * PE_SECTION_HEADER_SIZE), size, &pe.sections[i]);
+		pe.sections[i] = malloc(sizeof(pelib_section_t));
+		size_t section_size = deserialize_section(file, pe.section_offset + (i * PE_SECTION_HEADER_SIZE), size, pe.sections[i]);
 
 		if (section_size > pe.end_of_sections) {
 			pe.end_of_sections = section_size;
 		}
 
-		print_section(&pe.sections[i]);
+		for (uint32_t d = 0; d < pe.header.number_of_rva_and_sizes; ++d) {
+			size_t directory_va = pe.header.data_directories[d].virtual_address;
+			size_t directory_size = pe.header.data_directories[d].size;
+			size_t directory_end = pe.header.data_directories[d].virtual_address + pe.header.data_directories[d].size;
+			size_t section_va = pe.sections[i]->virtual_address;
+			size_t section_end = section_va + pe.sections[i]->size_of_raw_data;
+
+			if (section_va <= directory_va && section_end >= directory_end) {
+				pe.data_directories[d].section = pe.sections[i];
+				pe.data_directories[d].offset = directory_va - section_va;
+				pe.data_directories[d].size = directory_size;
+				pe.data_directories[d].orig_rva = directory_va;
+				pe.data_directories[d].orig_size = directory_size;
+			}
+		}
+		print_section(pe.sections[i]);
 		printf("\n");
 	}
+
+	//void* t = pe.sections[4];
+	//pe.sections[4] = pe.sections[3];
+	//pe.sections[3] = t;
 
         pe.stub = malloc(pe.pe_header_offset);
         if (! pe.stub) {
@@ -222,8 +287,11 @@ int main(int argc, char* argv[]) {
 	free(file);
 	free(pe.stub);
 	for (uint32_t i = 0; i < pe.header.number_of_sections; ++i) {
-		free(pe.sections[i].contents);
+		free(pe.sections[i]->contents);
+		free(pe.sections[i]);
 	}
+	free(pe.data_directories);
+	free(pe.header.data_directories);
 	free(pe.sections);
 	free(pe.trailing_data);
 }

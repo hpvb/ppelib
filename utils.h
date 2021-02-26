@@ -7,6 +7,7 @@
 #define CHECK_BIT(var,val) ((var) & (val))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define TO_NEAREST(num, size) num + size - 1 - (num + size - 1) % size
+#define SWAP(x, y) do { uint8_t swap_temp[sizeof(x)]; memcpy(swap_temp, x, sizeof(x)); x = y; memcpy(y, swap_temp, sizeof(x)); }  while (0)
 
 typedef struct map_entry {
         const char* string;

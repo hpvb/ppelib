@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-enum data_directory {
+enum data_directory_type {
 {%- for d in directories %}
   {{d.name}} = {{loop.index - 1}},
 {%- endfor %}
@@ -32,8 +32,7 @@ typedef struct pelib_header {
 {%- endif %}
 {%- endfor %}
 
-  pelib_data_directory_t data_directories[{{directories|length}}];
-  pelib_data_directory_t* unknown_data_directories;
+  pelib_data_directory_t* data_directories;
 } pelib_header_t;
 
 size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t offset);

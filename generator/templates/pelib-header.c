@@ -43,13 +43,8 @@ size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t
   }
 
   for (uint32_t i = 0; i < header->{{pe_rvas_field}}; ++i) {
-    if (i < {{directories|length}}) {
-      write_uint32_t(directories, header->data_directories[i].virtual_address);
-      write_uint32_t(directories + sizeof(uint32_t), header->data_directories[i].size);
-    } else {
-      write_uint32_t(directories, header->unknown_data_directories[i - {{directories|length - 1 }}].virtual_address);
-      write_uint32_t(directories + sizeof(uint32_t), header->unknown_data_directories[i - {{directories|length - 1 }}].size);
-    }
+    write_uint32_t(directories, header->data_directories[i].virtual_address);
+    write_uint32_t(directories + sizeof(uint32_t), header->data_directories[i].size);
     directories += PE_HEADER_DATA_DIRECTORIES_SIZE;
   }
 
@@ -103,18 +98,11 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
     directories = buf + {{sizes.total_peplus}};
   }
 
-  if (header->{{pe_rvas_field}} > {{directories|length}}) {
-    header->unknown_data_directories = malloc((header->{{pe_rvas_field}} - {{directories|length}}) * PE_HEADER_DATA_DIRECTORIES_SIZE);
-  }
+  header->data_directories = malloc(header->{{pe_rvas_field}} * PE_HEADER_DATA_DIRECTORIES_SIZE);
 
   for (uint32_t i = 0; i < header->{{pe_rvas_field}}; ++i) {
-    if (i < {{directories|length}}) {
-      header->data_directories[i].virtual_address = read_uint32_t(directories);
-      header->data_directories[i].size = read_uint32_t(directories + sizeof(uint32_t));
-    } else {
-      header->unknown_data_directories[i].virtual_address = read_uint32_t(directories);
-      header->unknown_data_directories[i].size = read_uint32_t(directories + sizeof(uint32_t));
-    }
+    header->data_directories[i].virtual_address = read_uint32_t(directories);
+    header->data_directories[i].size = read_uint32_t(directories + sizeof(uint32_t));
     directories += PE_HEADER_DATA_DIRECTORIES_SIZE;
   }
 
@@ -152,7 +140,7 @@ void print_pe_header(const pelib_header_t* header) {
     if (i < {{directories|length}}) {
       printf("%s: RVA: 0x%08lX, size: %li\n", data_directory_names[i], header->data_directories[i].virtual_address, header->data_directories[i].size);
     } else {
-      printf("Unknown%i: RVA: 0x%08lX, size: %li\n", i - ({{directories|length}} - 1), header->unknown_data_directories[i - ({{directories|length}} - 1)].virtual_address, header->unknown_data_directories[i - ({{directories|length}} - 1)].size);
+      printf("Unknown: RVA: 0x%08lX, size: %li\n", header->data_directories[i].virtual_address, header->data_directories[i].size);
     }
   }
 }

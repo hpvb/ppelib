@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-enum data_directory {
+enum data_directory_type {
   DIR_EXPORT_TABLE = 0,
   DIR_IMPORT_TABLE = 1,
   DIR_RESOURCE_TABLE = 2,
@@ -88,8 +88,7 @@ typedef struct pelib_header {
   uint32_t loader_flags;
   uint32_t number_of_rva_and_sizes;
 
-  pelib_data_directory_t data_directories[16];
-  pelib_data_directory_t* unknown_data_directories;
+  pelib_data_directory_t* data_directories;
 } pelib_header_t;
 
 size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t offset);
