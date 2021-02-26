@@ -4,17 +4,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <pelib/pelib_constants.h>
+
 #define CHECK_BIT(var,val) ((var) & (val))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X ,Y) (((X) > (Y)) ? (X) : (Y))
 #define TO_NEAREST(num, size) num + size - 1 - (num + size - 1) % size
 #define SWAP(x, y) do { uint8_t swap_temp[sizeof(x)]; memcpy(swap_temp, x, sizeof(x)); x = y; memcpy(y, swap_temp, sizeof(x)); }  while (0)
-
-typedef struct map_entry {
-        const char* string;
-        uint32_t value;
-} map_entry_t;
-
 
 uint8_t read_uint8_t(const uint8_t* buffer);
 void write_uint8_t(uint8_t* buffer, uint8_t val);

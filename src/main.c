@@ -4,38 +4,53 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "include/pelib_constants.h"
-#include "pelib-header.h"
-#include "pelib-section.h"
-#include "pelib-certificate_table.h"
-#include "utils.h"
+#include <pelib/pelib_constants.h>
 
-typedef struct data_directory {
-	pelib_section_t* section;
-	uint32_t offset;
-	uint32_t size;
+#include "pelib-generated.h"
+#include "main.h"
 
-	uint32_t orig_rva;
-	uint32_t orig_size;
-} data_directory_t;
+char* pelib_error() {
+	return NULL;
+}
 
-typedef struct pefile {
-        size_t pe_header_offset;
-        size_t coff_header_offset;
-	size_t section_offset;
-	size_t start_of_sections;
-        size_t end_of_sections;
+pelib_file_t* pelib_create() {
+	pelib_file_t* pe = calloc(sizeof(pelib_file_t), 1);
+	return pe;
+}
 
-       	pelib_header_t header;
-	pelib_section_t** sections;
-	data_directory_t* data_directories;
+void pelib_destroy(pelib_file_t* pe) {
+	free(pe->stub);
+	for (size_t i = 0; i < pe->header.number_of_sections; ++i) {
+		free(pe->sections[i]->contents);
+		free(pe->sections[i]);
+	}
+	for (size_t i = 0; i < pe->certificate_table.size; ++i) {
+		free(pe->certificate_table.certificates[i].certificate);
+	}
+	free(pe->certificate_table.certificates);
+	free(pe->data_directories);
+	free(pe->header.data_directories);
+	free(pe->sections);
+	free(pe->trailing_data);
+}
 
-	pelib_certificate_table_t certificate_table;
+pelib_file_t* pelib_create_from_buffer(uint8_t* buffer, size_t size) {
 
-        uint8_t* stub;
-	size_t trailing_data_size;
-	uint8_t* trailing_data;
-} pefile_t;
+	return NULL;
+}
+
+pelib_file_t* pelib_create_from_file(const char* filename) {
+
+}
+
+
+size_t pelib_write_to_buffer(pelib_file_t* file, uint8_t* buffer, size_t size) {
+
+}
+
+size_t pelib_write_to_file(pelib_file_t* file, const char* filename) {
+
+}
 
 int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* pe_header_offset) {
 	FILE *f = fopen(filename, "r");
@@ -90,7 +105,7 @@ int read_pe_file(const char* filename, uint8_t** file, size_t* size, uint32_t* p
 	return 0;
 }
 
-int write_pe_file(const char* filename, const pefile_t* pe) {
+int write_pe_file(const char* filename, const pelib_file_t* pe) {
 	uint8_t* buffer = NULL;
 	size_t size = 0;
 	size_t write = 0;
@@ -167,7 +182,7 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 	return size;
 }
 
-void recalculate(pefile_t* pe) {
+void recalculate(pelib_file_t* pe) {
 	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
 	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size + (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
 
@@ -231,11 +246,11 @@ void recalculate(pefile_t* pe) {
 	// The actual value of these of PE images in the wild varies a lot.
 	// There doesn't appear to be an actual correct way of calculating these
 	
-	//pe->header.base_of_data = base_of_data;
+	pe->header.base_of_data = base_of_data;
 
-	//pe->header.size_of_initialized_data = TO_NEAREST(size_of_initialized_data, pe->header.file_alignment);
-	//pe->header.size_of_uninitialized_data = TO_NEAREST(size_of_uninitialized_data, pe->header.file_alignment);
-	//pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);
+	pe->header.size_of_initialized_data = TO_NEAREST(size_of_initialized_data, pe->header.file_alignment);
+	pe->header.size_of_uninitialized_data = TO_NEAREST(size_of_uninitialized_data, pe->header.file_alignment);
+	pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);
 
 	size_t virtual_sections_end = pe->sections[pe->header.number_of_sections - 1]->virtual_address + pe->sections[pe->header.number_of_sections - 1]->virtual_size;
 	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
@@ -269,7 +284,7 @@ void recalculate(pefile_t* pe) {
 int main(int argc, char* argv[]) {
 	if (! argc) return 1;
 
-	pefile_t pe = {0};
+	pelib_file_t pe = {0};
 	uint8_t* file;
 	size_t size;
 	uint32_t pe_header_offset;
@@ -358,17 +373,5 @@ int main(int argc, char* argv[]) {
 	write_pe_file("out.exe", &pe);
 
 	free(file);
-	free(pe.stub);
-	for (size_t i = 0; i < pe.header.number_of_sections; ++i) {
-		free(pe.sections[i]->contents);
-		free(pe.sections[i]);
-	}
-	for (size_t i = 0; i < pe.certificate_table.size; ++i) {
-		free(pe.certificate_table.certificates[i].certificate);
-	}
-	free(pe.certificate_table.certificates);
-	free(pe.data_directories);
-	free(pe.header.data_directories);
-	free(pe.sections);
-	free(pe.trailing_data);
+
 }

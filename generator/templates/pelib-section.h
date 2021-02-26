@@ -15,8 +15,4 @@ typedef struct pelib_section {
   uint8_t* contents;
 } pelib_section_t;
 
-size_t serialize_section(const pelib_section_t* section, uint8_t* buffer, size_t offset);
-size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t size, pelib_section_t* section);
-void print_section(const pelib_section_t* section);
-
 #endif /* PELIB_SECTION_H */

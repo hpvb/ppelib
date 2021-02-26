@@ -5,8 +5,9 @@
 #include <stdint.h>
 
 #include <pelib/pelib_constants.h>
+#include <pelib/pelib-header.h>
 
-typedef struct pelib_file;
+typedef void pelib_file;
 
 char* pelib_error();
 

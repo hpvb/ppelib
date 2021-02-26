@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "utils.h"
-
 #define PE_SIGNATURE 0x3c
 #define COFF_HEADER_SIZE 20
 #define PE_HEADER_DATA_DIRECTORIES_SIZE 8
@@ -28,6 +26,11 @@
 #define PE32_MAGIC 0x10b
 #define PE32PLUS_MAGIC 0x20b
 #define PE32_ROM_MAGIC 0x107
+
+typedef struct map_entry {
+        const char* string;
+        uint32_t value;
+} map_entry_t;
 
 enum machine_type {
 	IMAGE_FILE_MACHINE_UNKNOWN = 0x0,

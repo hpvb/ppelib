@@ -5,8 +5,9 @@
 #include <string.h>
 
 #include <pelib/pelib_constants.h>
-#include "utils.h"
 #include "pelib-section.h"
+
+#include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
 

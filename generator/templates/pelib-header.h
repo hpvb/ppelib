@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "utils.h"
-
 enum data_directory_type {
 {%- for d in directories %}
   {{d.name}} = {{loop.index - 1}},
@@ -34,9 +32,5 @@ typedef struct pelib_header {
 
   pelib_data_directory_t* data_directories;
 } pelib_header_t;
-
-size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t offset);
-size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t size, pelib_header_t* header);
-void print_pe_header(const pelib_header_t* header);
 
 #endif /* PELIB_HEADER_H */

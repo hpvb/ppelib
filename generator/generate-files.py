@@ -11,6 +11,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 mydir = os.path.dirname(os.path.abspath(__file__))
 outdir = sys.argv[1]
+generate = sys.argv[2]
 
 type_map = {
     -1 : "uint8_t*",
@@ -216,23 +217,25 @@ for directory in pe_header_directories:
         "human_name": directory
     })
 
-with open(f'{mydir}/templates/pelib-header.h') as file_:
-    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-    with open(f'{outdir}/../src/pelib-header.h', 'w') as outfile:
-        outfile.write(template.render(fields=fields, directories=directories))
+if generate == "header":
+    with open(f'{mydir}/templates/pelib-header.h') as file_:
+        template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+        with open(f'{outdir}/pelib-header.h', 'w') as outfile:
+            outfile.write(template.render(fields=fields, directories=directories))
 
-with open(f'{mydir}/templates/pelib-header.c') as file_:
-    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-    with open(f'{outdir}/../src/pelib-header.c', 'w') as outfile:
-        outfile.write(template.render(
-            pe_magic_field=inflection.underscore('Magic'),
-            pe_rvas_field=inflection.underscore('NumberOfRvaAndSizes'),
-            sizes=sizes,
-            common_fields=common_fields,
-            pe_fields=pe_fields,
-            peplus_fields=peplus_fields,
-            directories=directories
-        ))
+if generate == "c":
+    with open(f'{mydir}/templates/pelib-header.c') as file_:
+        template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+        with open(f'{outdir}/pelib-header.c', 'w') as outfile:
+            outfile.write(template.render(
+                pe_magic_field=inflection.underscore('Magic'),
+                pe_rvas_field=inflection.underscore('NumberOfRvaAndSizes'),
+                sizes=sizes,
+                common_fields=common_fields,
+                pe_fields=pe_fields,
+                peplus_fields=peplus_fields,
+                directories=directories
+            ))
 
 fields = []
 offset = 0
@@ -255,25 +258,27 @@ pointer_field = inflection.underscore("PointerToRawData")
 virtualsize_field = inflection.underscore("VirtualSize")
 rawsize_field = inflection.underscore("SizeOfRawData")
 
-with open(f'{mydir}/templates/pelib-section.h') as file_:
-    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-    with open(f'{outdir}/../src/pelib-section.h', 'w') as outfile:
-        outfile.write(template.render(
-            fields=fields,
-            pointer_field=pointer_field,
-            virtualsize_field=virtualsize_field,
-            rawsize_field=rawsize_field,
-        ))
+if generate == "header":
+    with open(f'{mydir}/templates/pelib-section.h') as file_:
+        template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+        with open(f'{outdir}/pelib-section.h', 'w') as outfile:
+            outfile.write(template.render(
+                fields=fields,
+                pointer_field=pointer_field,
+                virtualsize_field=virtualsize_field,
+                rawsize_field=rawsize_field,
+            ))
 
-with open(f'{mydir}/templates/pelib-section.c') as file_:
-    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-    with open(f'{outdir}/../src/pelib-section.c', 'w') as outfile:
-        outfile.write(template.render(
-            fields=fields,
-            pointer_field=pointer_field,
-            virtualsize_field=virtualsize_field,
-            rawsize_field=rawsize_field,
-        ))
+if generate == "c":
+    with open(f'{mydir}/templates/pelib-section.c') as file_:
+        template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+        with open(f'{outdir}/pelib-section.c', 'w') as outfile:
+            outfile.write(template.render(
+                fields=fields,
+                pointer_field=pointer_field,
+                virtualsize_field=virtualsize_field,
+                rawsize_field=rawsize_field,
+            ))
 
 fields = []
 offset = 0
@@ -294,18 +299,20 @@ for field in certificate_table:
 
 length_field = inflection.underscore("Length")
 
-with open(f'{mydir}/templates/pelib-certificate_table.h') as file_:
-    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-    with open(f'{outdir}/../src/pelib-certificate_table.h', 'w') as outfile:
-        outfile.write(template.render(
-            fields=fields,
-            length_field=length_field
-        ))
+if generate == "header":
+    with open(f'{mydir}/templates/pelib-certificate_table.h') as file_:
+        template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+        with open(f'{outdir}/pelib-certificate_table.h', 'w') as outfile:
+            outfile.write(template.render(
+                fields=fields,
+                length_field=length_field
+            ))
 
-with open(f'{mydir}/templates/pelib-certificate_table.c') as file_:
-    template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-    with open(f'{outdir}/../src/pelib-certificate_table.c', 'w') as outfile:
-        outfile.write(template.render(
-            fields=fields,
-            length_field=length_field
-        ))
+if generate == "c":
+    with open(f'{mydir}/templates/pelib-certificate_table.c') as file_:
+        template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
+        with open(f'{outdir}/pelib-certificate_table.c', 'w') as outfile:
+            outfile.write(template.render(
+                fields=fields,
+                length_field=length_field
+            ))
