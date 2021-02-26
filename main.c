@@ -22,6 +22,7 @@ typedef struct pefile {
         size_t pe_header_offset;
         size_t coff_header_offset;
 	size_t section_offset;
+	size_t start_of_sections;
         size_t end_of_sections;
 
        	pelib_header_t header;
@@ -124,7 +125,7 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 		return 1;
 	}
 	memset(buffer, 0, size);
-	//memset(buffer, 0xFF, size);
+	//memset(buffer, 0xCC, size);
 
 	memcpy(buffer, pe->stub, pe->pe_header_offset);
 	write += pe->pe_header_offset;
@@ -157,7 +158,7 @@ void recalculate(pefile_t* pe) {
 	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
 	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size + (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
 
-	size_t next_section_virtual = 0x1000;
+	size_t next_section_virtual = pe->start_of_sections;;
 	size_t next_section_physical = pe->header.size_of_headers;
 
 	uint32_t base_of_code = 0;
@@ -187,8 +188,8 @@ void recalculate(pefile_t* pe) {
 				base_of_code = section->virtual_address;
 			}
 
-			if (strcmp(".text", section->name) == 0) {
-				size_of_code += section->virtual_size;
+			if (strcmp(".bind", section->name) != 0) {
+				size_of_code += TO_NEAREST(section->virtual_size, pe->header.file_alignment);
 			}
 		}
 
@@ -197,7 +198,14 @@ void recalculate(pefile_t* pe) {
 		}
 
 		if (CHECK_BIT(section->characteristics, IMAGE_SCN_CNT_INITIALIZED_DATA)) {
-			size_of_initialized_data += TO_NEAREST(section->virtual_size, pe->header.file_alignment);
+			// This appears to hold emperically true.
+			if (pe->header.magic == PE32_MAGIC) {
+				uint32_t vs = TO_NEAREST(section->virtual_size, pe->header.file_alignment);
+				uint32_t rs = section->size_of_raw_data;
+				size_of_initialized_data += MAX(vs, rs);
+			} else if (pe->header.magic == PE32PLUS_MAGIC) {
+				size_of_initialized_data += TO_NEAREST(section->size_of_raw_data, pe->header.file_alignment);
+			}
 		}
 
 		if (CHECK_BIT(section->characteristics, IMAGE_SCN_CNT_UNINITIALIZED_DATA)) {
@@ -272,21 +280,30 @@ int main(int argc, char* argv[]) {
 		for (uint32_t d = 0; d < pe.header.number_of_rva_and_sizes; ++d) {
 			size_t directory_va = pe.header.data_directories[d].virtual_address;
 			size_t directory_size = pe.header.data_directories[d].size;
-			size_t directory_end = pe.header.data_directories[d].virtual_address + pe.header.data_directories[d].size;
+			size_t directory_end = directory_va + directory_size;
 			size_t section_va = pe.sections[i]->virtual_address;
 			size_t section_end = section_va + pe.sections[i]->size_of_raw_data;
 
-			if (section_va <= directory_va && section_end >= directory_end) {
-				pe.data_directories[d].section = pe.sections[i];
-				pe.data_directories[d].offset = directory_va - section_va;
-				pe.data_directories[d].size = directory_size;
-				pe.data_directories[d].orig_rva = directory_va;
-				pe.data_directories[d].orig_size = directory_size;
+			if (section_va <= directory_va) {
+				//printf("Considering directory %s in section %s\n", data_directory_names[d], pe.sections[i]->name);
+				if (section_end >= directory_va) {
+					pe.data_directories[d].section = pe.sections[i];
+					pe.data_directories[d].offset = directory_va - section_va;
+					pe.data_directories[d].size = directory_size;
+					pe.data_directories[d].orig_rva = directory_va;
+					pe.data_directories[d].orig_size = directory_size;
+
+					//printf("Found directory %s in section %s\n", data_directory_names[d], pe.sections[i]->name);
+				} else {
+					//printf("Directory %s doesn't fit in section %s. 0x%08lx < 0x%08lx\n", data_directory_names[d], pe.sections[i]->name, section_end, directory_va);
+				}
 			}
 		}
 		print_section(pe.sections[i]);
 		printf("\n");
 	}
+
+	pe.start_of_sections = pe.sections[0]->virtual_address;
 
 	//void* t = pe.sections[4];
 	//pe.sections[4] = pe.sections[3];
