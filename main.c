@@ -156,41 +156,66 @@ int write_pe_file(const char* filename, const pefile_t* pe) {
 void recalculate(pefile_t* pe) {
 	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
 	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size + (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
-	pe->header.size_of_headers = TO_NEAREST(size_of_headers, pe->header.file_alignment);
 
 	size_t next_section_virtual = 0x1000;
 	size_t next_section_physical = pe->header.size_of_headers;
+
 	uint32_t base_of_code = 0;
 	uint32_t base_of_data = 0;
+	uint32_t size_of_initialized_data = 0;
+	uint32_t size_of_uninitialized_data = 0;
+	uint32_t size_of_code = 0;
 
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
-		if (pe->sections[i]->size_of_raw_data && pe->sections[i]->virtual_size <= pe->sections[i]->size_of_raw_data) {
-			pe->sections[i]->size_of_raw_data = TO_NEAREST(pe->sections[i]->virtual_size, pe->header.file_alignment);
+		pelib_section_t* section = pe->sections[i];
+
+		if (section->size_of_raw_data && section->virtual_size <= section->size_of_raw_data) {
+			section->size_of_raw_data = TO_NEAREST(section->virtual_size, pe->header.file_alignment);
 		}
 
-		pe->sections[i]->virtual_address = next_section_virtual;
+		section->virtual_address = next_section_virtual;
 
-		if (pe->sections[i]->size_of_raw_data) {
-			pe->sections[i]->pointer_to_raw_data = next_section_physical;
+		if (section->size_of_raw_data) {
+			section->pointer_to_raw_data = next_section_physical;
 		}
 
-		next_section_virtual = TO_NEAREST(pe->sections[i]->virtual_size, pe->header.section_alignment) + next_section_virtual;
-		next_section_physical = TO_NEAREST(pe->sections[i]->size_of_raw_data, pe->header.file_alignment) + next_section_physical;
+		next_section_virtual = TO_NEAREST(section->virtual_size, pe->header.section_alignment) + next_section_virtual;
+		next_section_physical = TO_NEAREST(section->size_of_raw_data, pe->header.file_alignment) + next_section_physical;
 
-		if (! base_of_code && CHECK_BIT(pe->sections[i]->characteristics, IMAGE_SCN_CNT_CODE)) {
-			base_of_code = pe->sections[i]->virtual_address;
+		if (CHECK_BIT(section->characteristics, IMAGE_SCN_CNT_CODE)) {
+			if (! base_of_code) {
+				base_of_code = section->virtual_address;
+			}
+
+			if (strcmp(".text", section->name) == 0) {
+				size_of_code += section->virtual_size;
+			}
 		}
 
-		if (! base_of_data && ! CHECK_BIT(pe->sections[i]->characteristics, IMAGE_SCN_CNT_CODE)) {
-			base_of_data = pe->sections[i]->virtual_address;
+		if (! base_of_data && ! CHECK_BIT(section->characteristics, IMAGE_SCN_CNT_CODE)) {
+			base_of_data = section->virtual_address;
+		}
+
+		if (CHECK_BIT(section->characteristics, IMAGE_SCN_CNT_INITIALIZED_DATA)) {
+			size_of_initialized_data += TO_NEAREST(section->virtual_size, pe->header.file_alignment);
+		}
+
+		if (CHECK_BIT(section->characteristics, IMAGE_SCN_CNT_UNINITIALIZED_DATA)) {
+			size_of_uninitialized_data += TO_NEAREST(section->virtual_size, pe->header.file_alignment);
 		}
 	}
 
 	pe->header.base_of_code = base_of_code;
 	pe->header.base_of_data = base_of_data;
 
+	pe->header.size_of_initialized_data = TO_NEAREST(size_of_initialized_data, pe->header.file_alignment);
+	pe->header.size_of_uninitialized_data = TO_NEAREST(size_of_uninitialized_data, pe->header.file_alignment);
+	pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);
+
 	size_t virtual_sections_end = pe->sections[pe->header.number_of_sections - 1]->virtual_address + pe->sections[pe->header.number_of_sections - 1]->virtual_size;
 	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
+
+	pe->header.size_of_headers = TO_NEAREST(size_of_headers, pe->header.file_alignment);
 
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
 		if (! pe->data_directories[i].section) {
