@@ -1,5 +1,3 @@
-prog_python = import('python').find_installation('python3')
-
 gen_src = custom_target('gen-output',
 	input: [
 		meson.source_root() + '/generator/templates/pelib-certificate_table.c',

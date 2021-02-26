@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "constants.h"
+#include <pelib/pelib_constants.h>
 #include "utils.h"
 #include "pelib-section.h"
 

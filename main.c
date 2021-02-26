@@ -4,11 +4,11 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "include/pelib_constants.h"
 #include "pelib-header.h"
 #include "pelib-section.h"
 #include "pelib-certificate_table.h"
 #include "utils.h"
-#include "constants.h"
 
 typedef struct data_directory {
 	pelib_section_t* section;
@@ -365,7 +365,7 @@ int main(int argc, char* argv[]) {
 	}
 	for (size_t i = 0; i < pe.certificate_table.size; ++i) {
 		free(pe.certificate_table.certificates[i].certificate);
-        }
+	}
 	free(pe.certificate_table.certificates);
 	free(pe.data_directories);
 	free(pe.header.data_directories);

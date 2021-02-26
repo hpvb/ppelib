@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "constants.h"
+#include <pelib/pelib_constants.h>
+
 #include "utils.h"
 #include "pelib-header.h"
 

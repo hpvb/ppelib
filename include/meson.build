@@ -1,1 +1,1 @@
-install_headers('pelib.h')
+install_headers('pelib/pelib.h', 'pelib/pelib_constants.h', subdir: 'pelib')
