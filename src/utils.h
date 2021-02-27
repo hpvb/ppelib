@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <pelib/pelib_constants.h>
+#include "../include/pelib/pelib-constants.h"
 
 #define CHECK_BIT(var,val) ((var) & (val))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))

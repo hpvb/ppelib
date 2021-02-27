@@ -1,10 +1,9 @@
 #include <errno.h>
+#include <pelib/pelib-constants.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-
-#include <pelib/pelib_constants.h>
 
 #include "pelib-error.h"
 #include "pelib-generated.h"

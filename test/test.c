@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <pelib/pelib.h>
+#include <pelib/pelib-low-level.h>
 
 int main(int argc, char* argv[]) {
 	pelib_file* pe = pelib_create_from_file(argv[1]);

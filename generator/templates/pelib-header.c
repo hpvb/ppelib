@@ -3,9 +3,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <pelib/pelib_constants.h>
 #include "pelib-error.h"
 #include "pelib-header.h"
+
+#include "../../include/pelib/pelib-constants.h"
 #include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}

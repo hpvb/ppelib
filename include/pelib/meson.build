@@ -19,6 +19,7 @@ gen_h = custom_target(
 
 install_headers(
 	'pelib.h',
-	'pelib_constants.h',
+	'pelib-constants.h',
+	'pelib-low-level.h',
 	subdir: 'pelib'
 )
