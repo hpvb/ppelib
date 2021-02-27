@@ -22,17 +22,17 @@
 #include <pelib/pelib-header.h>
 #include <pelib/pelib-constants.h>
 
-typedef void pelib_file;
+typedef void pelib_handle;
 
 const char* pelib_error();
 
-pelib_file* pelib_create();
-void pelib_destroy(pelib_file* file);
+pelib_handle* pelib_create();
+void pelib_destroy(pelib_handle* handle);
 
-pelib_file* pelib_create_from_buffer(uint8_t* buffer, size_t size);
-pelib_file* pelib_create_from_file(const char* filename);
+pelib_handle* pelib_create_from_buffer(uint8_t* buffer, size_t size);
+pelib_handle* pelib_create_from_file(const char* filename);
 
-size_t pelib_write_to_buffer(pelib_file* file, uint8_t* buffer, size_t size);
-size_t pelib_write_to_file(pelib_file* file, const char* filename);
+size_t pelib_write_to_buffer(pelib_handle* handle, uint8_t* buffer, size_t size);
+size_t pelib_write_to_file(pelib_handle* handle, const char* filename);
 
 #endif /* INCLUDE_PELIB_H_ */

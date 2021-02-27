@@ -18,7 +18,7 @@
 #include <pelib/pelib-low-level.h>
 
 int main(int argc, char* argv[]) {
-	pelib_file* pe = pelib_create_from_file(argv[1]);
+	pelib_handle* pe = pelib_create_from_file(argv[1]);
 	if (pelib_error()) {
 		printf("PElib-error: %s\n", pelib_error());
 		return(1);
