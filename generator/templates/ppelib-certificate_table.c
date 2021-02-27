@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,20 +21,18 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pelib/pelib-constants.h>
-#include <pelib/pelib-certificate_table.h>
-#include <pelib/pelib-header.h>
+#include <ppelib/ppelib-certificate_table.h>
+#include <ppelib/ppelib-header.h>
+#include <ppelib/ppelib-constants.h>
 
-#include "pelib-error.h"
+#include "ppelib-error.h"
 #include "export.h"
 #include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
 
-/* serialize a pelib_certificate_table_t* back to the on-disk format */
-/* When buffer is NULL only report how much we would write */
-size_t serialize_certificate_table(const pelib_certificate_table_t* certificate_table, uint8_t* buffer) {
-  pelib_reset_error();
+size_t serialize_certificate_table(const ppelib_certificate_table_t* certificate_table, uint8_t* buffer) {
+  ppelib_reset_error();
 
   size_t size = 0;
   size_t offset = certificate_table->offset;
@@ -56,23 +56,21 @@ size_t serialize_certificate_table(const pelib_certificate_table_t* certificate_
   return size + certificate_table->offset;
 }
 
-/* deserialize a buffer in on-disk format into a pelib_certificate_table_t */
-/* Return value is the size of bytes consumed, if there is insufficient size returns 0 */
-size_t deserialize_certificate_table(const uint8_t* buffer, pelib_header_t* header, const size_t size, pelib_certificate_table_t* certificate_table) {
-  pelib_reset_error();
+size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* header, const size_t size, ppelib_certificate_table_t* certificate_table) {
+  ppelib_reset_error();
 
   size_t table_offset = header->data_directories[DIR_CERTIFICATE_TABLE].virtual_address;
   size_t table_size = header->data_directories[DIR_CERTIFICATE_TABLE].size;
 
-  memset(certificate_table, 0, sizeof(pelib_certificate_table_t));
+  memset(certificate_table, 0, sizeof(ppelib_certificate_table_t));
 
   if (! table_offset || ! table_size) {
-    pelib_set_error("No certificate table found.");
+    ppelib_set_error("No certificate table found.");
     return 0;
   }
 
   if (table_offset + table_size > size) {
-    pelib_set_error("Buffer too small for table.");
+    ppelib_set_error("Buffer too small for table.");
     return 0;
   }
 
@@ -84,7 +82,7 @@ size_t deserialize_certificate_table(const uint8_t* buffer, pelib_header_t* head
     size_t i = certificate_count;
     certificate_count++;
 
-    certificate_table->certificates = realloc(certificate_table->certificates, sizeof(pelib_certificate_t) * certificate_count);
+    certificate_table->certificates = realloc(certificate_table->certificates, sizeof(ppelib_certificate_t) * certificate_count);
 {%- for field in fields %}
 {%- if 'format' in field and 'variable_size' in field.format %}
 {%- else %}
@@ -93,7 +91,7 @@ size_t deserialize_certificate_table(const uint8_t* buffer, pelib_header_t* head
 {%- endfor %}
 
     if (offset + certificate_table->certificates[i].{{length_field}} > max_offset) {
-      pelib_set_error("Buffer too small for table.");
+      ppelib_set_error("Buffer too small for table.");
       return 0;
     }
 
@@ -109,13 +107,13 @@ size_t deserialize_certificate_table(const uint8_t* buffer, pelib_header_t* head
   return max_offset;
 }
 
-EXPORT_SYM void print_certificate_table(const pelib_certificate_table_t* certificate_table) {
-  pelib_reset_error();
+EXPORT_SYM void ppelib_print_certificate_table(const ppelib_certificate_table_t* certificate_table) {
+  ppelib_reset_error();
 
   printf("Certificate table: \n");
   for (size_t i = 0; i < certificate_table->size; ++i) {
     printf("Certificate: %li\n", i);
-    pelib_certificate_t* certificate = &certificate_table->certificates[i];
+    ppelib_certificate_t* certificate = &certificate_table->certificates[i];
 
 {%- for field in fields -%}
   {{print_field(field, "certificate")|indent(4)}}

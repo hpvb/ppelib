@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +15,8 @@
  * limitations under the License.
 */
 
-#ifndef PELIB_CONSTANTS_H
-#define PELIB_CONSTANTS_H
+#ifndef PPELIB_CONSTANTS_H
+#define PPELIB_CONSTANTS_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -44,12 +46,12 @@
 #define PE32PLUS_MAGIC 0x20b
 #define PE32_ROM_MAGIC 0x107
 
-typedef struct map_entry {
+typedef struct ppelib_map_entry {
         const char* string;
         uint32_t value;
-} map_entry_t;
+} ppelib_map_entry_t;
 
-enum machine_type {
+enum ppelib_machine_type {
 	IMAGE_FILE_MACHINE_UNKNOWN = 0x0,
 	IMAGE_FILE_MACHINE_AM33 = 0x1d3,
 	IMAGE_FILE_MACHINE_AMD64 = 0x8664,
@@ -77,14 +79,14 @@ enum machine_type {
 	IMAGE_FILE_MACHINE_WCEMIPSV2 = 0x169,
 };
 
-static const map_entry_t magic_type_map[] = {
+static const ppelib_map_entry_t ppelib_magic_type_map[] = {
 	{"PE32", PE32_MAGIC},
 	{"PE32+", PE32PLUS_MAGIC},
 	{"PE32 ROM", PE32_ROM_MAGIC},
 	{NULL, 0}
 };
 
-static const map_entry_t machine_type_map[] = {
+static const ppelib_map_entry_t ppelib_machine_type_map[] = {
 	{"IMAGE_FILE_MACHINE_UNKNOWN", 0x0},
 	{"IMAGE_FILE_MACHINE_AM33", 0x1d3},
 	{"IMAGE_FILE_MACHINE_AMD64", 0x8664},
@@ -113,7 +115,7 @@ static const map_entry_t machine_type_map[] = {
 	{NULL, 0},
 };
 
-enum characteristics {
+enum ppelib_characteristics {
 	IMAGE_FILE_RELOCS_STRIPPED = 0x0001,
 	IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002,
 	IMAGE_FILE_LINE_NUMS_STRIPPED = 0x0004,
@@ -132,7 +134,7 @@ enum characteristics {
 	IMAGE_FILE_BYTES_REVERSED_HI = 0x8000,
 };
 
-static const map_entry_t characteristics_map[] = {
+static const ppelib_map_entry_t ppelib_characteristics_map[] = {
 	{"IMAGE_FILE_RELOCS_STRIPPED", 0x0001},
 	{"IMAGE_FILE_EXECUTABLE_IMAGE", 0x0002},
 	{"IMAGE_FILE_LINE_NUMS_STRIPPED", 0x0004},
@@ -152,7 +154,7 @@ static const map_entry_t characteristics_map[] = {
 	{NULL, 0},
 };
 
-enum windows_subsystem {
+enum ppelib_windows_subsystem {
 	IMAGE_SUBSYSTEM_UNKNOWN = 0,
 	IMAGE_SUBSYSTEM_NATIVE = 1,
 	IMAGE_SUBSYSTEM_WINDOWS_GUI = 2,
@@ -169,7 +171,7 @@ enum windows_subsystem {
 	IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16,
 };
 
-static const map_entry_t windows_subsystem_map[] = {
+static const ppelib_map_entry_t ppelib_windows_subsystem_map[] = {
 	{"IMAGE_SUBSYSTEM_UNKNOWN", 0},
 	{"IMAGE_SUBSYSTEM_NATIVE", 1},
 	{"IMAGE_SUBSYSTEM_WINDOWS_GUI", 2},
@@ -187,7 +189,7 @@ static const map_entry_t windows_subsystem_map[] = {
 	{NULL, 0}
 };
 
-enum dll_characteristics {
+enum ppelib_dll_characteristics {
 	IMAGE_DLLCHARACTERISTICS_RESERVED1 = 0x0001,
 	IMAGE_DLLCHARACTERISTICS_RESERVED2 = 0x0002,
 	IMAGE_DLLCHARACTERISTICS_RESERVED3 = 0x0004,
@@ -205,7 +207,7 @@ enum dll_characteristics {
 	IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000,
 };
 
-static const map_entry_t dll_characteristics_map[] = {
+static const ppelib_map_entry_t ppelib_dll_characteristics_map[] = {
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED1", 0x0001},
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED2", 0x0002},
 	{"IMAGE_DLLCHARACTERISTICS_RESERVED3", 0x0004},
@@ -224,7 +226,7 @@ static const map_entry_t dll_characteristics_map[] = {
 	{NULL, 0}
 };
 
-enum section_flags {
+enum ppelib_section_flags {
 	IMAGE_SCN_RESERVED1 = 0x00000000,
 	IMAGE_SCN_RESERVED2 = 0x00000001,
 	IMAGE_SCN_RESERVED3 = 0x00000002,
@@ -268,7 +270,7 @@ enum section_flags {
 	IMAGE_SCN_MEM_WRITE = 0x80000000,
 };
 
-static const map_entry_t section_flags_map[] = {
+static const ppelib_map_entry_t ppelib_section_flags_map[] = {
 	{"IMAGE_SCN_RESERVED1", 0x00000000},
 	{"IMAGE_SCN_RESERVED2", 0x00000001},
 	{"IMAGE_SCN_RESERVED3", 0x00000002},
@@ -313,7 +315,7 @@ static const map_entry_t section_flags_map[] = {
 	{NULL, 0}
 };
 
-enum resource_types {
+enum ppelib_resource_types {
 	RT_CURSOR = 1,
 	RT_BITMAP = 2,
 	RT_ICON = 3,
@@ -337,7 +339,7 @@ enum resource_types {
 	RT_MANIFEST = 24,
 };
 
-static const map_entry_t resource_types_map[] = {
+static const ppelib_map_entry_t ppelib_resource_types_map[] = {
 	{"RT_CURSOR", 1},
 	{"RT_BITMAP", 2},
 	{"RT_ICON", 3},
@@ -362,7 +364,7 @@ static const map_entry_t resource_types_map[] = {
 	{NULL, 0}
 };
 
-enum charset_types {
+enum ppelib_charset_types {
 	ASCII = 0x0,
 	Japan = 0x3a4,
 	Korea = 0x3b5,
@@ -377,7 +379,7 @@ enum charset_types {
 	Arabic = 0x4e8,
 };
 
-static const map_entry_t charsets_types_map[] = {
+static const ppelib_map_entry_t ppelib_charsets_types_map[] = {
 	{"ASCII", 0x0},
 	{"Japan", 0x3a4},
 	{"Korea", 0x3b5},
@@ -393,25 +395,25 @@ static const map_entry_t charsets_types_map[] = {
 	{NULL, 0}
 };
 
-enum certificate_revision {
+enum ppelib_certificate_revision {
 	WIN_CERT_REVISION_1_0 = 0x0100,
 	WIN_CERT_REVISION_2_0 = 0x0200,
 };
 
-static const map_entry_t certificate_revision_map[] = {
+static const ppelib_map_entry_t ppelib_certificate_revision_map[] = {
 	{"WIN_CERT_REVISION_1_0", 0x0100},
 	{"WIN_CERT_REVISION_2_0", 0x0200},
 	{NULL, 0}
 };
 
-enum certificate_type {
+enum ppelib_certificate_type {
 	WIN_CERT_TYPE_X509 = 1,
 	WIN_CERT_TYPE_PKCS_SIGNED_DATA = 2,
 	WIN_CERT_TYPE_RESERVED_1 = 3,
 	WIN_CERT_TYPE_TS_STACK_SIGNED = 4,
 };
 
-static const map_entry_t certificate_type_map[] = {
+static const ppelib_map_entry_t ppelib_certificate_type_map[] = {
 	{"WIN_CERT_TYPE_X509", 1},
 	{"WIN_CERT_TYPE_PKCS_SIGNED_DATA", 2},
 	{"WIN_CERT_TYPE_RESERVED_1", 3},

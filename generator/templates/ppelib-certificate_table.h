@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,41 +15,28 @@
  * limitations under the License.
 */
 
-#ifndef PELIB_HEADER_H
-#define PELIB_HEADER_H
+#ifndef PPELIB_CERTIFICATE_TABLE_H
+#define PPELIB_CERTIFICATE_TABLE_H
 
 #include <stdint.h>
 #include <stddef.h>
 
-enum data_directory_type {
-{%- for d in directories %}
-  {{d.name}} = {{loop.index - 1}},
-{%- endfor %}
-};
-
-static const char* const data_directory_names[] = {
-{%- for d in directories %}
-  "{{d.human_name}}",
-{%- endfor %}
-};
-
-typedef struct pelib_data_directory {
-  uint32_t virtual_address;
-  uint32_t size;
-} pelib_data_directory_t;
-
-typedef struct pelib_header {
+typedef struct ppelib_certificate {
 {%- for f in fields %}
-{%- if 'peplus_type' in f %}
-  {{f.peplus_type}} {{f.name}};
+{%- if 'format' in f and 'string' in f.format %}
+  uint8_t {{f.name}}[{{f.pe_size + 1}}];
 {%- else %}
   {{f.pe_type}} {{f.name}};
 {%- endif %}
 {%- endfor %}
+} ppelib_certificate_t;
 
-  pelib_data_directory_t* data_directories;
-} pelib_header_t;
+typedef struct ppelib_certificate_table {
+  size_t size;
+  size_t offset;
+  ppelib_certificate_t* certificates;
+} ppelib_certificate_table_t;
 
-void print_pe_header(const pelib_header_t* header);
+void ppelib_print_certificate_table(const ppelib_certificate_table_t* certificate_table);
 
-#endif /* PELIB_HEADER_H */
+#endif /* PPELIB_CERTIFICATE_TABLE_H */

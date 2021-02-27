@@ -15,30 +15,28 @@
  * limitations under the License.
 */
 
-#include <stdio.h>
+#ifndef PPELIB_H_
+#define PPELIB_H_
 
-#include <ppelib/ppelib.h>
-#include <ppelib/ppelib-low-level.h>
+#include <stddef.h>
+#include <stdint.h>
 
-int main(int argc, char* argv[]) {
-	ppelib_handle* pe = ppelib_create_from_file(argv[1]);
-	if (ppelib_error()) {
-		printf("PElib-error: %s\n", ppelib_error());
-		return(1);
-	}
+#include <ppelib/ppelib-constants.h>
+#include <ppelib/ppelib-certificate_table.h>
+#include <ppelib/ppelib-header.h>
+#include <ppelib/ppelib-section.h>
 
-	ppelib_header_t* header = ppelib_get_header(pe);
+typedef void ppelib_handle;
 
-	ppelib_recalculate(pe);
+const char* ppelib_error();
 
-	ppelib_header_t* header1 = ppelib_get_header(pe);
+ppelib_handle* ppelib_create();
+void ppelib_destroy(ppelib_handle* handle);
 
-	ppelib_print_pe_header(header);
-	ppelib_print_pe_header(header1);
+ppelib_handle* ppelib_create_from_buffer(uint8_t* buffer, size_t size);
+ppelib_handle* ppelib_create_from_file(const char* filename);
 
-	ppelib_set_header(pe, header);
-	ppelib_free_header(header);
-	ppelib_free_header(header1);
+size_t ppelib_write_to_buffer(ppelib_handle* handle, uint8_t* buffer, size_t size);
+size_t ppelib_write_to_file(ppelib_handle* handle, const char* filename);
 
-	ppelib_destroy(pe);
-}
+#endif /* PPELIB_H_ */

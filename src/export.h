@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#ifndef PELIB_EXPORT_H_
-#define PELIB_EXPORT_H_
+#ifndef PPELIB_EXPORT_H_
+#define PPELIB_EXPORT_H_
 
 #if defined _WIN32 || defined __CYGWIN__
 	#ifdef __GNUC__
@@ -29,4 +31,4 @@
 	#endif
 #endif
 
-#endif /* PELIB_EXPORT_H_ */
+#endif /* PPELIB_EXPORT_H_ */

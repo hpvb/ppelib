@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,20 +20,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <pelib/pelib-constants.h>
-
-#include "pelib-error.h"
-#include "pelib-header.h"
-
+#include <ppelib/ppelib-constants.h>
+#include <ppelib/ppelib-header.h>
+#include "ppelib-error.h"
 #include "export.h"
 #include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
 
-/* serialize a pelib_header_t* back to the on-disk format */
-/* When buffer is NULL only report how much we would write */
-size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t offset) {
-  pelib_reset_error();
+size_t serialize_pe_header(const ppelib_header_t* header, uint8_t* buffer, size_t offset) {
+  ppelib_reset_error();
 
   if (! buffer) {
     goto end;
@@ -80,13 +78,11 @@ size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t
   }
 }
 
-/* deserialize a buffer in on-disk format into a pelib_header_t */
-/* Return value is the size of bytes consumed, if there is insufficient size returns 0 */
-size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t size, pelib_header_t* header) {
-  pelib_reset_error();
+size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t size, ppelib_header_t* header) {
+  ppelib_reset_error();
 
   if (size - offset < {{sizes.common}}) {
-	pelib_set_error("Buffer too small for common COFF headers.");
+	ppelib_set_error("Buffer too small for common COFF headers.");
     return 0;
   }
 
@@ -97,13 +93,13 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
 {%- endfor %}
 
   if (header->{{pe_magic_field}} != PE32_MAGIC && header->{{pe_magic_field}} != PE32PLUS_MAGIC) {
-	pelib_set_error("Unknown PE magic.");
+	ppelib_set_error("Unknown PE magic.");
     return 0;
   }
 
   if (header->{{pe_magic_field}} == PE32_MAGIC) {
     if (size - offset < {{sizes.total_pe}}) {
-      pelib_set_error("Buffer too small for PE headers.");
+      ppelib_set_error("Buffer too small for PE headers.");
       return 0;
     }
 {%- for field in pe_fields %}
@@ -115,7 +111,7 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
 
   if (header->{{pe_magic_field}} == PE32PLUS_MAGIC) {
     if (size - offset < {{sizes.total_peplus}}) {
-      pelib_set_error("Buffer too small for PE+ headers.");
+      ppelib_set_error("Buffer too small for PE+ headers.");
       return 0;
     }
 {%- for field in peplus_fields %}
@@ -143,8 +139,8 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
   }
 }
 
-EXPORT_SYM void print_pe_header(const pelib_header_t* header) {
-  pelib_reset_error();
+EXPORT_SYM void ppelib_print_pe_header(const ppelib_header_t* header) {
+  ppelib_reset_error();
 
 {%- for field in common_fields %}
 {{print_field(field, "header")|indent(2)}}

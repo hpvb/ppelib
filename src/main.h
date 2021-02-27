@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,16 +15,16 @@
  * limitations under the License.
 */
 
-#ifndef PELIB_MAIN_H_
-#define PELIB_MAIN_H_
+#ifndef PPELIB_MAIN_H_
+#define PPELIB_MAIN_H_
 
-#include "pelib-header.h"
-#include "pelib-section.h"
-#include "pelib-certificate_table.h"
+#include "ppelib-header.h"
+#include "ppelib-section.h"
+#include "ppelib-certificate_table.h"
 #include "utils.h"
 
 typedef struct data_directory {
-	pelib_section_t *section;
+	ppelib_section_t *section;
 	uint32_t offset;
 	uint32_t size;
 
@@ -30,18 +32,18 @@ typedef struct data_directory {
 	uint32_t orig_size;
 } data_directory_t;
 
-typedef struct pelib_file {
+typedef struct ppelib_file {
 	size_t pe_header_offset;
 	size_t coff_header_offset;
 	size_t section_offset;
 	size_t start_of_sections;
 	size_t end_of_sections;
 
-	pelib_header_t header;
-	pelib_section_t **sections;
+	ppelib_header_t header;
+	ppelib_section_t **sections;
 	data_directory_t *data_directories;
 
-	pelib_certificate_table_t certificate_table;
+	ppelib_certificate_table_t certificate_table;
 
 	uint8_t *stub;
 	size_t trailing_data_size;
@@ -49,6 +51,6 @@ typedef struct pelib_file {
 
 	uint8_t *file_contents;
 	size_t file_size;
-} pelib_file_t;
+} ppelib_file_t;
 
-#endif /* PELIB_MAIN_H_ */
+#endif /* PPELIB_MAIN_H_ */

@@ -1,1 +1,1 @@
-subdir('pelib')
+subdir('ppelib')

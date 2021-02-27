@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,29 +16,29 @@
 */
 
 #include <errno.h>
+#include <ppelib/ppelib-constants.h>
+#include <ppelib-error.h>
+#include <ppelib-generated.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
-#include <pelib/pelib-constants.h>
-
 #include "export.h"
-#include "pelib-error.h"
-#include "pelib-generated.h"
 #include "main.h"
 
-EXPORT_SYM pelib_file_t* pelib_create() {
-	pelib_reset_error();
+EXPORT_SYM ppelib_file_t* ppelib_create() {
+	ppelib_reset_error();
 
-	pelib_file_t *pe = calloc(sizeof(pelib_file_t), 1);
+	ppelib_file_t *pe = calloc(sizeof(ppelib_file_t), 1);
 	if (!pe) {
-		pelib_set_error("Failed to allocate PE structure");
+		ppelib_set_error("Failed to allocate PE structure");
 	}
+
 	return pe;
 }
 
-EXPORT_SYM void pelib_destroy(pelib_file_t *pe) {
+EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	if (!pe) {
 		return;
 	}
@@ -59,32 +61,32 @@ EXPORT_SYM void pelib_destroy(pelib_file_t *pe) {
 	free(pe);
 }
 
-EXPORT_SYM pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) {
-	pelib_reset_error();
+EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(uint8_t *buffer, size_t size) {
+	ppelib_reset_error();
 
 	if (size < PE_SIGNATURE_OFFSET + sizeof(uint32_t)) {
-		pelib_set_error("Not a PE file (file too small)");
+		ppelib_set_error("Not a PE file (file too small)");
 		free(buffer);
 		return NULL;
 	}
 
 	uint32_t header_offset = read_uint32_t(buffer + PE_SIGNATURE_OFFSET);
 	if (size < header_offset + sizeof(uint32_t)) {
-		pelib_set_error("Not a PE file (file too small for PE signature)");
+		ppelib_set_error("Not a PE file (file too small for PE signature)");
 		free(buffer);
 		return NULL;
 	}
 
 	uint32_t signature = read_uint32_t(buffer + header_offset);
 	if (signature != PE_SIGNATURE) {
-		pelib_set_error("Not a PE file (PE00 signature missing)");
+		ppelib_set_error("Not a PE file (PE00 signature missing)");
 		free(buffer);
 		return NULL;
 	}
 
-	pelib_file_t *pe = pelib_create();
-	if (pelib_error_peek()) {
-		pelib_destroy(pe);
+	ppelib_file_t *pe = ppelib_create();
+	if (ppelib_error_peek()) {
+		ppelib_destroy(pe);
 		return NULL;
 	}
 
@@ -94,47 +96,47 @@ EXPORT_SYM pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) 
 	pe->coff_header_offset = header_offset + 4;
 
 	if (size < pe->coff_header_offset + COFF_HEADER_SIZE) {
-		pelib_set_error("Not a PE file (file too small for COFF header)");
-		pelib_destroy(pe);
+		ppelib_set_error("Not a PE file (file too small for COFF header)");
+		ppelib_destroy(pe);
 		return NULL;
 	}
 
 	size_t header_size = deserialize_pe_header(pe->file_contents, pe->coff_header_offset, pe->file_size, &pe->header);
-	if (pelib_error_peek()) {
-		pelib_destroy(pe);
+	if (ppelib_error_peek()) {
+		ppelib_destroy(pe);
 		return NULL;
 	}
 
 	pe->section_offset = header_size + pe->coff_header_offset;
-	pe->sections = malloc(sizeof(pelib_section_t*) * pe->header.number_of_sections);
+	pe->sections = malloc(sizeof(ppelib_section_t*) * pe->header.number_of_sections);
 	if (!pe->sections) {
-		pelib_set_error("Failed to allocate sections");
-		pelib_destroy(pe);
+		ppelib_set_error("Failed to allocate sections");
+		ppelib_destroy(pe);
 		return NULL;
 	}
 
 	pe->data_directories = calloc(sizeof(data_directory_t) * pe->header.number_of_rva_and_sizes, 1);
 	if (!pe->data_directories) {
-		pelib_set_error("Failed to allocate data directories");
-		pelib_destroy(pe);
+		ppelib_set_error("Failed to allocate data directories");
+		ppelib_destroy(pe);
 		return NULL;
 	}
 
 	pe->end_of_sections = 0;
 
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
-		pe->sections[i] = malloc(sizeof(pelib_section_t));
+		pe->sections[i] = malloc(sizeof(ppelib_section_t));
 		if (!pe->sections[i]) {
-			pelib_set_error("Failed to allocate section");
-			pelib_destroy(pe);
+			ppelib_set_error("Failed to allocate section");
+			ppelib_destroy(pe);
 			return NULL;
 		}
 
 		size_t section_size = deserialize_section(pe->file_contents, pe->section_offset + (i * PE_SECTION_HEADER_SIZE),
 				pe->file_size, pe->sections[i]);
 
-		if (pelib_error_peek()) {
-			pelib_destroy(pe);
+		if (ppelib_error_peek()) {
+			ppelib_destroy(pe);
 			return NULL;
 		}
 
@@ -167,8 +169,8 @@ EXPORT_SYM pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) 
 
 	if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
 		deserialize_certificate_table(pe->file_contents, &pe->header, pe->file_size, &pe->certificate_table);
-		if (pelib_error_peek()) {
-			pelib_destroy(pe);
+		if (ppelib_error_peek()) {
+			ppelib_destroy(pe);
 			return NULL;
 		}
 	}
@@ -181,8 +183,8 @@ EXPORT_SYM pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) 
 
 	pe->stub = malloc(pe->pe_header_offset);
 	if (!pe->stub) {
-		pelib_set_error("Failed to allocate memory for PE stub");
-		pelib_destroy(pe);
+		ppelib_set_error("Failed to allocate memory for PE stub");
+		ppelib_destroy(pe);
 		return NULL;
 	}
 	memcpy(pe->stub, pe->file_contents, pe->pe_header_offset);
@@ -192,8 +194,8 @@ EXPORT_SYM pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) 
 		pe->trailing_data = malloc(pe->trailing_data_size);
 
 		if (!pe->trailing_data) {
-			pelib_set_error("Failed to allocate memory for trailing data");
-			pelib_destroy(pe);
+			ppelib_set_error("Failed to allocate memory for trailing data");
+			ppelib_destroy(pe);
 			return NULL;
 		}
 
@@ -203,15 +205,15 @@ EXPORT_SYM pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) 
 	return pe;
 }
 
-EXPORT_SYM pelib_file_t* pelib_create_from_file(const char *filename) {
-	pelib_reset_error();
+EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
+	ppelib_reset_error();
 	size_t file_size;
 	uint8_t *file_contents;
 
 	FILE *f = fopen(filename, "rb");
 
 	if (!f) {
-		pelib_set_error("Failed to open file");
+		ppelib_set_error("Failed to open file");
 		return NULL;
 	}
 
@@ -222,74 +224,74 @@ EXPORT_SYM pelib_file_t* pelib_create_from_file(const char *filename) {
 	file_contents = malloc(file_size);
 	if (!file_size) {
 		fclose(f);
-		pelib_set_error("Failed to allocate file data");
+		ppelib_set_error("Failed to allocate file data");
 		return NULL;
 	}
 
 	size_t retsize = fread(file_contents, 1, file_size, f);
 	if (retsize != file_size) {
 		fclose(f);
-		pelib_set_error("Failed to read file data");
+		ppelib_set_error("Failed to read file data");
 		return NULL;
 	}
 
 	fclose(f);
 
-	return pelib_create_from_buffer(file_contents, file_size);
+	return ppelib_create_from_buffer(file_contents, file_size);
 }
 
-EXPORT_SYM size_t pelib_write_to_buffer(pelib_file_t *file, uint8_t *buffer, size_t size) {
-	pelib_reset_error();
-
-}
-
-EXPORT_SYM size_t pelib_write_to_file(pelib_file_t *file, const char *filename) {
-	pelib_reset_error();
+EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *file, uint8_t *buffer, size_t size) {
+	ppelib_reset_error();
 
 }
 
-EXPORT_SYM pelib_header_t* pelib_get_header(pelib_file_t *pe) {
-	pelib_reset_error();
+EXPORT_SYM size_t ppelib_write_to_file(ppelib_file_t *file, const char *filename) {
+	ppelib_reset_error();
 
-	pelib_header_t *retval = malloc(sizeof(pelib_header_t));
+}
+
+EXPORT_SYM ppelib_header_t* ppelib_get_header(ppelib_file_t *pe) {
+	ppelib_reset_error();
+
+	ppelib_header_t *retval = malloc(sizeof(ppelib_header_t));
 	if (!retval) {
-		pelib_set_error("Unable to allocate header");
+		ppelib_set_error("Unable to allocate header");
 		return NULL;
 	}
 
-	memcpy(retval, &pe->header, sizeof(pelib_header_t));
+	memcpy(retval, &pe->header, sizeof(ppelib_header_t));
 	return retval;
 }
 
-EXPORT_SYM void pelib_set_header(pelib_file_t *pe, pelib_header_t *header) {
-	pelib_reset_error();
+EXPORT_SYM void ppelib_set_header(ppelib_file_t *pe, ppelib_header_t *header) {
+	ppelib_reset_error();
 
 	if (header->magic != PE32_MAGIC || header->magic != PE32PLUS_MAGIC) {
-		pelib_set_error("Unknown magic");
+		ppelib_set_error("Unknown magic");
 		return;
 	}
 
 	if (header->number_of_sections != pe->header.number_of_sections) {
-		pelib_set_error("number_of_sections mismatch");
+		ppelib_set_error("number_of_sections mismatch");
 		return;
 	}
 
 	if (header->number_of_rva_and_sizes != pe->header.number_of_rva_and_sizes) {
-		pelib_set_error("number_of_rva_and_sizes mismatch");
+		ppelib_set_error("number_of_rva_and_sizes mismatch");
 	}
 
 	if (header->size_of_headers != pe->header.size_of_headers) {
-		pelib_set_error("size_of_headers mismatch");
+		ppelib_set_error("size_of_headers mismatch");
 	}
 
-	memcpy(&pe->header, header, sizeof(pelib_header_t));
+	memcpy(&pe->header, header, sizeof(ppelib_header_t));
 }
 
-EXPORT_SYM void pelib_free_header(pelib_header_t *header) {
+EXPORT_SYM void ppelib_free_header(ppelib_header_t *header) {
 	free(header);
 }
 
-int write_pe_file(const char *filename, const pelib_file_t *pe) {
+int write_pe_file(const char *filename, const ppelib_file_t *pe) {
 	uint8_t *buffer = NULL;
 	size_t size = 0;
 	size_t write = 0;
@@ -366,7 +368,7 @@ int write_pe_file(const char *filename, const pelib_file_t *pe) {
 	return size;
 }
 
-EXPORT_SYM void pelib_recalculate(pelib_file_t *pe) {
+EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
 	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size
 			+ (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
@@ -381,7 +383,7 @@ EXPORT_SYM void pelib_recalculate(pelib_file_t *pe) {
 	uint32_t size_of_code = 0;
 
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
-		pelib_section_t *section = pe->sections[i];
+		ppelib_section_t *section = pe->sections[i];
 
 		if (section->size_of_raw_data && section->virtual_size <= section->size_of_raw_data) {
 			section->size_of_raw_data = TO_NEAREST(section->virtual_size, pe->header.file_alignment);

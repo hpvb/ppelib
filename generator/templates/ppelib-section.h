@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +15,23 @@
  * limitations under the License.
 */
 
-#include <stddef.h>
+#ifndef PPELIB_SECTION_H
+#define PPELIB_SECTION_H
+
 #include <stdint.h>
+#include <stddef.h>
 
-#include "export.h"
+typedef struct ppelib_section {
+{%- for f in fields %}
+{%- if 'format' in f and 'string' in f.format %}
+  char {{f.name}}[{{f.pe_size + 1}}];
+{%- else %}
+  {{f.pe_type}} {{f.name}};
+{%- endif %}
+{%- endfor %}
+  uint8_t* contents;
+} ppelib_section_t;
 
-_Thread_local const char* pelib_new_error;
-_Thread_local const char* pelib_cur_error;
+void ppelib_print_section(const ppelib_section_t* section);
 
-EXPORT_SYM const char* pelib_error() {
-	pelib_cur_error = pelib_new_error;
-
-	return pelib_cur_error;
-}
-
-void pelib_set_error(const char* error) {
-	pelib_new_error = error;
-}
-
-void pelib_reset_error() {
-	pelib_new_error = NULL;
-}
-
-uint32_t pelib_error_peek() {
-	if (pelib_new_error)
-		return 1;
-
-	return 0;
-}
+#endif /* PPELIB_SECTION_H */

@@ -23,14 +23,14 @@ type_map = {
 }
 
 pe_header = [
-    { "name": "Machine", "pe_size": 2, "format": {"enum": "machine_type_map"}},
+    { "name": "Machine", "pe_size": 2, "format": {"enum": "ppelib_machine_type_map"}},
     { "name": "NumberOfSections", "pe_size": 2},
     { "name": "TimeDateStamp", "pe_size": 4},
     { "name": "PointerToSymbolTable", "pe_size": 4, "format": {"hex": True}},
     { "name": "NumberOfSymbols", "pe_size": 4},
     { "name": "SizeOfOptionalHeader", "pe_size": 2},
-    { "name": "Characteristics", "pe_size": 2, "format": {"bitfield": "characteristics_map"}},
-    { "name": "Magic", "pe_size": 2, "format": {"enum": "magic_type_map"}},
+    { "name": "Characteristics", "pe_size": 2, "format": {"bitfield": "ppelib_characteristics_map"}},
+    { "name": "Magic", "pe_size": 2, "format": {"enum": "ppelib_magic_type_map"}},
     { "name": "MajorLinkerVersion", "pe_size": 1},
     { "name": "MinorLinkerVersion", "pe_size": 1},
     { "name": "SizeOfCode", "pe_size": 4},
@@ -52,8 +52,8 @@ pe_header = [
     { "name": "SizeOfImage", "pe_size": 4},
     { "name": "SizeOfHeaders", "pe_size": 4},
     { "name": "Checksum", "pe_size": 4, "format": {"hex": True}},
-    { "name": "Subsystem", "pe_size": 2, "format": {"enum": "windows_subsystem_map"}},
-    { "name": "DllCharacteristics", "pe_size": 2, "format": {"bitfield": "dll_characteristics_map"}},
+    { "name": "Subsystem", "pe_size": 2, "format": {"enum": "ppelib_windows_subsystem_map"}},
+    { "name": "DllCharacteristics", "pe_size": 2, "format": {"bitfield": "ppelib_dll_characteristics_map"}},
     { "name": "SizeOfStackReserve", "pe_size": 4, "peplus_size": 8},
     { "name": "SizeOfStackCommit", "pe_size": 4, "peplus_size": 8},
     { "name": "SizeOfHeapReserve", "pe_size": 4, "peplus_size": 8},
@@ -91,13 +91,13 @@ section_header = [
     { "name": "PointerToLinenumbers", "pe_size": 4, "format": {"hex": True}},
     { "name": "NumberOfRelocations", "pe_size": 2},
     { "name": "NumberOfLinenumbers", "pe_size": 2},
-    { "name": "Characteristics", "pe_size": 4, "format": {"bitfield": "section_flags_map"}},
+    { "name": "Characteristics", "pe_size": 4, "format": {"bitfield": "ppelib_section_flags_map"}},
 ]
 
 certificate_table = [
     { "name": "Length", "pe_size": 4 },
-    { "name": "Revision", "pe_size": 2, "format": {"enum": "certificate_revision_map"}},
-    { "name": "CertificateType", "pe_size": 2, "format": {"enum": "certificate_type_map"}},
+    { "name": "Revision", "pe_size": 2, "format": {"enum": "ppelib_certificate_revision_map"}},
+    { "name": "CertificateType", "pe_size": 2, "format": {"enum": "ppelib_certificate_type_map"}},
     { "name": "Certificate", "pe_size": -1, "format": {"variable_size": True}},
 ]
 
@@ -228,15 +228,15 @@ for directory in pe_header_directories:
     })
 
 if generate == "header":
-    with open(f'{mydir}/templates/pelib-header.h') as file_:
+    with open(f'{mydir}/templates/ppelib-header.h') as file_:
         template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-        with open(f'{outdir}/pelib-header.h', 'w') as outfile:
+        with open(f'{outdir}/ppelib-header.h', 'w') as outfile:
             outfile.write(template.render(fields=fields, directories=directories))
 
 if generate == "c":
-    with open(f'{mydir}/templates/pelib-header.c') as file_:
+    with open(f'{mydir}/templates/ppelib-header.c') as file_:
         template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-        with open(f'{outdir}/pelib-header.c', 'w') as outfile:
+        with open(f'{outdir}/ppelib-header.c', 'w') as outfile:
             outfile.write(template.render(
                 pe_magic_field=inflection.underscore('Magic'),
                 pe_rvas_field=inflection.underscore('NumberOfRvaAndSizes'),
@@ -269,9 +269,9 @@ virtualsize_field = inflection.underscore("VirtualSize")
 rawsize_field = inflection.underscore("SizeOfRawData")
 
 if generate == "header":
-    with open(f'{mydir}/templates/pelib-section.h') as file_:
+    with open(f'{mydir}/templates/ppelib-section.h') as file_:
         template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-        with open(f'{outdir}/pelib-section.h', 'w') as outfile:
+        with open(f'{outdir}/ppelib-section.h', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
                 pointer_field=pointer_field,
@@ -280,9 +280,9 @@ if generate == "header":
             ))
 
 if generate == "c":
-    with open(f'{mydir}/templates/pelib-section.c') as file_:
+    with open(f'{mydir}/templates/ppelib-section.c') as file_:
         template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-        with open(f'{outdir}/pelib-section.c', 'w') as outfile:
+        with open(f'{outdir}/ppelib-section.c', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
                 pointer_field=pointer_field,
@@ -310,18 +310,18 @@ for field in certificate_table:
 length_field = inflection.underscore("Length")
 
 if generate == "header":
-    with open(f'{mydir}/templates/pelib-certificate_table.h') as file_:
+    with open(f'{mydir}/templates/ppelib-certificate_table.h') as file_:
         template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-        with open(f'{outdir}/pelib-certificate_table.h', 'w') as outfile:
+        with open(f'{outdir}/ppelib-certificate_table.h', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
                 length_field=length_field
             ))
 
 if generate == "c":
-    with open(f'{mydir}/templates/pelib-certificate_table.c') as file_:
+    with open(f'{mydir}/templates/ppelib-certificate_table.c') as file_:
         template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
-        with open(f'{outdir}/pelib-certificate_table.c', 'w') as outfile:
+        with open(f'{outdir}/ppelib-certificate_table.c', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
                 length_field=length_field

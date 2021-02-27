@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,28 +15,14 @@
  * limitations under the License.
 */
 
-#ifndef PELIB_CERTIFICATE_TABLE_H
-#define PELIB_CERTIFICATE_TABLE_H
+#ifndef PPELIB_ERROR_H_
+#define PPELIB_ERROR_H_
 
 #include <stdint.h>
-#include <stddef.h>
 
-typedef struct pelib_certificate {
-{%- for f in fields %}
-{%- if 'format' in f and 'string' in f.format %}
-  uint8_t {{f.name}}[{{f.pe_size + 1}}];
-{%- else %}
-  {{f.pe_type}} {{f.name}};
-{%- endif %}
-{%- endfor %}
-} pelib_certificate_t;
+void ppelib_set_error(const char* error);
+void ppelib_reset_error();
 
-typedef struct pelib_certificate_table {
-  size_t size;
-  size_t offset;
-  pelib_certificate_t* certificates;
-} pelib_certificate_table_t;
+uint32_t ppelib_error_peek();
 
-void print_certificate_table(const pelib_certificate_table_t* certificate_table);
-
-#endif /* PELIB_CERTIFICATE_TABLE_H */
+#endif /* PPELIB_ERROR_H_*/

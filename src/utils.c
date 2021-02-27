@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -49,8 +51,8 @@ void write_uint64_t(uint8_t* buffer, uint64_t val) {
         ((uint64_t*)buffer)[0] = val;
 }
 
-const char* map_lookup(uint32_t value, const map_entry_t* map) {
-        const map_entry_t* m = map;
+const char* map_lookup(uint32_t value, const ppelib_map_entry_t* map) {
+        const ppelib_map_entry_t* m = map;
         while (m->string) {
                 if (m->value == value) {
                         return m->string;

@@ -14,7 +14,7 @@ printf("{{field.human_name}} (0x%08lX): ", {{varname}}->{{field.name}});
     {%- else -%}
 printf("{{field.human_name}} (0x%08X): ", {{varname}}->{{field.name}});
     {%- endif -%}
-const map_entry_t* {{field.name}}_map_i = {{field['format']['bitfield']}};
+const ppelib_map_entry_t* {{field.name}}_map_i = {{field['format']['bitfield']}};
 while ({{field.name}}_map_i->string) {
   if (CHECK_BIT({{varname}}->{{field.name}}, {{field.name}}_map_i->value)) {
     printf("%s ", {{field.name}}_map_i->string);

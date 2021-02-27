@@ -4,5 +4,5 @@ testexe = executable(
 	'testexe',
 	testexe_files,
 	include_directories: inc,
-	link_with: pelib
+	link_with: ppelib
 )

@@ -11,31 +11,31 @@ endif
 gen_src = custom_target(
 	'generate-files-c',
 	input: [
-		meson.source_root() + '/generator/templates/pelib-certificate_table.c',
-		meson.source_root() + '/generator/templates/pelib-header.c',
-		meson.source_root() + '/generator/templates/pelib-section.c',
+		meson.source_root() + '/generator/templates/ppelib-certificate_table.c',
+		meson.source_root() + '/generator/templates/ppelib-header.c',
+		meson.source_root() + '/generator/templates/ppelib-section.c',
 		meson.source_root() + '/generator/templates/print-field-macro.jinja',
 		meson.source_root() + '/generator/generate-files.py',
 	],
 	output: [
-		'pelib-certificate_table.c',
-		'pelib-header.c',
-		'pelib-section.c',
+		'ppelib-certificate_table.c',
+		'ppelib-header.c',
+		'ppelib-section.c',
 	],
 	command: [prog_python, meson.source_root() + '/generator/generate-files.py', '@OUTDIR@', 'c']
 )
 
-pelib_sources = [
+ppelib_sources = [
 	'utils.c',
 	'main.c',
-	'pelib-error.c',
+	'ppelib-error.c',
 	gen_src,
 	gen_h
 ]
 
-pelib = library(
-	'pelib',
-	pelib_sources,
+ppelib = library(
+	'ppelib',
+	ppelib_sources,
 	c_args : extra_args,
 	include_directories: inc,
 	install: true,

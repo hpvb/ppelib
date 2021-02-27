@@ -1,5 +1,7 @@
 /* Copyright 2021 Hein-Pieter van Braam-Stewart
  *
+ * This file is part of ppelib (Portable Portable Executable LIBrary)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,20 +21,18 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pelib/pelib-constants.h>
+#include <ppelib/ppelib-constants.h>
+#include <ppelib/ppelib-section.h>
 
-#include "pelib-error.h"
-#include "pelib-section.h"
-
+#include "ppelib-error.h"
 #include "export.h"
 #include "utils.h"
 
+
 {% from "print-field-macro.jinja" import print_field with context %}
 
-/* serialize a pelib_section_t* back to the on-disk format */
-/* When buffer is NULL only report how much we would write */
-size_t serialize_section(const pelib_section_t* section, uint8_t* buffer, size_t offset) {
-  pelib_reset_error();
+size_t serialize_section(const ppelib_section_t* section, uint8_t* buffer, size_t offset) {
+  ppelib_reset_error();
 
   size_t data_size = MIN(section->{{virtualsize_field}}, section->{{rawsize_field}});
 
@@ -62,17 +62,15 @@ size_t serialize_section(const pelib_section_t* section, uint8_t* buffer, size_t
   }
 }
 
-/* deserialize a buffer in on-disk format into a pelib_section_t */
-/* Return value is the size of bytes consumed, if there is insufficient size returns 0 */
-size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t size, pelib_section_t* section) {
-  pelib_reset_error();
+size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t size, ppelib_section_t* section) {
+  ppelib_reset_error();
 
   if (size - offset < PE_SECTION_HEADER_SIZE) {
-	pelib_set_error("Buffer too small for section header.");
+	ppelib_set_error("Buffer too small for section header.");
     return 0;
   }
 
-  memset(section, 0, sizeof(pelib_section_t));
+  memset(section, 0, sizeof(ppelib_section_t));
   const uint8_t* section_header = buffer + offset;
 
 {%- for field in fields %}
@@ -86,7 +84,7 @@ size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t si
   size_t data_size = MIN(section->{{virtualsize_field}}, section->{{rawsize_field}});
 
   if (section->{{pointer_field}} + data_size > size) {
-	pelib_set_error("Buffer too small for section size.");
+	ppelib_set_error("Buffer too small for section size.");
     return 0;
   }
 
@@ -102,8 +100,8 @@ size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t si
   }
 }
 
-EXPORT_SYM void print_section(const pelib_section_t* section) {
-  pelib_reset_error();
+EXPORT_SYM void ppelib_print_section(const ppelib_section_t* section) {
+  ppelib_reset_error();
 
 {%- for field in fields %}
 {{print_field(field, "section")|indent(2)}}
