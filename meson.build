@@ -2,26 +2,17 @@ project(
 	'pelib', 'c',
 	default_options : ['c_std=c11'],
 	version : '0.0.1',
+	license: 'Apache-2.0',
+)
+
+pkg = import('pkgconfig')
+lib = library('pelib')
+pkg.generate(
+	lib,
+	description: 'Library for manipulating PE (Portable Executable) files',
 )
 
 prog_python = import('python').find_installation('python3', modules: ['jinja2', 'inflection'])
-
-gen_src = custom_target(
-	'generate-files-c',
-	input: [
-		meson.source_root() + '/generator/templates/pelib-certificate_table.c',
-		meson.source_root() + '/generator/templates/pelib-header.c',
-		meson.source_root() + '/generator/templates/pelib-section.c',
-		meson.source_root() + '/generator/templates/print-field-macro.jinja',
-		meson.source_root() + '/generator/generate-files.py',
-	],
-	output: [
-		'pelib-certificate_table.c',
-		'pelib-header.c',
-		'pelib-section.c',
-	],
-	command: [prog_python, meson.source_root() + '/generator/generate-files.py', '@OUTDIR@', 'c']
-)
 
 inc = include_directories('include')
 subdir('include')

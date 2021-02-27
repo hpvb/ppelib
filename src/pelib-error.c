@@ -1,10 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <threads.h>
 
-
-thread_local const char* pelib_new_error;
-thread_local const char* pelib_cur_error;
+_Thread_local const char* pelib_new_error;
+_Thread_local const char* pelib_cur_error;
 
 const char* pelib_error() {
 	pelib_cur_error = pelib_new_error;

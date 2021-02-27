@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pelib/pelib-constants.h>
+
 #include "pelib-error.h"
 #include "pelib-section.h"
 
-#include "../../include/pelib/pelib-constants.h"
 #include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}

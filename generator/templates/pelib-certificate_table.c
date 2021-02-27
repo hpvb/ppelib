@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pelib/pelib-constants.h>
 #include <pelib/pelib-certificate_table.h>
 #include <pelib/pelib-header.h>
-#include "../../include/pelib/pelib-constants.h"
 
 #include "pelib-error.h"
 #include "utils.h"
