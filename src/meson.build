@@ -1,3 +1,13 @@
+if cc.get_id() != 'msvc'
+	if cc.get_argument_syntax() == 'gcc'
+		extra_args = ['-fvisibility=hidden']
+	else
+		if cc.has_argument('-fvisibility=hidden')
+			extra_args = ['-fvisibility=hidden']
+		endif
+	endif
+endif
+
 gen_src = custom_target(
 	'generate-files-c',
 	input: [
@@ -23,9 +33,10 @@ pelib_sources = [
 	gen_h
 ]
 
-pelib = shared_library(
+pelib = library(
 	'pelib',
 	pelib_sources,
+	c_args : extra_args,
 	include_directories: inc,
 	install: true,
 	version: meson.project_version(),

@@ -13,6 +13,7 @@ pkg.generate(
 )
 
 prog_python = import('python').find_installation('python3', modules: ['jinja2', 'inflection'])
+cc = meson.get_compiler('c')
 
 inc = include_directories('include')
 subdir('include')

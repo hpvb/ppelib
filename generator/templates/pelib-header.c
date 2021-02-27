@@ -23,6 +23,7 @@
 #include "pelib-error.h"
 #include "pelib-header.h"
 
+#include "export.h"
 #include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
@@ -142,7 +143,7 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
   }
 }
 
-void print_pe_header(const pelib_header_t* header) {
+EXPORT_SYM void print_pe_header(const pelib_header_t* header) {
   pelib_reset_error();
 
 {%- for field in common_fields %}

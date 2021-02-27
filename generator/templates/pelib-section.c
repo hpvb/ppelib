@@ -24,6 +24,7 @@
 #include "pelib-error.h"
 #include "pelib-section.h"
 
+#include "export.h"
 #include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
@@ -101,7 +102,7 @@ size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t si
   }
 }
 
-void print_section(const pelib_section_t* section) {
+EXPORT_SYM void print_section(const pelib_section_t* section) {
   pelib_reset_error();
 
 {%- for field in fields %}

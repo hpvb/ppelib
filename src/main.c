@@ -21,11 +21,12 @@
 
 #include <pelib/pelib-constants.h>
 
+#include "export.h"
 #include "pelib-error.h"
 #include "pelib-generated.h"
 #include "main.h"
 
-pelib_file_t* pelib_create() {
+EXPORT_SYM pelib_file_t* pelib_create() {
 	pelib_reset_error();
 
 	pelib_file_t *pe = calloc(sizeof(pelib_file_t), 1);
@@ -35,7 +36,7 @@ pelib_file_t* pelib_create() {
 	return pe;
 }
 
-void pelib_destroy(pelib_file_t *pe) {
+EXPORT_SYM void pelib_destroy(pelib_file_t *pe) {
 	if (!pe) {
 		return;
 	}
@@ -58,7 +59,7 @@ void pelib_destroy(pelib_file_t *pe) {
 	free(pe);
 }
 
-pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) {
+EXPORT_SYM pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) {
 	pelib_reset_error();
 
 	if (size < PE_SIGNATURE_OFFSET + sizeof(uint32_t)) {
@@ -202,7 +203,7 @@ pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) {
 	return pe;
 }
 
-pelib_file_t* pelib_create_from_file(const char *filename) {
+EXPORT_SYM pelib_file_t* pelib_create_from_file(const char *filename) {
 	pelib_reset_error();
 	size_t file_size;
 	uint8_t *file_contents;
@@ -237,17 +238,17 @@ pelib_file_t* pelib_create_from_file(const char *filename) {
 	return pelib_create_from_buffer(file_contents, file_size);
 }
 
-size_t pelib_write_to_buffer(pelib_file_t *file, uint8_t *buffer, size_t size) {
+EXPORT_SYM size_t pelib_write_to_buffer(pelib_file_t *file, uint8_t *buffer, size_t size) {
 	pelib_reset_error();
 
 }
 
-size_t pelib_write_to_file(pelib_file_t *file, const char *filename) {
+EXPORT_SYM size_t pelib_write_to_file(pelib_file_t *file, const char *filename) {
 	pelib_reset_error();
 
 }
 
-pelib_header_t* pelib_get_header(pelib_file_t *pe) {
+EXPORT_SYM pelib_header_t* pelib_get_header(pelib_file_t *pe) {
 	pelib_reset_error();
 
 	pelib_header_t *retval = malloc(sizeof(pelib_header_t));
@@ -260,7 +261,7 @@ pelib_header_t* pelib_get_header(pelib_file_t *pe) {
 	return retval;
 }
 
-void pelib_set_header(pelib_file_t *pe, pelib_header_t *header) {
+EXPORT_SYM void pelib_set_header(pelib_file_t *pe, pelib_header_t *header) {
 	pelib_reset_error();
 
 	if (header->magic != PE32_MAGIC || header->magic != PE32PLUS_MAGIC) {
@@ -284,7 +285,7 @@ void pelib_set_header(pelib_file_t *pe, pelib_header_t *header) {
 	memcpy(&pe->header, header, sizeof(pelib_header_t));
 }
 
-void pelib_free_header(pelib_header_t *header) {
+EXPORT_SYM void pelib_free_header(pelib_header_t *header) {
 	free(header);
 }
 
@@ -365,7 +366,7 @@ int write_pe_file(const char *filename, const pelib_file_t *pe) {
 	return size;
 }
 
-void pelib_recalculate(pelib_file_t *pe) {
+EXPORT_SYM void pelib_recalculate(pelib_file_t *pe) {
 	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
 	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size
 			+ (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);

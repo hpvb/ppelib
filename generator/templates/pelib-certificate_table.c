@@ -24,6 +24,7 @@
 #include <pelib/pelib-header.h>
 
 #include "pelib-error.h"
+#include "export.h"
 #include "utils.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
@@ -108,7 +109,7 @@ size_t deserialize_certificate_table(const uint8_t* buffer, pelib_header_t* head
   return max_offset;
 }
 
-void print_certificate_table(const pelib_certificate_table_t* certificate_table) {
+EXPORT_SYM void print_certificate_table(const pelib_certificate_table_t* certificate_table) {
   pelib_reset_error();
 
   printf("Certificate table: \n");

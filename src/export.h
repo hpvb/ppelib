@@ -12,32 +12,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+#ifndef PELIB_EXPORT_H_
+#define PELIB_EXPORT_H_
 
-#include <stddef.h>
-#include <stdint.h>
+#if defined _WIN32 || defined __CYGWIN__
+	#ifdef __GNUC__
+		#define EXPORT_SYM __attribute__ ((dllexport))
+	#else
+		#define EXPORT_SYM __declspec(dllexport)
+	#endif
+#else
+	#if __GNUC__ >= 4
+    	#define EXPORT_SYM __attribute__ ((visibility ("default")))
+	#else
+    	#define EXPORT_SYM
+	#endif
+#endif
 
-#include "export.h"
-
-_Thread_local const char* pelib_new_error;
-_Thread_local const char* pelib_cur_error;
-
-EXPORT_SYM const char* pelib_error() {
-	pelib_cur_error = pelib_new_error;
-
-	return pelib_cur_error;
-}
-
-void pelib_set_error(const char* error) {
-	pelib_new_error = error;
-}
-
-void pelib_reset_error() {
-	pelib_new_error = NULL;
-}
-
-uint32_t pelib_error_peek() {
-	if (pelib_new_error)
-		return 1;
-
-	return 0;
-}
+#endif /* PELIB_EXPORT_H_ */
