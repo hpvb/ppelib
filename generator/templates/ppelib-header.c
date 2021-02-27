@@ -163,7 +163,7 @@ EXPORT_SYM void ppelib_fprint_pe_header(FILE* stream, const ppelib_header_t* hea
   fprintf(stream, "Data directories:\n");
   for (uint32_t i = 0; i < header->{{pe_rvas_field}}; ++i) {
     if (i < {{directories|length}}) {
-      fprintf(stream, "%s: RVA: 0x%08X, size: %i\n", data_directory_names[i], header->data_directories[i].virtual_address, header->data_directories[i].size);
+      fprintf(stream, "%s: RVA: 0x%08X, size: %i\n", ppelib_data_directory_names[i], header->data_directories[i].virtual_address, header->data_directories[i].size);
     } else {
       fprintf(stream, "Unknown: RVA: 0x%08X, size: %i\n", header->data_directories[i].virtual_address, header->data_directories[i].size);
     }

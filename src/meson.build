@@ -26,9 +26,12 @@ gen_src = custom_target(
 )
 
 ppelib_sources = [
-	'utils.c',
-	'main.c',
+	'ppelib-certificates.c',
 	'ppelib-error.c',
+	'ppelib-handles.c',
+	'ppelib-headers.c',
+	'ppelib-sections.c',
+	'utils.c',
 	gen_src,
 	gen_h
 ]

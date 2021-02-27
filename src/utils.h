@@ -38,6 +38,8 @@ void write_uint32_t(uint8_t* buffer, uint32_t val);
 uint64_t read_uint64_t(const uint8_t* buffer);
 void write_uint64_t(uint8_t* buffer, uint64_t val);
 
+uint16_t buffer_excise(uint8_t** buffer, size_t size, size_t start, size_t end);
+
 const char* map_lookup(uint32_t value, const ppelib_map_entry_t* map);
 
-#endif
+#endif /* PPELIB_UTILS_H */

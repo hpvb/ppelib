@@ -39,4 +39,7 @@ ppelib_handle* ppelib_create_from_file(const char* filename);
 size_t ppelib_write_to_buffer(ppelib_handle* handle, uint8_t* buffer, size_t size);
 size_t ppelib_write_to_file(ppelib_handle* handle, const char* filename);
 
+uint32_t ppelib_has_signature(ppelib_handle* handle);
+void ppelib_signature_remove(ppelib_handle* handle);
+
 #endif /* PPELIB_H_ */

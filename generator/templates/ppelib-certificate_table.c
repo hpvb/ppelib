@@ -120,3 +120,16 @@ EXPORT_SYM void ppelib_print_certificate_table(const ppelib_certificate_table_t*
 {%- endfor %}
   }
 }
+
+void ppelib_free_certificate_table(ppelib_certificate_table_t* certificate_table) {
+	if (!certificate_table->size) {
+		return;
+	}
+
+	for (size_t i = 0; i < certificate_table->size; ++i) {
+		free(certificate_table->certificates[i].certificate);
+	}
+	free(certificate_table->certificates);
+
+	certificate_table->size = 0;
+}

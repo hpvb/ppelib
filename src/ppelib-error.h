@@ -20,6 +20,8 @@
 
 #include <stdint.h>
 
+const char* ppelib_error();
+
 void ppelib_set_error(const char* error);
 void ppelib_reset_error();
 

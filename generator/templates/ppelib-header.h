@@ -22,22 +22,22 @@
 #include <stdio.h>
 #include <stddef.h>
 
-enum data_directory_type {
+enum ppelib_data_directory_type {
 {%- for d in directories %}
   {{d.name}} = {{loop.index - 1}},
 {%- endfor %}
 };
 
-static const char* const data_directory_names[] = {
+static const char* const ppelib_data_directory_names[] = {
 {%- for d in directories %}
   "{{d.human_name}}",
 {%- endfor %}
 };
 
-typedef struct ppelib_data_directory {
+typedef struct ppelib_header_data_directory {
   uint32_t virtual_address;
   uint32_t size;
-} ppelib_data_directory_t;
+} ppelib_header_data_directory_t;
 
 typedef struct ppelib_header {
 {%- for f in fields %}
@@ -48,7 +48,7 @@ typedef struct ppelib_header {
 {%- endif %}
 {%- endfor %}
 
-  ppelib_data_directory_t* data_directories;
+  ppelib_header_data_directory_t* data_directories;
 } ppelib_header_t;
 
 void ppelib_print_pe_header(const ppelib_header_t* header);

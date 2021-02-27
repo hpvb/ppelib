@@ -23,14 +23,14 @@
 #include "ppelib-certificate_table.h"
 #include "utils.h"
 
-typedef struct data_directory {
+typedef struct ppelib_data_directory {
 	ppelib_section_t *section;
 	uint32_t offset;
 	uint32_t size;
 
 	uint32_t orig_rva;
 	uint32_t orig_size;
-} data_directory_t;
+} ppelib_data_directory_t;
 
 typedef struct ppelib_file {
 	size_t pe_header_offset;
@@ -41,16 +41,13 @@ typedef struct ppelib_file {
 
 	ppelib_header_t header;
 	ppelib_section_t **sections;
-	data_directory_t *data_directories;
+	ppelib_data_directory_t *data_directories;
 
 	ppelib_certificate_table_t certificate_table;
 
 	uint8_t *stub;
 	size_t trailing_data_size;
 	uint8_t *trailing_data;
-
-	uint8_t *file_contents;
-	size_t file_size;
 } ppelib_file_t;
 
 #endif /* PPELIB_MAIN_H_ */
