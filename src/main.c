@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #include <errno.h>
 #include <ppelib/ppelib-constants.h>
@@ -240,14 +240,138 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 	return ppelib_create_from_buffer(file_contents, file_size);
 }
 
-EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *file, uint8_t *buffer, size_t size) {
+EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, size_t buf_size) {
 	ppelib_reset_error();
 
+	size_t size = 0;
+
+	// Write stub
+	size += pe->pe_header_offset;
+	size += 4;
+	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
+	if (ppelib_error_peek()) {
+		return 0;
+	}
+
+	size += coff_header_size;
+	size_t end_of_sections = 0;
+
+	size_t section_offset = pe->pe_header_offset + coff_header_size;
+	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
+		size_t section_size = serialize_section(pe->sections[i], NULL, section_offset + (i * PE_SECTION_HEADER_SIZE));
+		if (ppelib_error_peek()) {
+			return 0;
+		}
+
+		if (section_size > end_of_sections) {
+			end_of_sections = section_size;
+		}
+	}
+
+	// Theoretically all the sections could be before the header
+	if (end_of_sections > size) {
+		size = end_of_sections;
+	}
+
+	size += pe->trailing_data_size;
+
+	size_t certificates_size = 0;
+	if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
+		certificates_size = serialize_certificate_table(&pe->certificate_table, NULL);
+		if (ppelib_error_peek()) {
+			return 0;
+		}
+
+		if (certificates_size > size) {
+			size = certificates_size;
+		}
+	}
+
+	if (buffer && size > buf_size) {
+		ppelib_set_error("Target buffer too small.");
+		return 0;
+	}
+
+	if (!buffer) {
+		return size;
+	}
+
+	size_t write = 0;
+
+	memset(buffer, 0, size);
+	//memset(buffer, 0xCC, size);
+
+	memcpy(buffer, pe->stub, pe->pe_header_offset);
+	write += pe->pe_header_offset;
+
+	// Write PE header
+	memcpy(buffer + write, "PE\0", 4);
+	write += 4;
+
+	// Write COFF header
+	serialize_pe_header(&pe->header, buffer, pe->pe_header_offset + 4);
+	if (ppelib_error_peek()) {
+		return 0;
+	}
+
+	// Write sections
+	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
+		serialize_section(pe->sections[i], buffer, section_offset + 4 + (i * PE_SECTION_HEADER_SIZE));
+		if (ppelib_error_peek()) {
+			return 0;
+		}
+	}
+
+	// Write trailing data
+	memcpy(buffer + end_of_sections, pe->trailing_data, pe->trailing_data_size);
+
+	// Write certificates
+	serialize_certificate_table(&pe->certificate_table, buffer);
+	if (ppelib_error_peek()) {
+		return 0;
+	}
+
+	return size;
 }
 
-EXPORT_SYM size_t ppelib_write_to_file(ppelib_file_t *file, const char *filename) {
+EXPORT_SYM size_t ppelib_write_to_file(ppelib_file_t *pe, const char *filename) {
 	ppelib_reset_error();
 
+	FILE* f = fopen(filename, "wb");
+	if (!f) {
+		ppelib_set_error("Failed to open file");
+		return 0;
+	}
+
+	size_t bufsize = ppelib_write_to_buffer(pe, NULL, 0);
+	if (ppelib_error_peek()) {
+		fclose(f);
+		return 0;
+	}
+
+	uint8_t* buffer = malloc(bufsize);
+	if (!buffer) {
+		ppelib_set_error("Failed to allocate buffer");
+		fclose(f);
+		return 0;
+	}
+
+	ppelib_write_to_buffer(pe, buffer, bufsize);
+	if (ppelib_error_peek()) {
+		fclose(f);
+		free(buffer);
+		return 0;
+	}
+
+	size_t written = fwrite(buffer, 1, bufsize, f);
+	fclose(f);
+	free(buffer);
+
+	if (written != bufsize) {
+		ppelib_set_error("Failed to write data");
+	}
+
+	return written;
 }
 
 EXPORT_SYM ppelib_header_t* ppelib_get_header(ppelib_file_t *pe) {
@@ -266,7 +390,7 @@ EXPORT_SYM ppelib_header_t* ppelib_get_header(ppelib_file_t *pe) {
 EXPORT_SYM void ppelib_set_header(ppelib_file_t *pe, ppelib_header_t *header) {
 	ppelib_reset_error();
 
-	if (header->magic != PE32_MAGIC || header->magic != PE32PLUS_MAGIC) {
+	if (header->magic != PE32_MAGIC && header->magic != PE32PLUS_MAGIC) {
 		ppelib_set_error("Unknown magic");
 		return;
 	}
@@ -473,102 +597,3 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].size = size;
 	}
 }
-
-#if 0
-int main(int argc, char *argv[]) {
-	if (!argc)
-		return 1;
-
-	pelib_file_t pe = { 0 };
-	uint8_t *file;
-	size_t size;
-	uint32_t pe_header_offset;
-
-	if (read_pe_file(argv[1], &file, &size, &pe_header_offset)) {
-		return 1;
-	}
-
-	pe.pe_header_offset = pe_header_offset;
-	pe.coff_header_offset = pe_header_offset + 4;
-
-	if (size < pe.coff_header_offset + COFF_HEADER_SIZE) {
-		fprintf(stderr, "File size too small\n");
-		return 1;
-	}
-
-	size_t header_size = deserialize_pe_header(file, pe.coff_header_offset, size, &pe.header);
-	pe.section_offset = header_size + pe.coff_header_offset;
-
-	print_pe_header(&pe.header);
-	printf("\n");
-
-	pe.sections = malloc(sizeof(pelib_section_t*) * pe.header.number_of_sections);
-	pe.data_directories = calloc(sizeof(data_directory_t) * pe.header.number_of_rva_and_sizes, 1);
-	pe.end_of_sections = 0;
-
-	for (uint32_t i = 0; i < pe.header.number_of_sections; ++i) {
-		pe.sections[i] = malloc(sizeof(pelib_section_t));
-		size_t section_size = deserialize_section(file, pe.section_offset + (i * PE_SECTION_HEADER_SIZE), size,
-				pe.sections[i]);
-
-		if (section_size > pe.end_of_sections) {
-			pe.end_of_sections = section_size;
-		}
-
-		for (uint32_t d = 0; d < pe.header.number_of_rva_and_sizes; ++d) {
-			size_t directory_va = pe.header.data_directories[d].virtual_address;
-			size_t directory_size = pe.header.data_directories[d].size;
-			size_t directory_end = directory_va + directory_size;
-			size_t section_va = pe.sections[i]->virtual_address;
-			size_t section_end = section_va + pe.sections[i]->size_of_raw_data;
-
-			if (section_va <= directory_va) {
-				//printf("Considering directory %s in section %s\n", data_directory_names[d], pe.sections[i]->name);
-				if (section_end >= directory_va) {
-					pe.data_directories[d].section = pe.sections[i];
-					pe.data_directories[d].offset = directory_va - section_va;
-					pe.data_directories[d].size = directory_size;
-					pe.data_directories[d].orig_rva = directory_va;
-					pe.data_directories[d].orig_size = directory_size;
-
-					//printf("Found directory %s in section %s\n", data_directory_names[d], pe.sections[i]->name);
-				} else {
-					//printf("Directory %s doesn't fit in section %s. 0x%08lx < 0x%08lx\n", data_directory_names[d], pe.sections[i]->name, section_end, directory_va);
-				}
-			}
-		}
-		print_section(pe.sections[i]);
-		printf("\n");
-	}
-
-	deserialize_certificate_table(file, &pe.header, size, &pe.certificate_table);
-	print_certificate_table(&pe.certificate_table);
-	printf("\n");
-
-	pe.start_of_sections = pe.sections[0]->virtual_address;
-
-	//void* t = pe.sections[4];
-	//pe.sections[4] = pe.sections[3];
-	//pe.sections[3] = t;
-
-	pe.stub = malloc(pe.pe_header_offset);
-	if (!pe.stub) {
-		fprintf(stderr, "Failed to allocate memory\n");
-		return 1;
-	}
-	memcpy(pe.stub, file, pe.pe_header_offset);
-
-	if (size > pe.end_of_sections) {
-		pe.trailing_data_size = size - pe.end_of_sections;
-		pe.trailing_data = malloc(pe.trailing_data_size);
-
-		memcpy(pe.trailing_data, file + pe.end_of_sections, pe.trailing_data_size);
-	}
-
-	recalculate(&pe);
-	write_pe_file("out.exe", &pe);
-
-	free(file);
-
-}
-#endif
