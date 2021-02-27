@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include <pelib/pelib-header.h>
-#include "pelib-constants.h"
+#include <pelib/pelib-constants.h>
 
 typedef void pelib_file;
 

@@ -10,5 +10,7 @@ pelib = shared_library(
 	'pelib',
 	pelib_sources,
 	include_directories: inc,
-	install: true
+	install: true,
+	version: '0.0.1',
+	soversion: 0
 )
