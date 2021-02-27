@@ -2,8 +2,9 @@
 #include <stdint.h>
 #include <threads.h>
 
-const char* pelib_new_error;
-const char* pelib_cur_error;
+
+thread_local const char* pelib_new_error;
+thread_local const char* pelib_cur_error;
 
 const char* pelib_error() {
 	pelib_cur_error = pelib_new_error;

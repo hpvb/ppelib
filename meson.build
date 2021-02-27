@@ -1,5 +1,6 @@
 project(
 	'pelib', 'c',
+	default_options : ['c_std=c11'],
 	version : '0.0.1',
 )
 

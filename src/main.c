@@ -10,7 +10,7 @@
 #include "main.h"
 
 pelib_file_t* pelib_create() {
-	pelib_new_error = NULL;
+	pelib_reset_error();
 
 	pelib_file_t *pe = calloc(sizeof(pelib_file_t), 1);
 	if (!pe) {
@@ -43,7 +43,7 @@ void pelib_destroy(pelib_file_t *pe) {
 }
 
 pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) {
-	pelib_new_error = NULL;
+	pelib_reset_error();
 
 	if (size < PE_SIGNATURE_OFFSET + sizeof(uint32_t)) {
 		pelib_set_error("Not a PE file (file too small)");
@@ -187,7 +187,7 @@ pelib_file_t* pelib_create_from_buffer(uint8_t *buffer, size_t size) {
 }
 
 pelib_file_t* pelib_create_from_file(const char *filename) {
-	pelib_new_error = NULL;
+	pelib_reset_error();
 	size_t file_size;
 	uint8_t *file_contents;
 
@@ -222,17 +222,17 @@ pelib_file_t* pelib_create_from_file(const char *filename) {
 }
 
 size_t pelib_write_to_buffer(pelib_file_t *file, uint8_t *buffer, size_t size) {
-	pelib_new_error = NULL;
+	pelib_reset_error();
 
 }
 
 size_t pelib_write_to_file(pelib_file_t *file, const char *filename) {
-	pelib_new_error = NULL;
+	pelib_reset_error();
 
 }
 
 pelib_header_t* pelib_get_header(pelib_file_t *pe) {
-	pelib_new_error = NULL;
+	pelib_reset_error();
 
 	pelib_header_t *retval = malloc(sizeof(pelib_header_t));
 	if (!retval) {
@@ -245,7 +245,7 @@ pelib_header_t* pelib_get_header(pelib_file_t *pe) {
 }
 
 void pelib_set_header(pelib_file_t *pe, pelib_header_t *header) {
-	pelib_new_error = NULL;
+	pelib_reset_error();
 
 	if (header->magic != PE32_MAGIC || header->magic != PE32PLUS_MAGIC) {
 		pelib_set_error("Unknown magic");
