@@ -5,6 +5,8 @@
 #include <string.h>
 
 #include <pelib/pelib_constants.h>
+
+#include "pelib-error.h"
 #include "pelib-section.h"
 
 #include "utils.h"
@@ -14,6 +16,8 @@
 /* serialize a pelib_section_t* back to the on-disk format */
 /* When buffer is NULL only report how much we would write */
 size_t serialize_section(const pelib_section_t* section, uint8_t* buffer, size_t offset) {
+  pelib_reset_error();
+
   size_t data_size = MIN(section->{{virtualsize_field}}, section->{{rawsize_field}});
 
   if (! buffer) {
@@ -45,7 +49,10 @@ size_t serialize_section(const pelib_section_t* section, uint8_t* buffer, size_t
 /* deserialize a buffer in on-disk format into a pelib_section_t */
 /* Return value is the size of bytes consumed, if there is insufficient size returns 0 */
 size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t size, pelib_section_t* section) {
+  pelib_reset_error();
+
   if (size - offset < PE_SECTION_HEADER_SIZE) {
+	pelib_set_error("Buffer too small for section header.");
     return 0;
   }
 
@@ -63,6 +70,7 @@ size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t si
   size_t data_size = MIN(section->{{virtualsize_field}}, section->{{rawsize_field}});
 
   if (section->{{pointer_field}} + data_size > size) {
+	pelib_set_error("Buffer too small for section size.");
     return 0;
   }
 
@@ -79,7 +87,9 @@ size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t si
 }
 
 void print_section(const pelib_section_t* section) {
-{%- for field in fields -%}
+  pelib_reset_error();
+
+{%- for field in fields %}
 {{print_field(field, "section")|indent(2)}}
 {%- endfor %}
 }

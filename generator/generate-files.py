@@ -185,8 +185,13 @@ for field in fields:
             "human_name": field["human_name"],
             "type": field["pe_type"],
             "offset": field["pe_offset"],
-            "size": field["pe_size"],
+            "pe_size": field["pe_size"],
         }
+        
+        if "peplus_size" in field:
+            f["size"] = field["peplus_size"]
+        else:
+            f["size"] = field["pe_size"]
 
         if "format" in field:
             f["format"] = field["format"]
@@ -201,11 +206,16 @@ for field in fields:
             "human_name": field["human_name"],
             "type": field["peplus_type"],
             "offset": field["peplus_offset"],
-            "size": field["peplus_size"],
+            "pe_size": field["peplus_size"],
         }
         if "format" in field:
             f["format"] = field["format"]
 
+        if "peplus_size" in field:
+            f["size"] = field["peplus_size"]
+        else:
+            f["size"] = field["pe_size"]
+            
         peplus_fields.append(f)
 
         sizes["total_peplus"] = sizes["total_peplus"] + field["peplus_size"]

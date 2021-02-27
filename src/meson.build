@@ -1,6 +1,7 @@
 pelib_sources = [
 	'utils.c',
 	'main.c',
+	'pelib-error.c',
 	gen_src,
 	gen_h
 ]

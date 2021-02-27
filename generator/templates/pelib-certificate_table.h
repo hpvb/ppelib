@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "pelib-header.h"
-
 typedef struct pelib_certificate {
 {%- for f in fields %}
 {%- if 'format' in f and 'string' in f.format %}
@@ -21,5 +19,7 @@ typedef struct pelib_certificate_table {
   size_t offset;
   pelib_certificate_t* certificates;
 } pelib_certificate_table_t;
+
+void print_certificate_table(const pelib_certificate_table_t* certificate_table);
 
 #endif /* PELIB_CERTIFICATE_TABLE_H */

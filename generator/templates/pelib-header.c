@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include <pelib/pelib_constants.h>
+#include "pelib-error.h"
 #include "pelib-header.h"
 #include "utils.h"
 
@@ -12,6 +13,8 @@
 /* serialize a pelib_header_t* back to the on-disk format */
 /* When buffer is NULL only report how much we would write */
 size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t offset) {
+  pelib_reset_error();
+
   if (! buffer) {
     goto end;
   }
@@ -62,7 +65,10 @@ size_t serialize_pe_header(const pelib_header_t* header, uint8_t* buffer, size_t
 /* deserialize a buffer in on-disk format into a pelib_header_t */
 /* Return value is the size of bytes consumed, if there is insufficient size returns 0 */
 size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t size, pelib_header_t* header) {
+  pelib_reset_error();
+
   if (size - offset < {{sizes.common}}) {
+	pelib_set_error("Buffer too small for common COFF headers.");
     return 0;
   }
 
@@ -73,11 +79,13 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
 {%- endfor %}
 
   if (header->{{pe_magic_field}} != PE32_MAGIC && header->{{pe_magic_field}} != PE32PLUS_MAGIC) {
+	pelib_set_error("Unknown PE magic.");
     return 0;
   }
 
   if (header->{{pe_magic_field}} == PE32_MAGIC) {
     if (size - offset < {{sizes.total_pe}}) {
+      pelib_set_error("Buffer too small for PE headers.");
       return 0;
     }
 {%- for field in pe_fields %}
@@ -89,6 +97,7 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
 
   if (header->{{pe_magic_field}} == PE32PLUS_MAGIC) {
     if (size - offset < {{sizes.total_peplus}}) {
+      pelib_set_error("Buffer too small for PE+ headers.");
       return 0;
     }
 {%- for field in peplus_fields %}
@@ -117,7 +126,9 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
 }
 
 void print_pe_header(const pelib_header_t* header) {
-{%- for field in common_fields -%}
+  pelib_reset_error();
+
+{%- for field in common_fields %}
 {{print_field(field, "header")|indent(2)}}
 {%- endfor %}
 
@@ -126,12 +137,12 @@ void print_pe_header(const pelib_header_t* header) {
   }
 
   if (header->{{pe_magic_field}} == PE32_MAGIC) {
-{%- for field in pe_fields -%}
+{%- for field in pe_fields %}
   {{print_field(field, "header")|indent(4)}}
 {%- endfor %}
   }
   if (header->{{pe_magic_field}} == PE32PLUS_MAGIC) {
-{%- for field in peplus_fields -%}
+{%- for field in peplus_fields %}
   {{print_field(field, "header")|indent(4)}}
 {%- endfor %}
   }

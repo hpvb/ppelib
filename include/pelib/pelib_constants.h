@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define PE_SIGNATURE 0x3c
+#define PE_SIGNATURE_OFFSET 0x3c
+#define PE_SIGNATURE 0x00004550
+
 #define COFF_HEADER_SIZE 20
 #define PE_HEADER_DATA_DIRECTORIES_SIZE 8
 

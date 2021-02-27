@@ -12,7 +12,7 @@ enum data_directory_type {
 
 static const char* const data_directory_names[] = {
 {%- for d in directories %}
-	"{{d.human_name}}",
+  "{{d.human_name}}",
 {%- endfor %}
 };
 
@@ -32,5 +32,7 @@ typedef struct pelib_header {
 
   pelib_data_directory_t* data_directories;
 } pelib_header_t;
+
+void print_pe_header(const pelib_header_t* header);
 
 #endif /* PELIB_HEADER_H */

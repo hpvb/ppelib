@@ -13,7 +13,7 @@ gen_h = custom_target(
 		'pelib-section.h',
 	],
 	install: true,
-	install_dir: 'include/pelib',
+	install_dir: get_option('includedir') + '/pelib',
 	command: [prog_python, meson.source_root() + '/generator/generate-files.py', '@OUTDIR@', 'header']
 )
 

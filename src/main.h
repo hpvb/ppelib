@@ -31,6 +31,9 @@ typedef struct pelib_file {
 	uint8_t *stub;
 	size_t trailing_data_size;
 	uint8_t *trailing_data;
+
+	uint8_t *file_contents;
+	size_t file_size;
 } pelib_file_t;
 
 #endif /* PELIB_MAIN_H_ */
