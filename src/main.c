@@ -431,12 +431,15 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 		}
 	}
 
-	pe->header.base_of_code = base_of_code;
+	// PE files with only data can have this set to garbage. Might as well just keep it.
+	if (size_of_code) {
+		pe->header.base_of_code = base_of_code;
+	}
+
 	// The actual value of these of PE images in the wild varies a lot.
 	// There doesn't appear to be an actual correct way of calculating these
 
 	pe->header.base_of_data = base_of_data;
-
 	pe->header.size_of_initialized_data = TO_NEAREST(size_of_initialized_data, pe->header.file_alignment);
 	pe->header.size_of_uninitialized_data = TO_NEAREST(size_of_uninitialized_data, pe->header.file_alignment);
 	pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);

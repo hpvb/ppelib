@@ -1,35 +1,35 @@
-{%- macro print_field(field, varname) -%}
+{%- macro print_field(field, varname, stream = "stdout") -%}
 {%- if 'format' in field %}
   {%- if 'enum' in field['format'] %}
-printf("{{field.human_name}}: %s\n", map_lookup({{varname}}->{{field.name}}, {{field['format']['enum']}}));
+fprintf({{stream}}, "{{field.human_name}}: %s\n", map_lookup({{varname}}->{{field.name}}, {{field['format']['enum']}}));
   {%- elif 'hex' in field['format'] %}
     {%- if field.peplus_size == 8 or field.pe_size == 8 or field.size == 8 -%}
-printf("{{field.human_name}}: 0x%08lX\n", {{varname}}->{{field.name}});
+fprintf({{stream}}, "{{field.human_name}}: 0x%08lX\n", {{varname}}->{{field.name}});
     {%- else -%}
-printf("{{field.human_name}}: 0x%08X\n", {{varname}}->{{field.name}});
+fprintf({{stream}}, "{{field.human_name}}: 0x%08X\n", {{varname}}->{{field.name}});
     {%- endif -%}
   {%- elif 'bitfield' in field['format'] %}
     {%- if field.peplus_size == 8 or field.pe_size == 8 or field.size == 8 -%}
-printf("{{field.human_name}} (0x%08lX): ", {{varname}}->{{field.name}});
+fprintf({{stream}}, "{{field.human_name}} (0x%08lX): ", {{varname}}->{{field.name}});
     {%- else -%}
-printf("{{field.human_name}} (0x%08X): ", {{varname}}->{{field.name}});
+fprintf({{stream}}, "{{field.human_name}} (0x%08X): ", {{varname}}->{{field.name}});
     {%- endif -%}
 const ppelib_map_entry_t* {{field.name}}_map_i = {{field['format']['bitfield']}};
 while ({{field.name}}_map_i->string) {
   if (CHECK_BIT({{varname}}->{{field.name}}, {{field.name}}_map_i->value)) {
-    printf("%s ", {{field.name}}_map_i->string);
+    fprintf({{stream}}, "%s ", {{field.name}}_map_i->string);
   }
   ++{{field.name}}_map_i;
 }
-printf("\n");
+fprintf({{stream}}, "\n");
   {%- elif 'string' in field['format'] %}
-printf("{{field.human_name}}: %s\n", {{varname}}->{{field.name}});
+fprintf({{stream}}, "{{field.human_name}}: %s\n", {{varname}}->{{field.name}});
   {%- endif %}
 {%- else %}
   {%- if field.peplus_size == 8 or field.pe_size == 8 or field.size == 8 -%}
-printf("{{field.human_name}}: %li\n", {{varname}}->{{field.name}});
+fprintf({{stream}}, "{{field.human_name}}: %li\n", {{varname}}->{{field.name}});
   {%- else -%}
-printf("{{field.human_name}}: %i\n", {{varname}}->{{field.name}});
+fprintf({{stream}}, "{{field.human_name}}: %i\n", {{varname}}->{{field.name}});
   {%- endif -%}
 {%- endif %}
 {%- endmacro %}

@@ -19,6 +19,7 @@
 #define PPELIB_HEADER_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stddef.h>
 
 enum data_directory_type {
@@ -51,5 +52,6 @@ typedef struct ppelib_header {
 } ppelib_header_t;
 
 void ppelib_print_pe_header(const ppelib_header_t* header);
+void ppelib_fprint_pe_header(FILE *stream, const ppelib_header_t* header);
 
 #endif /* PPELIB_HEADER_H */

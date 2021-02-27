@@ -139,11 +139,11 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
   }
 }
 
-EXPORT_SYM void ppelib_print_pe_header(const ppelib_header_t* header) {
+EXPORT_SYM void ppelib_fprint_pe_header(FILE* stream, const ppelib_header_t* header) {
   ppelib_reset_error();
 
 {%- for field in common_fields %}
-{{print_field(field, "header")|indent(2)}}
+{{print_field(field, "header", "stream")|indent(2)}}
 {%- endfor %}
 
   if (header->{{pe_magic_field}} != PE32_MAGIC && header->{{pe_magic_field}} != PE32PLUS_MAGIC) {
@@ -152,20 +152,24 @@ EXPORT_SYM void ppelib_print_pe_header(const ppelib_header_t* header) {
 
   if (header->{{pe_magic_field}} == PE32_MAGIC) {
 {%- for field in pe_fields %}
-  {{print_field(field, "header")|indent(4)}}
+  {{print_field(field, "header", "stream")|indent(4)}}
 {%- endfor %}
   }
   if (header->{{pe_magic_field}} == PE32PLUS_MAGIC) {
 {%- for field in peplus_fields %}
-  {{print_field(field, "header")|indent(4)}}
+  {{print_field(field, "header", "stream")|indent(4)}}
 {%- endfor %}
   }
-  printf("Data directories:\n");
+  fprintf(stream, "Data directories:\n");
   for (uint32_t i = 0; i < header->{{pe_rvas_field}}; ++i) {
     if (i < {{directories|length}}) {
-      printf("%s: RVA: 0x%08X, size: %i\n", data_directory_names[i], header->data_directories[i].virtual_address, header->data_directories[i].size);
+      fprintf(stream, "%s: RVA: 0x%08X, size: %i\n", data_directory_names[i], header->data_directories[i].virtual_address, header->data_directories[i].size);
     } else {
-      printf("Unknown: RVA: 0x%08X, size: %i\n", header->data_directories[i].virtual_address, header->data_directories[i].size);
+      fprintf(stream, "Unknown: RVA: 0x%08X, size: %i\n", header->data_directories[i].virtual_address, header->data_directories[i].size);
     }
   }
+}
+
+EXPORT_SYM void ppelib_print_pe_header(const ppelib_header_t* header) {
+  ppelib_fprint_pe_header(stdout, header);
 }
