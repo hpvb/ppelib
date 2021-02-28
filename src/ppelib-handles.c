@@ -46,7 +46,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free_resource_directory(pe);
 
 	free(pe->stub);
-	for (size_t i = 0; i < pe->header.number_of_sections; ++i) {
+	for (size_t i = 0; i < pe->allocated_sections; ++i) {
 		free(pe->sections[i]->contents);
 		free(pe->sections[i]);
 	}
@@ -59,26 +59,23 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe);
 }
 
-EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(uint8_t *buffer, size_t size) {
+EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
 
 	if (size < PE_SIGNATURE_OFFSET + sizeof(uint32_t)) {
 		ppelib_set_error("Not a PE file (file too small)");
-		free(buffer);
 		return NULL;
 	}
 
 	uint32_t header_offset = read_uint32_t(buffer + PE_SIGNATURE_OFFSET);
 	if (size < header_offset + sizeof(uint32_t)) {
 		ppelib_set_error("Not a PE file (file too small for PE signature)");
-		free(buffer);
 		return NULL;
 	}
 
 	uint32_t signature = read_uint32_t(buffer + header_offset);
 	if (signature != PE_SIGNATURE) {
 		ppelib_set_error("Not a PE file (PE00 signature missing)");
-		free(buffer);
 		return NULL;
 	}
 
@@ -121,17 +118,24 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(uint8_t *buffer, size_t size
 	pe->end_of_sections = 0;
 
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
-		pe->sections[i] = malloc(sizeof(ppelib_section_t));
+		pe->sections[i] = calloc(sizeof(ppelib_section_t), 1);
 		if (!pe->sections[i]) {
 			ppelib_set_error("Failed to allocate section");
 			ppelib_destroy(pe);
 			return NULL;
 		}
+		pe->allocated_sections++;
 
 		size_t section_size = deserialize_section(buffer, pe->section_offset + (i * PE_SECTION_HEADER_SIZE), size,
 				pe->sections[i]);
 
 		if (ppelib_error_peek()) {
+			ppelib_destroy(pe);
+			return NULL;
+		}
+
+		if (pe->sections[i]->pointer_to_raw_data > size) {
+			ppelib_set_error("Section past end of file");
 			ppelib_destroy(pe);
 			return NULL;
 		}
@@ -158,15 +162,19 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(uint8_t *buffer, size_t size
 		}
 	}
 
-	if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
-		deserialize_certificate_table(buffer, &pe->header, size, &pe->certificate_table);
-		if (ppelib_error_peek()) {
-			ppelib_destroy(pe);
-			return NULL;
+	if (pe->header.number_of_rva_and_sizes >= DIR_CERTIFICATE_TABLE) {
+		if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
+			deserialize_certificate_table(buffer, &pe->header, size, &pe->certificate_table);
+			if (ppelib_error_peek()) {
+				ppelib_destroy(pe);
+				return NULL;
+			}
 		}
 	}
 
-	pe->start_of_sections = pe->sections[0]->virtual_address;
+	if (pe->allocated_sections) {
+		pe->start_of_sections = pe->sections[0]->virtual_address;
+	}
 
 	//void* t = pe.sections[4];
 	//pe.sections[4] = pe.sections[3];
@@ -193,8 +201,10 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(uint8_t *buffer, size_t size
 		memcpy(pe->trailing_data, buffer + pe->end_of_sections, pe->trailing_data_size);
 	}
 
-	if (pe->header.data_directories[DIR_RESOURCE_TABLE].size) {
-		parse_resource_table(pe);
+	if (pe->header.number_of_rva_and_sizes >= DIR_RESOURCE_TABLE) {
+		if (pe->header.data_directories[DIR_RESOURCE_TABLE].size) {
+			parse_resource_table(pe);
+		}
 	}
 
 	return pe;
@@ -476,4 +486,13 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address = pe->certificate_table.offset;
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].size = size;
 	}
+}
+
+EXPORT_SYM int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
+	ppelib_file_t *pe = ppelib_create_from_buffer(buffer, size);
+	if (ppelib_error()) {
+		printf("PPELib-Error: %s\n", ppelib_error());
+	}
+	ppelib_destroy(pe);
+	return 0;  // Non-zero return values are reserved for future use.
 }

@@ -76,29 +76,47 @@ size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* hea
 
   size_t certificate_count = 0;
   size_t offset = table_offset;
+  size_t prev_offset = 0;
   size_t max_offset = table_offset + table_size;
 
   while (offset < max_offset) {
+	prev_offset = offset;
     size_t i = certificate_count;
-    certificate_count++;
 
+    {{fields[0].pe_type}} length = read_{{fields[0].pe_type}}(buffer + offset + {{fields[0].offset}});
+
+    if (length < 8) {
+    	ppelib_set_error("Certificate too small");
+    	return 0;
+    }
+
+    if (offset + length > size) {
+      ppelib_set_error("Buffer too small for table.");
+      return 0;
+    }
+
+    certificate_count++;
     certificate_table->certificates = realloc(certificate_table->certificates, sizeof(ppelib_certificate_t) * certificate_count);
-{%- for field in fields %}
+
+    {%- for field in fields %}
 {%- if 'format' in field and 'variable_size' in field.format %}
 {%- else %}
     certificate_table->certificates[i].{{field.name}} = read_{{field.pe_type}}(buffer + offset + {{field.offset}});
 {%- endif %}
 {%- endfor %}
 
-    if (offset + certificate_table->certificates[i].{{length_field}} > max_offset) {
-      ppelib_set_error("Buffer too small for table.");
+    certificate_table->certificates[i].certificate = malloc(certificate_table->certificates[i].{{length_field}});
+    if (!certificate_table->certificates[i].certificate){
+      ppelib_set_error("Unable to allocate certificate");
       return 0;
     }
-
-    certificate_table->certificates[i].certificate = malloc(certificate_table->certificates[i].{{length_field}});
     memcpy(certificate_table->certificates[i].certificate, buffer + offset + 8, certificate_table->certificates[i].{{length_field}} - 8);
 
     offset = TO_NEAREST(offset + certificate_table->certificates[i].{{length_field}}, 8);
+    if (offset < prev_offset) {
+    	ppelib_set_error("Wrong length in certificate table");
+    	return 0;
+    }
   }
 
   certificate_table->size = certificate_count;

@@ -40,6 +40,7 @@ typedef struct ppelib_file {
 	size_t section_offset;
 	size_t start_of_sections;
 	size_t end_of_sections;
+	size_t allocated_sections;
 
 	ppelib_header_t header;
 	ppelib_section_t **sections;

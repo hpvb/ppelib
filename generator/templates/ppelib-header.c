@@ -106,6 +106,10 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
     header->{{field.name}} = read_{{field.type}}(buf + {{field.offset}});
 {%- endfor %}
 
+    if (size < {{sizes.total_pe}} + offset + (header->{{pe_rvas_field}} * PE_HEADER_DATA_DIRECTORIES_SIZE)) {
+      ppelib_set_error("Buffer too small for directory entries.");
+      return 0;
+    }
     directories = buf + {{sizes.total_pe}};
   }
 
@@ -118,10 +122,23 @@ size_t deserialize_pe_header(const uint8_t* buffer, size_t offset, const size_t 
     header->{{field.name}} = read_{{field.type}}(buf + {{field.offset}});
 {%- endfor %}
 
+	if (size < {{sizes.total_peplus}} + offset + (header->{{pe_rvas_field}} * PE_HEADER_DATA_DIRECTORIES_SIZE)) {
+      ppelib_set_error("Buffer too small for directory entries.");
+      return 0;
+	}
     directories = buf + {{sizes.total_peplus}};
   }
 
+  if (header->{{pe_rvas_field}} > header->{{pe_rvas_field}} * PE_HEADER_DATA_DIRECTORIES_SIZE) {
+    ppelib_set_error("Too many directory entries");
+    return 0;
+  }
+
   header->data_directories = malloc(header->{{pe_rvas_field}} * PE_HEADER_DATA_DIRECTORIES_SIZE);
+  if (!header->data_directories) {
+	ppelib_set_error("Failed to allocate data directories.");
+	return 0;
+  }
 
   for (uint32_t i = 0; i < header->{{pe_rvas_field}}; ++i) {
     header->data_directories[i].virtual_address = read_uint32_t(directories);

@@ -71,7 +71,7 @@ size_t parse_data_entry(ppelib_resource_data_t *data_entry, uint8_t *buffer, siz
 	data_entry->codepage = read_uint32_t(buffer + offset + 8);
 	data_entry->reserved = read_uint32_t(buffer + offset + 12);
 
-	if (data_rva + data_entry->size > max_size) {
+	if (data_rva > max_size || data_entry->size > max_size || data_rva + data_entry->size > max_size) {
 		ppelib_set_error("Section too small for resource data entry");
 		return 0;
 	}
@@ -276,7 +276,6 @@ void free_resource_directory_table(ppelib_resource_table_t *table) {
 }
 
 void free_resource_directory(ppelib_file_t *pe) {
-	ppelib_reset_error();
 
 	free_resource_directory_table(&pe->resource_table);
 }
