@@ -12,3 +12,4 @@ vgcore*
 /tests/
 /failed/
 /build/
+/fuzz/corpus

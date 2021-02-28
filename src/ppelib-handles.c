@@ -38,9 +38,6 @@ EXPORT_SYM ppelib_file_t* ppelib_create() {
 }
 
 EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
-	if (ppelib_error())
-		printf("Last error: %s\n", ppelib_error());
-
 	if (!pe) {
 		return;
 	}
@@ -493,21 +490,5 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address = pe->certificate_table.offset;
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].size = size;
 	}
-}
-
-EXPORT_SYM int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
-	ppelib_file_t *pe = ppelib_create_from_buffer(buffer, size);
-	if (ppelib_error()) {
-		printf("PPELib-Error: %s\n", ppelib_error());
-	} else {
-		ppelib_print_pe_header(&pe->header);
-		ppelib_print_resource_table(&pe->resource_table);
-		size_t len = ppelib_write_to_buffer(pe, NULL, 0);
-		uint8_t *buffer = malloc(len);
-		ppelib_write_to_buffer(pe, buffer, len);
-		free(buffer);
-	}
-	ppelib_destroy(pe);
-	return 0;  // Non-zero return values are reserved for future use.
 }
 

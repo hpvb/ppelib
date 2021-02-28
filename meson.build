@@ -5,6 +5,23 @@ project(
 	license: 'Apache-2.0',
 )
 
+cc = meson.get_compiler('c')
+
+if get_option('use_clang_fuzzer') == true
+	if cc.get_id() != 'clang'
+		error('use_clang_fuzzer must use CC=clang')
+	endif
+	
+	add_project_arguments(
+		'-fsanitize=fuzzer-no-link',
+		language: ['c', 'cpp'],	
+	)
+	add_project_link_arguments(
+		['-fsanitize=fuzzer', '-Wl,--unresolved-symbols=ignore-in-object-files'],
+		language: ['c', 'cpp'],
+	)
+endif
+
 pkg = import('pkgconfig')
 lib = library('ppelib')
 pkg.generate(
@@ -13,9 +30,12 @@ pkg.generate(
 )
 
 prog_python = import('python').find_installation('python3', modules: ['jinja2', 'inflection'])
-cc = meson.get_compiler('c')
 
 inc = include_directories('include')
 subdir('include')
 subdir('src')
-subdir('test')
+if get_option('use_clang_fuzzer') == false
+	subdir('test')
+else
+	subdir('fuzz')
+endif

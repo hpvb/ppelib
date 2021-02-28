@@ -38,14 +38,3 @@ remove_signature = executable(
 	include_directories: inc,
 	link_with: ppelib
 )
-
-if cc.get_id() == 'clang'
-fuzz = executable(
-	'fuzz',
-	gen_h,
-	c_args: ['-fsanitize=fuzzer'],
-	link_args: ['-fsanitize=fuzzer'],
-	include_directories: inc,
-	link_with: ppelib
-)
-endif

@@ -10,14 +10,6 @@ else
 	extra_args = []
 endif
 
-if cc.get_id() == 'clang'
-	extra_args += '-fsanitize=fuzzer'
-	extra_args += '-v'
-	extra_linker_args = ['-Wl,--whole-archive', '/usr/lib64/clang/11.0.0/lib/linux/libclang_rt.fuzzer-x86_64.a', '-Wl,--no-whole-archive', '-lstdc++', '-pthread', '-lm']
-else
-	extra_linker_args = []
-endif
-
 gen_src = custom_target(
 	'generate-files-c',
 	input: [
@@ -51,7 +43,6 @@ ppelib = library(
 	'ppelib',
 	ppelib_sources,
 	c_args: extra_args,
-	link_args: extra_linker_args,
 	include_directories: inc,
 	install: true,
 	version: meson.project_version(),
