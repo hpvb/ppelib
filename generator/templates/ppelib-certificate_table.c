@@ -74,29 +74,21 @@ size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* hea
     return 0;
   }
 
-  size_t certificate_count = 0;
   size_t offset = table_offset;
   size_t prev_offset = 0;
   size_t max_offset = table_offset + table_size;
 
   while (offset < max_offset) {
 	prev_offset = offset;
-    size_t i = certificate_count;
+    size_t i = certificate_table->size;
 
-    {{fields[0].pe_type}} length = read_{{fields[0].pe_type}}(buffer + offset + {{fields[0].offset}});
-
-    if (length < 8) {
-    	ppelib_set_error("Certificate too small");
+    if (offset + {{length}} > size){
+    	ppelib_set_error("Not enough space for certificate entry");
     	return 0;
     }
 
-    if (offset + length > size) {
-      ppelib_set_error("Buffer too small for table.");
-      return 0;
-    }
-
-    certificate_count++;
-    certificate_table->certificates = realloc(certificate_table->certificates, sizeof(ppelib_certificate_t) * certificate_count);
+    certificate_table->size++;
+    certificate_table->certificates = realloc(certificate_table->certificates, sizeof(ppelib_certificate_t) * certificate_table->size);
 
     {%- for field in fields %}
 {%- if 'format' in field and 'variable_size' in field.format %}
@@ -104,6 +96,18 @@ size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* hea
     certificate_table->certificates[i].{{field.name}} = read_{{field.pe_type}}(buffer + offset + {{field.offset}});
 {%- endif %}
 {%- endfor %}
+
+    if (certificate_table->certificates[i].length < 8) {
+	  ppelib_set_error("Certificate too small");
+	  certificate_table->certificates[i].certificate = NULL;
+	  return 0;
+    }
+
+    if (offset + certificate_table->certificates[i].length > size) {
+      ppelib_set_error("Buffer too small for table.");
+	  certificate_table->certificates[i].certificate = NULL;
+      return 0;
+    }
 
     certificate_table->certificates[i].certificate = malloc(certificate_table->certificates[i].{{length_field}});
     if (!certificate_table->certificates[i].certificate){
@@ -119,7 +123,6 @@ size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* hea
     }
   }
 
-  certificate_table->size = certificate_count;
   certificate_table->offset = table_offset;
 
   return max_offset;

@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -22,39 +22,45 @@
 #include "export.h"
 #include "utils.h"
 
-uint8_t read_uint8_t(const uint8_t* buffer) {
-        return *buffer;
+uint8_t read_uint8_t(const uint8_t *buffer) {
+	return *buffer;
 }
 
-void write_uint8_t(uint8_t* buffer, uint8_t val) {
-        buffer[0] = val;
+void write_uint8_t(uint8_t *buffer, uint8_t val) {
+	buffer[0] = val;
 }
 
-uint16_t read_uint16_t(const uint8_t* buffer) {
-        return *(uint16_t*)buffer;
+uint16_t read_uint16_t(const uint8_t *buffer) {
+	uint16_t retval;
+	memcpy(&retval, buffer, sizeof(uint16_t));
+	return retval;
 }
 
-void write_uint16_t(uint8_t* buffer, uint16_t val) {
-        ((uint16_t*)buffer)[0] = val;
+void write_uint16_t(uint8_t *buffer, uint16_t val) {
+	memcpy(buffer, &val, sizeof(uint16_t));
 }
 
-uint32_t read_uint32_t(const uint8_t* buffer) {
-        return *(uint32_t*)buffer;
+uint32_t read_uint32_t(const uint8_t *buffer) {
+	uint32_t retval;
+	memcpy(&retval, buffer, sizeof(uint32_t));
+	return retval;
 }
 
-void write_uint32_t(uint8_t* buffer, uint32_t val) {
-        ((uint32_t*)buffer)[0] = val;
+void write_uint32_t(uint8_t *buffer, uint32_t val) {
+	memcpy(buffer, &val, sizeof(uint32_t));
 }
 
-uint64_t read_uint64_t(const uint8_t* buffer) {
-        return *(uint64_t*)buffer;
+uint64_t read_uint64_t(const uint8_t *buffer) {
+	uint64_t retval;
+	memcpy(&retval, buffer, sizeof(uint64_t));
+	return retval;
 }
 
-void write_uint64_t(uint8_t* buffer, uint64_t val) {
-        ((uint64_t*)buffer)[0] = val;
+void write_uint64_t(uint8_t *buffer, uint64_t val) {
+	memcpy(buffer, &val, sizeof(uint64_t));
 }
 
-uint16_t buffer_excise(uint8_t** buffer, size_t size, size_t start, size_t end) {
+uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end) {
 	if (start >= end) {
 		return 1;
 	}
@@ -73,14 +79,14 @@ uint16_t buffer_excise(uint8_t** buffer, size_t size, size_t start, size_t end) 
 	return 0;
 }
 
-EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t* map) {
-        const ppelib_map_entry_t* m = map;
-        while (m->string) {
-                if (m->value == value) {
-                        return m->string;
-                }
-                ++m;
-        }
+EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map) {
+	const ppelib_map_entry_t *m = map;
+	while (m->string) {
+		if (m->value == value) {
+			return m->string;
+		}
+		++m;
+	}
 
-        return NULL;
+	return NULL;
 }

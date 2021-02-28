@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #include <stdlib.h>
 
@@ -24,18 +24,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 	ppelib_handle *pe = ppelib_create_from_buffer(buffer, size);
 	if (ppelib_error()) {
 		printf("PPELib-Error: %s\n", ppelib_error());
-	} else {
-		ppelib_header_t *header = ppelib_get_header(pe);
-		ppelib_print_pe_header(header);
-		ppelib_free_header(header);
-
-		ppelib_print_resource_table(ppelib_get_resource_table(pe));
-
-		size_t len = ppelib_write_to_buffer(pe, NULL, 0);
-		uint8_t *buffer = malloc(len);
-		ppelib_write_to_buffer(pe, buffer, len);
-		free(buffer);
+		goto out;
 	}
-	ppelib_destroy(pe);
+
+	ppelib_header_t *header = ppelib_get_header(pe);
+	ppelib_print_pe_header(header);
+	ppelib_free_header(header);
+
+	ppelib_print_resource_table(ppelib_get_resource_table(pe));
+
+	size_t len = ppelib_write_to_buffer(pe, NULL, 0);
+	if (ppelib_error()) {
+		printf("PPELib-Error: %s\n", ppelib_error());
+		goto out;
+	}
+	uint8_t *b = malloc(len);
+	ppelib_write_to_buffer(pe, b, len);
+	free(b);
+
+	out: ppelib_destroy(pe);
 	return 0;  // Non-zero return values are reserved for future use.
 }

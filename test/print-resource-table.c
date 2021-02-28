@@ -27,7 +27,6 @@ int main(int argc, char *argv[]) {
 	ppelib_handle *pe = ppelib_create_from_file(argv[1]);
 	if (ppelib_error()) {
 		printf("PElib-error: %s\n", ppelib_error());
-		return (1);
 	}
 
 	ppelib_resource_table_t* table = ppelib_get_resource_table(pe);

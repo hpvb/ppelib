@@ -43,7 +43,7 @@ wchar_t* get_string(uint8_t *buffer, size_t offset) {
 
 	uint16_t size = read_uint16_t(buffer + offset + 0);
 
-	if (offset + size + 2 > max_size) {
+	if (offset + 2 + (size * 2) > max_size) {
 		ppelib_set_error("Section too small for string");
 		return NULL;
 	}
@@ -58,7 +58,7 @@ wchar_t* get_string(uint8_t *buffer, size_t offset) {
 		memcpy(string, buffer + 2, size * 2);
 	} else {
 		for (uint16_t i = 0; i < size; ++i) {
-			string[i] = *(uint16_t*) (buffer + offset + 2 + (i * 2));
+			memcpy(string + i, buffer + offset + 2 + (i * 2), 2);
 		}
 	}
 
@@ -72,7 +72,7 @@ size_t parse_data_entry(ppelib_resource_data_t *data_entry, uint8_t *buffer, siz
 	data_entry->reserved = read_uint32_t(buffer + offset + 12);
 
 	if (data_rva > max_size || data_entry->size > max_size || data_rva + data_entry->size > max_size) {
-		ppelib_set_error("Section too small for resource data entry");
+		ppelib_set_error("Section too small for resource data entry data");
 		return 0;
 	}
 
@@ -122,17 +122,18 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 		entries += 8;
 
 		wchar_t *name = NULL;
-		if (CHECK_BIT(name_offset_or_id, 1 << 31)) {
-			name = get_string(buffer, name_offset_or_id ^ (1 << 31));
+		if (CHECK_BIT(name_offset_or_id, HIGH_BIT32)) {
+			name = get_string(buffer, name_offset_or_id ^ HIGH_BIT32);
 			if (ppelib_error_peek()) {
 				return 0;
 			}
 		}
 
-		if (CHECK_BIT(entry_offset, 1 << 31)) {
-			entry_offset = entry_offset ^ (1 << 31);
+		if (CHECK_BIT(entry_offset, HIGH_BIT32)) {
+			entry_offset = entry_offset ^ HIGH_BIT32;
 
 			if (offset + 16 + entry_offset + 16 > max_size) {
+				free(name);
 				ppelib_set_error("Section too small for sub-directory");
 				return 0;
 			}
@@ -164,6 +165,11 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 			size_t subdir_size = parse_directory_table(subdir, buffer, entry_offset, depth);
 			if (ppelib_error_peek()) {
+				free(name);
+				resource_table->subdirectories_number--;
+				free(resource_table->subdirectories[resource_table->subdirectories_number]);
+				resource_table->subdirectories = realloc(resource_table->subdirectories,
+						sizeof(void*) * resource_table->subdirectories_number);
 				return 0;
 			}
 
@@ -171,6 +177,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 		} else {
 			if (offset + 16 + entry_offset + 16 > max_size) {
+				free(name);
 				ppelib_set_error("Section too small for data entry");
 				return 0;
 			}
@@ -202,6 +209,11 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 			size_t data_size = parse_data_entry(data_entry, buffer, entry_offset);
 			if (ppelib_error_peek()) {
+				free(name);
+				resource_table->data_entries_number--;
+				free(resource_table->data_entries[resource_table->data_entries_number]);
+				resource_table->data_entries = realloc(resource_table->data_entries,
+						sizeof(void*) * resource_table->data_entries_number);
 				return 0;
 			}
 

@@ -166,7 +166,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		}
 	}
 
-	if (pe->header.number_of_rva_and_sizes >= DIR_CERTIFICATE_TABLE) {
+	if (pe->header.number_of_rva_and_sizes > DIR_CERTIFICATE_TABLE) {
 		if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
 			deserialize_certificate_table(buffer, &pe->header, size, &pe->certificate_table);
 			if (ppelib_error_peek()) {
@@ -205,7 +205,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		memcpy(pe->trailing_data, buffer + pe->end_of_sections, pe->trailing_data_size);
 	}
 
-	if (pe->header.number_of_rva_and_sizes >= DIR_RESOURCE_TABLE) {
+	if (pe->header.number_of_rva_and_sizes > DIR_RESOURCE_TABLE) {
 		if (pe->header.data_directories[DIR_RESOURCE_TABLE].size) {
 			parse_resource_table(pe);
 		}
@@ -229,6 +229,12 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 	fseek(f, 0, SEEK_END);
 	file_size = ftell(f);
 	rewind(f);
+
+	if (!file_size) {
+		fclose(f);
+		ppelib_set_error("Empty file");
+		return NULL;
+	}
 
 	file_contents = malloc(file_size);
 	if (!file_size) {
@@ -288,14 +294,16 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	size += pe->trailing_data_size;
 
 	size_t certificates_size = 0;
-	if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
-		certificates_size = serialize_certificate_table(&pe->certificate_table, NULL);
-		if (ppelib_error_peek()) {
-			return 0;
-		}
+	if (pe->header.number_of_rva_and_sizes > DIR_CERTIFICATE_TABLE) {
+		if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
+			certificates_size = serialize_certificate_table(&pe->certificate_table, NULL);
+			if (ppelib_error_peek()) {
+				return 0;
+			}
 
-		if (certificates_size > size) {
-			size = certificates_size;
+			if (certificates_size > size) {
+				size = certificates_size;
+			}
 		}
 	}
 
@@ -335,12 +343,18 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	}
 
 	// Write trailing data
-	memcpy(buffer + end_of_sections, pe->trailing_data, pe->trailing_data_size);
+	if (pe->trailing_data_size) {
+		memcpy(buffer + end_of_sections, pe->trailing_data, pe->trailing_data_size);
+	}
 
 	// Write certificates
-	serialize_certificate_table(&pe->certificate_table, buffer);
-	if (ppelib_error_peek()) {
-		return 0;
+	if (pe->header.number_of_rva_and_sizes > DIR_CERTIFICATE_TABLE) {
+		if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
+			serialize_certificate_table(&pe->certificate_table, buffer);
+			if (ppelib_error_peek()) {
+				return 0;
+			}
+		}
 	}
 
 	return size;
@@ -462,10 +476,13 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	pe->header.size_of_uninitialized_data = TO_NEAREST(size_of_uninitialized_data, pe->header.file_alignment);
 	pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);
 
-	size_t virtual_sections_end = pe->sections[pe->header.number_of_sections - 1]->virtual_address
-			+ pe->sections[pe->header.number_of_sections - 1]->virtual_size;
-	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
+	size_t virtual_sections_end = 0;
+	if (pe->header.number_of_sections) {
+		ppelib_section_t *last_section = pe->sections[pe->header.number_of_sections - 1];
+		virtual_sections_end = last_section->virtual_address + last_section->virtual_size;
+	}
 
+	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
 	pe->header.size_of_headers = TO_NEAREST(size_of_headers, pe->header.file_alignment);
 
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {

@@ -249,6 +249,7 @@ if generate == "c":
 
 fields = []
 offset = 0
+length = 0
 for field in section_header:
     t = type_map[field["pe_size"]]
     field_name = inflection.underscore(field["name"])
@@ -263,6 +264,7 @@ for field in section_header:
         f["format"] = field["format"]
     fields.append(f)
     offset = offset + field["pe_size"]
+    length = length + f['pe_size']
 
 pointer_field = inflection.underscore("PointerToRawData")
 virtualsize_field = inflection.underscore("VirtualSize")
@@ -274,6 +276,7 @@ if generate == "header":
         with open(f'{outdir}/ppelib-section.h', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
+                length=length,
                 pointer_field=pointer_field,
                 virtualsize_field=virtualsize_field,
                 rawsize_field=rawsize_field,
@@ -285,6 +288,7 @@ if generate == "c":
         with open(f'{outdir}/ppelib-section.c', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
+                length=length,
                 pointer_field=pointer_field,
                 virtualsize_field=virtualsize_field,
                 rawsize_field=rawsize_field,
@@ -292,6 +296,7 @@ if generate == "c":
 
 fields = []
 offset = 0
+length = 0
 for field in certificate_table:
     t = type_map[field["pe_size"]]
     field_name = inflection.underscore(field["name"])
@@ -306,6 +311,7 @@ for field in certificate_table:
         f["format"] = field["format"]
     fields.append(f)
     offset = offset + field["pe_size"]
+    length = length + f['pe_size']
 
 length_field = inflection.underscore("Length")
 
@@ -315,6 +321,7 @@ if generate == "header":
         with open(f'{outdir}/ppelib-certificate_table.h', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
+                length=length,
                 length_field=length_field
             ))
 
@@ -324,5 +331,6 @@ if generate == "c":
         with open(f'{outdir}/ppelib-certificate_table.c', 'w') as outfile:
             outfile.write(template.render(
                 fields=fields,
+                length=length,
                 length_field=length_field
             ))

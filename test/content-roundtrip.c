@@ -29,7 +29,8 @@ int main(int argc, char *argv[]) {
 	ppelib_handle *pe = ppelib_create_from_file(argv[1]);
 	if (ppelib_error()) {
 		printf("PElib-error infile: %s\n", ppelib_error());
-		return (1);
+		retval = 1;
+		goto out;
 	}
 
 	// Get original header
@@ -58,9 +59,11 @@ int main(int argc, char *argv[]) {
 	ppelib_write_to_file(pe, argv[2]);
 	if (ppelib_error()) {
 		printf("PElib-error outfile: %s\n", ppelib_error());
-		return (1);
+		retval = 1;
+		goto out;
 	}
 
+	out:
 	ppelib_destroy(pe);
 
 	return retval;

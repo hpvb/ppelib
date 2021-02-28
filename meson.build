@@ -13,11 +13,11 @@ if get_option('use_clang_fuzzer') == true
 	endif
 	
 	add_project_arguments(
-		'-fsanitize=fuzzer-no-link',
+		'-fsanitize=fuzzer-no-link,address,undefined',
 		language: ['c', 'cpp'],	
 	)
 	add_project_link_arguments(
-		['-fsanitize=fuzzer', '-Wl,--unresolved-symbols=ignore-in-object-files'],
+		['-fsanitize=fuzzer,address,undefined', '-Wl,--unresolved-symbols=ignore-in-object-files'],
 		language: ['c', 'cpp'],
 	)
 endif

@@ -23,6 +23,7 @@
 
 #include <ppelib/ppelib-constants.h>
 
+#define HIGH_BIT32 ((uint32_t)(1) << 31)
 #define CHECK_BIT(var,val) ((var) & (val))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X ,Y) (((X) > (Y)) ? (X) : (Y))

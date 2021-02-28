@@ -42,7 +42,9 @@ int main(int argc, char *argv[]) {
 
 	if (memcmp(header, header1, sizeof(ppelib_header_t))) {
 		header1->base_of_data = header->base_of_data;
+		header1->base_of_code = header->base_of_code;
 		header1->size_of_code = header->size_of_code;
+		header1->size_of_image = header->size_of_image;
 		header1->size_of_uninitialized_data = header->size_of_uninitialized_data;
 		header1->size_of_initialized_data = header->size_of_initialized_data;
 
