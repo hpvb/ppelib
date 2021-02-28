@@ -38,6 +38,9 @@ EXPORT_SYM ppelib_file_t* ppelib_create() {
 }
 
 EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
+	if (ppelib_error())
+		printf("Last error: %s\n", ppelib_error());
+
 	if (!pe) {
 		return;
 	}
@@ -46,11 +49,12 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free_resource_directory(pe);
 
 	free(pe->stub);
-	for (size_t i = 0; i < pe->allocated_sections; ++i) {
-		free(pe->sections[i]->contents);
-		free(pe->sections[i]);
+	if (pe->allocated_sections) {
+		for (size_t i = 0; i < pe->header.number_of_sections; ++i) {
+			free(pe->sections[i]->contents);
+			free(pe->sections[i]);
+		}
 	}
-
 	free(pe->data_directories);
 	free(pe->header.data_directories);
 	free(pe->sections);
@@ -120,12 +124,15 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		pe->sections[i] = calloc(sizeof(ppelib_section_t), 1);
 		if (!pe->sections[i]) {
+			pe->header.number_of_sections = i;
 			ppelib_set_error("Failed to allocate section");
 			ppelib_destroy(pe);
 			return NULL;
 		}
-		pe->allocated_sections++;
+	}
+	pe->allocated_sections = 1;
 
+	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = deserialize_section(buffer, pe->section_offset + (i * PE_SECTION_HEADER_SIZE), size,
 				pe->sections[i]);
 
@@ -172,7 +179,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		}
 	}
 
-	if (pe->allocated_sections) {
+	if (pe->header.number_of_sections) {
 		pe->start_of_sections = pe->sections[0]->virtual_address;
 	}
 
@@ -492,7 +499,15 @@ EXPORT_SYM int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 	ppelib_file_t *pe = ppelib_create_from_buffer(buffer, size);
 	if (ppelib_error()) {
 		printf("PPELib-Error: %s\n", ppelib_error());
+	} else {
+		ppelib_print_pe_header(&pe->header);
+		ppelib_print_resource_table(&pe->resource_table);
+		size_t len = ppelib_write_to_buffer(pe, NULL, 0);
+		uint8_t *buffer = malloc(len);
+		ppelib_write_to_buffer(pe, buffer, len);
+		free(buffer);
 	}
 	ppelib_destroy(pe);
 	return 0;  // Non-zero return values are reserved for future use.
 }
+
