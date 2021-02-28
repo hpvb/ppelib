@@ -22,7 +22,9 @@
 
 const char* ppelib_error();
 
-void ppelib_set_error(const char* error);
+#define ppelib_set_error(x) ppelib_set_error_func(__FUNCTION__, x)
+
+void ppelib_set_error_func(const char* function, const char* error);
 void ppelib_reset_error();
 
 uint32_t ppelib_error_peek();

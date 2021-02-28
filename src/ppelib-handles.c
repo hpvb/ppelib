@@ -43,6 +43,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	}
 
 	ppelib_free_certificate_table(&pe->certificate_table);
+	free_resource_directory(pe);
 
 	free(pe->stub);
 	for (size_t i = 0; i < pe->header.number_of_sections; ++i) {
@@ -143,9 +144,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(uint8_t *buffer, size_t size
 			size_t directory_va = pe->header.data_directories[d].virtual_address;
 			size_t directory_size = pe->header.data_directories[d].size;
 			size_t section_va = pe->sections[i]->virtual_address;
-			size_t section_raw = pe->sections[i]->pointer_to_raw_data;
 			size_t section_va_end = section_va + pe->sections[i]->size_of_raw_data;
-			size_t section_raw_end = section_raw + pe->sections[i]->size_of_raw_data;
 
 			if (d != DIR_CERTIFICATE_TABLE) {
 				if (section_va <= directory_va && section_va_end >= directory_va) {
@@ -192,6 +191,10 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(uint8_t *buffer, size_t size
 		}
 
 		memcpy(pe->trailing_data, buffer + pe->end_of_sections, pe->trailing_data_size);
+	}
+
+	if (pe->header.data_directories[DIR_RESOURCE_TABLE].size) {
+		parse_resource_table(pe);
 	}
 
 	return pe;

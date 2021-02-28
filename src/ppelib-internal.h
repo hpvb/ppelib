@@ -43,9 +43,12 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 void ppelib_free_certificate_table(ppelib_certificate_table_t *certificate_table);
 uint16_t ppelib_section_find_index(ppelib_file_t *pe, ppelib_section_t *section);
 
+size_t parse_resource_table(ppelib_file_t *pe);
+void free_resource_directory(ppelib_file_t *pe);
+
 // Copies of <ppelib/ppelib-low-level.h>
 
-void ppelib_recalculate(ppelib_file_t* pe);
+void ppelib_recalculate(ppelib_file_t *pe);
 
 ppelib_header_t* ppelib_get_header(ppelib_file_t *pe);
 void ppelib_free_header(ppelib_header_t *header);

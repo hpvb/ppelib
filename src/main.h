@@ -18,6 +18,8 @@
 #ifndef PPELIB_MAIN_H_
 #define PPELIB_MAIN_H_
 
+#include <ppelib/ppelib-resource-table.h>
+
 #include "ppelib-header.h"
 #include "ppelib-section.h"
 #include "ppelib-certificate_table.h"
@@ -44,6 +46,7 @@ typedef struct ppelib_file {
 	ppelib_data_directory_t *data_directories;
 
 	ppelib_certificate_table_t certificate_table;
+	ppelib_resource_table_t resource_table;
 
 	uint8_t *stub;
 	size_t trailing_data_size;

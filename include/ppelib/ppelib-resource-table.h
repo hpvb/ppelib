@@ -13,34 +13,45 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
-#ifndef PPELIB_H_
-#define PPELIB_H_
+#ifndef PPELIB_RESOURCE_TABLE_H_
+#define PPELIB_RESOURCE_TABLE_H_
 
 #include <stddef.h>
 #include <stdint.h>
 
 #include <ppelib/ppelib-constants.h>
-#include <ppelib/ppelib-certificate_table.h>
-#include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-section.h>
-#include <ppelib/ppelib-resource-table.h>
 
-typedef void ppelib_handle;
+typedef struct ppelib_resource_data {
+	wchar_t* name;
+	uint32_t resource_type;
 
-const char* ppelib_error();
+	uint32_t size;
+	uint32_t codepage;
+	uint32_t reserved;
 
-ppelib_handle* ppelib_create();
-void ppelib_destroy(ppelib_handle* handle);
+	uint8_t* data;
+} ppelib_resource_data_t;
 
-ppelib_handle* ppelib_create_from_buffer(uint8_t* buffer, size_t size);
-ppelib_handle* ppelib_create_from_file(const char* filename);
+typedef struct ppelib_resource_table {
+	uint8_t root;
 
-size_t ppelib_write_to_buffer(ppelib_handle* handle, uint8_t* buffer, size_t size);
-size_t ppelib_write_to_file(ppelib_handle* handle, const char* filename);
+	wchar_t* name;
+	uint32_t resource_type;
 
-uint32_t ppelib_has_signature(ppelib_handle* handle);
-void ppelib_signature_remove(ppelib_handle* handle);
+	uint32_t characteristics;
+	uint32_t time_date_stamp;
+	uint16_t major_version;
+	uint16_t minor_version;
 
-#endif /* PPELIB_H_ */
+	size_t subdirectories_number;
+	struct ppelib_resource_table **subdirectories;
+
+	size_t data_entries_number;
+	struct ppelib_resource_data **data_entries;
+} ppelib_resource_table_t;
+
+void ppelib_print_resource_table(const ppelib_resource_table_t *resource_table);
+
+#endif /* PPELIB_RESOURCE_TABLE_H_ */

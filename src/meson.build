@@ -30,6 +30,7 @@ ppelib_sources = [
 	'ppelib-error.c',
 	'ppelib-handles.c',
 	'ppelib-headers.c',
+	'ppelib-resource-table.c',
 	'ppelib-sections.c',
 	'utils.c',
 	gen_src,

@@ -26,4 +26,7 @@ ppelib_header_t* ppelib_get_header(ppelib_handle* handle);
 void ppelib_free_header(ppelib_header_t* header);
 void ppelib_set_header(ppelib_handle* handle, ppelib_header_t* header);
 
+ppelib_resource_table_t* ppelib_get_resource_table(ppelib_handle* handle);
+void ppelib_free_resource_directory_table(ppelib_resource_table_t* table);
+
 #endif /* PPELIB_LOW_LEVEL_H_ */

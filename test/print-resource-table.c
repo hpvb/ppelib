@@ -13,36 +13,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "export.h"
+#include <ppelib/ppelib.h>
+#include <ppelib/ppelib-low-level.h>
 
-_Thread_local const char* ppelib_cur_error;
-_Thread_local char ppelib_error_str[100];
+int main(int argc, char *argv[]) {
+	int retval = 0;
 
-EXPORT_SYM const char* ppelib_error() {
-	return ppelib_cur_error;
-}
+	ppelib_handle *pe = ppelib_create_from_file(argv[1]);
+	if (ppelib_error()) {
+		printf("PElib-error: %s\n", ppelib_error());
+		return (1);
+	}
 
-void ppelib_set_error_func(const char* function, const char* error) {
-	strncpy(ppelib_error_str, function, 99);
-	strncat(ppelib_error_str, "(): ", 99);
-	strncat(ppelib_error_str, error, 99);
+	ppelib_resource_table_t* table = ppelib_get_resource_table(pe);
+	if (ppelib_error()) {
+		printf("PElib-error: %s\n", ppelib_error());
+		return (1);
+	}
+	ppelib_print_resource_table(table);
 
-	ppelib_cur_error = ppelib_error_str;
-}
+	ppelib_destroy(pe);
 
-void ppelib_reset_error() {
-	ppelib_cur_error = NULL;
-}
-
-uint32_t ppelib_error_peek() {
-	if (ppelib_cur_error)
-		return 1;
-
-	return 0;
+	return retval;
 }

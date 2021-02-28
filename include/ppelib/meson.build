@@ -21,5 +21,6 @@ install_headers(
 	'ppelib.h',
 	'ppelib-constants.h',
 	'ppelib-low-level.h',
+	'ppelib-resource-table.h',
 	subdir: 'ppelib'
 )
