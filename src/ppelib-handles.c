@@ -275,17 +275,17 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	size_t end_of_sections = 0;
 
 	// Write resources TODO
-	if (pe->header.number_of_rva_and_sizes > DIR_RESOURCE_TABLE) {
-		if (pe->data_directories[DIR_RESOURCE_TABLE].size) {
-			ppelib_section_t *section = pe->data_directories[DIR_RESOURCE_TABLE].section;
-			size_t offset = pe->data_directories[DIR_RESOURCE_TABLE].offset;
-
-			if (buffer && section) {
-				serialize_resource_table(&pe->resource_table, section->contents + offset,
-						pe->data_directories[DIR_RESOURCE_TABLE].orig_rva);
-			}
-		}
-	}
+//	if (pe->header.number_of_rva_and_sizes > DIR_RESOURCE_TABLE) {
+//		if (pe->data_directories[DIR_RESOURCE_TABLE].size) {
+//			ppelib_section_t *section = pe->data_directories[DIR_RESOURCE_TABLE].section;
+//			size_t offset = pe->data_directories[DIR_RESOURCE_TABLE].offset;
+//
+//			if (buffer && section) {
+//				serialize_resource_table(&pe->resource_table, section->contents + offset,
+//						pe->data_directories[DIR_RESOURCE_TABLE].orig_rva);
+//			}
+//		}
+//	}
 
 	size_t section_offset = pe->pe_header_offset + coff_header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {

@@ -30,6 +30,7 @@
 
 _Thread_local size_t t_max_size;
 _Thread_local size_t t_rscs_base;
+_Thread_local uint8_t t_parse_error_handled;
 
 typedef struct string_table_string {
 	size_t offset;
@@ -46,6 +47,9 @@ typedef struct string_table {
 
 	string_table_string_t *strings;
 } string_table_t;
+
+size_t put_string(const wchar_t *string, uint8_t *buffer);
+void free_resource_directory_table(ppelib_resource_table_t *table);
 
 void string_table_serialize(string_table_t *table, uint8_t *buffer) {
 	for (size_t i = 0; i < table->size; ++i) {
@@ -111,8 +115,6 @@ void string_table_put(string_table_t *table, wchar_t *string) {
 void string_table_free(string_table_t *table) {
 	free(table->strings);
 }
-
-size_t put_string(const wchar_t *string, uint8_t *buffer);
 
 size_t table_length(const ppelib_resource_table_t *resource_table, size_t in_size) {
 	size_t subdirs_size = 0;
@@ -207,7 +209,7 @@ size_t write_tables(const ppelib_resource_table_t *resource_table, uint8_t *buff
 		next_entry += table_length(t, 0);
 
 		if (t->name) {
-			string_table_string_t* string = string_table_find(string_table, t->name);
+			string_table_string_t *string = string_table_find(string_table, t->name);
 			name_offset_or_id = (string_table->base_offset + string->offset) ^ HIGH_BIT32;
 		} else {
 			name_offset_or_id = t->resource_type;
@@ -230,7 +232,7 @@ size_t write_tables(const ppelib_resource_table_t *resource_table, uint8_t *buff
 		uint32_t entry_offset = *data_entries_offset;
 
 		if (d->name) {
-			string_table_string_t* string = string_table_find(string_table, d->name);
+			string_table_string_t *string = string_table_find(string_table, d->name);
 			name_offset_or_id = (string_table->base_offset + string->offset) ^ HIGH_BIT32;
 		} else {
 			name_offset_or_id = d->resource_type;
@@ -300,6 +302,7 @@ size_t serialize_resource_table(const ppelib_resource_table_t *resource_table, u
 wchar_t* get_string(uint8_t *buffer, size_t offset) {
 	if (offset + 2 > t_max_size) {
 		ppelib_set_error("Section too small for string");
+		t_parse_error_handled = 0;
 		return NULL;
 	}
 
@@ -307,12 +310,14 @@ wchar_t* get_string(uint8_t *buffer, size_t offset) {
 
 	if (offset + 2 + (size * 2) > t_max_size) {
 		ppelib_set_error("Section too small for string");
+		t_parse_error_handled = 0;
 		return NULL;
 	}
 
 	wchar_t *string = calloc((size + 1) * sizeof(wchar_t), 1);
 	if (!string) {
 		ppelib_set_error("Failed to allocate string");
+		t_parse_error_handled = 0;
 		return NULL;
 	}
 
@@ -339,12 +344,14 @@ size_t parse_data_entry(ppelib_resource_data_t *data_entry, uint8_t *buffer, siz
 
 	if (data_rva > t_max_size || data_entry->size > t_max_size || data_rva + data_entry->size > t_max_size) {
 		ppelib_set_error("Section too small for resource data entry data");
+		t_parse_error_handled = 0;
 		return 0;
 	}
 
 	data_entry->data = malloc(data_entry->size);
 	if (!data_entry->data) {
 		ppelib_set_error("Failed to allocate resource data");
+		t_parse_error_handled = 0;
 		return 0;
 	}
 
@@ -358,6 +365,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 	if (depth > 10) {
 		ppelib_set_error("Parse depth (10) exceeded");
+		t_parse_error_handled = 0;
 		return 0;
 	}
 
@@ -377,6 +385,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 	if (offset + 16 + min_space > t_max_size) {
 		ppelib_set_error("Section too small for resource table (no space for directory contents)");
+		t_parse_error_handled = 0;
 		return 0;
 	}
 
@@ -401,6 +410,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 			if (offset + 16 + entry_offset + 16 > t_max_size) {
 				free(name);
 				ppelib_set_error("Section too small for sub-directory");
+				t_parse_error_handled = 0;
 				return 0;
 			}
 
@@ -418,8 +428,10 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 			resource_table->subdirectories[subdirs - 1] = calloc(sizeof(ppelib_resource_table_t), 1);
 			ppelib_resource_table_t *subdir = resource_table->subdirectories[subdirs - 1];
+
 			if (!subdir) {
 				ppelib_set_error("Failed to allocate resource sub-directory entry");
+				t_parse_error_handled = 0;
 				return 0;
 			}
 
@@ -431,11 +443,18 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 			size_t subdir_size = parse_directory_table(subdir, buffer, entry_offset, depth);
 			if (ppelib_error_peek()) {
-				free(name);
-				resource_table->subdirectories_number--;
-				free(resource_table->subdirectories[resource_table->subdirectories_number]);
-				resource_table->subdirectories = realloc(resource_table->subdirectories,
-						sizeof(void*) * resource_table->subdirectories_number);
+				if (!t_parse_error_handled) {
+					t_parse_error_handled = 1;
+
+					free(name);
+					resource_table->subdirectories_number--;
+					subdirs = resource_table->subdirectories_number;
+
+					free_resource_directory_table(resource_table->subdirectories[subdirs]);
+					free(resource_table->subdirectories[subdirs]);
+
+					resource_table->subdirectories = realloc(resource_table->subdirectories, sizeof(void*) * subdirs);
+				}
 				return 0;
 			}
 
@@ -445,6 +464,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 			if (offset + 16 + entry_offset + 16 > t_max_size) {
 				free(name);
 				ppelib_set_error("Section too small for data entry");
+				t_parse_error_handled = 0;
 				return 0;
 			}
 
@@ -453,6 +473,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 			void *oldptr = resource_table->data_entries;
 			resource_table->data_entries = realloc(resource_table->data_entries, sizeof(void*) * datas);
+
 			if (!resource_table->data_entries) {
 				resource_table->data_entries = oldptr;
 				resource_table->data_entries_number--;
@@ -475,12 +496,17 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 			size_t data_size = parse_data_entry(data_entry, buffer, entry_offset);
 			if (ppelib_error_peek()) {
-				free(name);
-				resource_table->data_entries_number--;
-				free(resource_table->data_entries[resource_table->data_entries_number]);
-				resource_table->data_entries = realloc(resource_table->data_entries,
-						sizeof(void*) * resource_table->data_entries_number);
-				return 0;
+				if (!t_parse_error_handled) {
+					t_parse_error_handled = 1;
+
+					free(name);
+					resource_table->data_entries_number--;
+					free(resource_table->data_entries[resource_table->data_entries_number]);
+					resource_table->data_entries = realloc(resource_table->data_entries,
+							sizeof(void*) * resource_table->data_entries_number);
+
+					return 0;
+				}
 			}
 
 			size = MAX(size, data_size);
@@ -492,6 +518,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 size_t parse_resource_table(ppelib_file_t *pe) {
 	ppelib_reset_error();
+	t_parse_error_handled = 0;
 
 	if (pe->header.number_of_rva_and_sizes < DIR_RESOURCE_TABLE) {
 		ppelib_set_error("No resource table found (too few directory entries).");
@@ -534,15 +561,6 @@ size_t parse_resource_table(ppelib_file_t *pe) {
 }
 
 void free_resource_directory_table(ppelib_resource_table_t *table) {
-	for (size_t i = 0; i < table->subdirectories_number; ++i) {
-		free_resource_directory_table(table->subdirectories[i]);
-		free(table->subdirectories[i]->name);
-		free(table->subdirectories[i]);
-	}
-
-	free(table->subdirectories);
-	table->subdirectories_number = 0;
-
 	for (size_t i = 0; i < table->data_entries_number; ++i) {
 		free(table->data_entries[i]->data);
 		free(table->data_entries[i]->name);
@@ -551,6 +569,15 @@ void free_resource_directory_table(ppelib_resource_table_t *table) {
 
 	free(table->data_entries);
 	table->data_entries_number = 0;
+
+	for (size_t i = 0; i < table->subdirectories_number; ++i) {
+		free_resource_directory_table(table->subdirectories[i]);
+		free(table->subdirectories[i]->name);
+		free(table->subdirectories[i]);
+	}
+
+	free(table->subdirectories);
+	table->subdirectories_number = 0;
 }
 
 void free_resource_directory(ppelib_file_t *pe) {
