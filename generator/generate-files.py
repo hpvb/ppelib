@@ -264,7 +264,8 @@ for field in section_header:
         f["format"] = field["format"]
     fields.append(f)
     offset = offset + field["pe_size"]
-    length = length + f['pe_size']
+    if f["pe_size"] > 0:
+        length = length + f['pe_size']
 
 pointer_field = inflection.underscore("PointerToRawData")
 virtualsize_field = inflection.underscore("VirtualSize")
@@ -311,8 +312,10 @@ for field in certificate_table:
         f["format"] = field["format"]
     fields.append(f)
     offset = offset + field["pe_size"]
-    length = length + f['pe_size']
+    if f["pe_size"] > 0:
+        length = length + f['pe_size']
 
+print(f"Certificate table length: {length}")
 length_field = inflection.underscore("Length")
 
 if generate == "header":
