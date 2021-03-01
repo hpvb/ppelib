@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <ppelib/ppelib-resource-table.h>
 #include <ppelib/ppelib-certificate_table.h>
 #include <ppelib/ppelib-header.h>
 #include <ppelib/ppelib-section.h>
@@ -44,6 +45,8 @@ void ppelib_free_certificate_table(ppelib_certificate_table_t *certificate_table
 uint16_t ppelib_section_find_index(ppelib_file_t *pe, ppelib_section_t *section);
 
 size_t parse_resource_table(ppelib_file_t *pe);
+size_t serialize_resource_table(const ppelib_resource_table_t *resource_table, uint8_t *buffer, size_t rscs_base);
+
 void free_resource_directory(ppelib_file_t *pe);
 
 // Copies of <ppelib/ppelib-low-level.h>

@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include <ppelib/ppelib-section.h>
 #include <ppelib/ppelib-resource-table.h>
@@ -27,23 +28,284 @@
 #include "export.h"
 #include "utils.h"
 
-_Thread_local size_t max_size;
-_Thread_local size_t rscs_base;
+_Thread_local size_t t_max_size;
+_Thread_local size_t t_rscs_base;
 
-size_t serialize_resource_table(const ppelib_resource_table_t *resource_table, uint8_t *buffer) {
+typedef struct string_table_string {
+	size_t offset;
+	size_t bytes;
+
+	const wchar_t *string;
+} string_table_string_t;
+
+typedef struct string_table {
+	size_t size;
+	size_t bytes;
+
+	size_t base_offset;
+
+	string_table_string_t *strings;
+} string_table_t;
+
+void string_table_serialize(string_table_t *table, uint8_t *buffer) {
+	for (size_t i = 0; i < table->size; ++i) {
+		size_t offset = table->base_offset + table->strings[i].offset;
+
+		const wchar_t *string = table->strings[i].string;
+		size_t size = wcslen(string);
+
+		printf("Writing string '%ls' at offset %li\n", string, offset);
+		if (size > (1 << 17)) {
+			ppelib_set_error("String too long");
+			return;
+		}
+
+		write_uint16_t(buffer + offset, size);
+
+		if (sizeof(wchar_t) == 2) {
+			memcpy(buffer + offset + 2, string, size * 2);
+		} else {
+			for (uint16_t i = 0; i < size; ++i) {
+				memcpy(buffer + offset + 2 + (i * 2), string + i, 2);
+			}
+		}
+	}
+}
+
+string_table_string_t* string_table_find(string_table_t *table, wchar_t *string) {
+	for (size_t i = 0; i < table->size; ++i) {
+		if (wcscmp(string, table->strings[i].string) == 0) {
+			return &table->strings[i];
+		}
+	}
+
+	return NULL;
+}
+
+void string_table_put(string_table_t *table, wchar_t *string) {
+	if (string_table_find(table, string)) {
+		return;
+	}
+
+	size_t s_size = (wcslen(string) * 2) + 2;
+
+	table->size++;
+	table->bytes += s_size;
+
+	table->strings = realloc(table->strings, sizeof(string_table_string_t) * table->size);
+	table->strings[table->size - 1].string = string;
+
+	table->strings[table->size - 1].bytes = s_size;
+
+	if (table->size > 1) {
+		size_t prev_offset = table->strings[table->size - 2].offset;
+		size_t prev_length = table->strings[table->size - 2].bytes;
+		table->strings[table->size - 1].offset = prev_offset + prev_length;
+	} else {
+		table->strings[table->size - 1].offset = 0;
+	}
+
+	printf("RVA: %li string: '%ls' s_size : %li\n", table->strings[table->size - 1].offset, string, s_size);
+}
+
+void string_table_free(string_table_t *table) {
+	free(table->strings);
+}
+
+size_t put_string(const wchar_t *string, uint8_t *buffer);
+
+size_t table_length(const ppelib_resource_table_t *resource_table, size_t in_size) {
+	size_t subdirs_size = 0;
+	for (uint32_t i = 0; i < resource_table->subdirectories_number; ++i) {
+		subdirs_size += table_length(resource_table->subdirectories[i], in_size);
+	}
+
+	size_t entries_size = (resource_table->subdirectories_number + resource_table->data_entries_number) * 8;
+
+	return in_size + subdirs_size + 16 + entries_size;
+}
+
+size_t table_data_entries_number(const ppelib_resource_table_t *resource_table, size_t in_size) {
+	size_t subdirs_size = 0;
+	for (uint32_t i = 0; i < resource_table->subdirectories_number; ++i) {
+		subdirs_size += table_data_entries_number(resource_table->subdirectories[i], in_size);
+	}
+
+	return in_size + subdirs_size + resource_table->data_entries_number;
+}
+
+size_t write_name(const wchar_t *string, uint8_t *buffer, size_t offset) {
+	size_t string_size = put_string(string, buffer + offset);
+	offset += TO_NEAREST(offset + string_size, 8);
+
+	return offset;
+}
+
+size_t write_tables(const ppelib_resource_table_t *resource_table, uint8_t *buffer, size_t offset,
+		string_table_t *string_table, size_t *data_entries_offset, size_t *data_offset, size_t rscs_base) {
+
+	printf("write_tables\n");
+
+	//size_t size = string_table_offset;
+	size_t next_entry = 0;
+
+	size_t number_of_name_entries = 0;
+	size_t number_of_id_entries = 0;
+
+	for (uint32_t i = 0; i < resource_table->subdirectories_number; ++i) {
+		if (resource_table->subdirectories[i]->name) {
+			number_of_name_entries++;
+		} else {
+			number_of_id_entries++;
+		}
+	}
+
+	for (uint32_t i = 0; i < resource_table->data_entries_number; ++i) {
+		if (resource_table->data_entries[i]->name) {
+			number_of_name_entries++;
+		} else {
+			number_of_id_entries++;
+		}
+	}
+
+	if (number_of_name_entries > (1 << 17)) {
+		ppelib_set_error("Too many name entries");
+		return 0;
+	}
+
+	if (number_of_id_entries > (1 << 17)) {
+		ppelib_set_error("Too many id entries");
+		return 0;
+	}
+
+	uint8_t *table = buffer + offset;
+
+	write_uint32_t(table + 0, resource_table->characteristics);
+	write_uint32_t(table + 4, resource_table->time_date_stamp);
+	write_uint16_t(table + 8, resource_table->major_version);
+	write_uint16_t(table + 10, resource_table->minor_version);
+	write_uint16_t(table + 12, number_of_name_entries);
+	write_uint16_t(table + 14, number_of_id_entries);
+
+	offset += 16;
+
+	next_entry = offset + ((number_of_name_entries + number_of_id_entries) * 8);
+
+	printf("Going to write %li subdirs\n", resource_table->subdirectories_number);
+	for (uint32_t i = 0; i < resource_table->subdirectories_number; ++i) {
+
+		const ppelib_resource_table_t *t = resource_table->subdirectories[i];
+		uint8_t *entry = buffer + offset;
+
+		uint32_t name_offset_or_id = 0;
+		uint32_t entry_offset = next_entry;
+
+		printf("table_length: %li\n", table_length(t, 0));
+		ppelib_print_resource_table(t);
+		printf("\n");
+
+		next_entry += table_length(t, 0);
+
+		if (t->name) {
+			string_table_string_t* string = string_table_find(string_table, t->name);
+			name_offset_or_id = (string_table->base_offset + string->offset) ^ HIGH_BIT32;
+		} else {
+			name_offset_or_id = t->resource_type;
+		}
+
+		write_uint32_t(entry + 0, name_offset_or_id);
+		write_uint32_t(entry + 4, entry_offset ^ HIGH_BIT32);
+
+		write_tables(t, buffer, entry_offset, string_table, data_entries_offset, data_offset, rscs_base);
+		offset += 8;
+	}
+
+	for (uint32_t i = 0; i < resource_table->data_entries_number; ++i) {
+		printf("Writing data entry\n");
+
+		const ppelib_resource_data_t *d = resource_table->data_entries[i];
+		uint8_t *entry = buffer + offset;
+
+		uint32_t name_offset_or_id = 0;
+		uint32_t entry_offset = *data_entries_offset;
+
+		if (d->name) {
+			string_table_string_t* string = string_table_find(string_table, d->name);
+			name_offset_or_id = (string_table->base_offset + string->offset) ^ HIGH_BIT32;
+		} else {
+			name_offset_or_id = d->resource_type;
+		}
+
+		write_uint32_t(entry + 0, name_offset_or_id);
+		write_uint32_t(entry + 4, entry_offset);
+
+		write_uint32_t(buffer + entry_offset + 0, rscs_base + *data_offset);
+		write_uint32_t(buffer + entry_offset + 4, d->size);
+		write_uint32_t(buffer + entry_offset + 8, d->codepage);
+		write_uint32_t(buffer + entry_offset + 12, d->reserved);
+
+		memcpy(buffer + *data_offset, d->data, d->size);
+
+		*data_entries_offset = entry_offset + 16;
+		*data_offset = TO_NEAREST(*data_offset + d->size, 8);
+
+		offset += 8;
+		return 0;
+	}
+
+	return 0;
+}
+
+void fill_string_table(const ppelib_resource_table_t *resource_table, string_table_t *string_table) {
+	if (resource_table->name) {
+		string_table_put(string_table, resource_table->name);
+	}
+
+	for (size_t i = 0; i < resource_table->subdirectories_number; ++i) {
+		fill_string_table(resource_table->subdirectories[i], string_table);
+	}
+
+	for (size_t i = 0; i < resource_table->data_entries_number; ++i) {
+		if (resource_table->data_entries[i]->name) {
+			string_table_put(string_table, resource_table->data_entries[i]->name);
+		}
+	}
+}
+
+size_t serialize_resource_table(const ppelib_resource_table_t *resource_table, uint8_t *buffer, size_t rscs_base) {
 	ppelib_reset_error();
 
+	size_t size = 0;
+
+	size_t string_table_offset = table_length(resource_table, 0);
+
+	string_table_t string_table = { 0 };
+	string_table.base_offset = string_table_offset;
+
+	size_t data_entries = table_data_entries_number(resource_table, 0);
+	fill_string_table(resource_table, &string_table);
+
+	size_t data_entries_offset = TO_NEAREST(string_table_offset + string_table.bytes, 4);
+	size_t data_offset = data_entries_offset + (data_entries * 16);
+
+	if (buffer) {
+		string_table_serialize(&string_table, buffer);
+		write_tables(resource_table, buffer, 0, &string_table, &data_entries_offset, &data_offset, rscs_base);
+	}
+
+	string_table_free(&string_table);
+	return size;
 }
 
 wchar_t* get_string(uint8_t *buffer, size_t offset) {
-	if (offset + 2 > max_size) {
+	if (offset + 2 > t_max_size) {
 		ppelib_set_error("Section too small for string");
 		return NULL;
 	}
 
 	uint16_t size = read_uint16_t(buffer + offset + 0);
 
-	if (offset + 2 + (size * 2) > max_size) {
+	if (offset + 2 + (size * 2) > t_max_size) {
 		ppelib_set_error("Section too small for string");
 		return NULL;
 	}
@@ -65,13 +327,17 @@ wchar_t* get_string(uint8_t *buffer, size_t offset) {
 	return string;
 }
 
+size_t put_string(const wchar_t *string, uint8_t *buffer) {
+
+}
+
 size_t parse_data_entry(ppelib_resource_data_t *data_entry, uint8_t *buffer, size_t offset) {
-	uint32_t data_rva = read_uint32_t(buffer + offset + 0) - rscs_base;
+	uint32_t data_rva = read_uint32_t(buffer + offset + 0) - t_rscs_base;
 	data_entry->size = read_uint32_t(buffer + offset + 4);
 	data_entry->codepage = read_uint32_t(buffer + offset + 8);
 	data_entry->reserved = read_uint32_t(buffer + offset + 12);
 
-	if (data_rva > max_size || data_entry->size > max_size || data_rva + data_entry->size > max_size) {
+	if (data_rva > t_max_size || data_entry->size > t_max_size || data_rva + data_entry->size > t_max_size) {
 		ppelib_set_error("Section too small for resource data entry data");
 		return 0;
 	}
@@ -109,7 +375,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 
 	size_t min_space = (number_of_name_entries + number_of_id_entries) * 8;
 
-	if (offset + 16 + min_space > max_size) {
+	if (offset + 16 + min_space > t_max_size) {
 		ppelib_set_error("Section too small for resource table (no space for directory contents)");
 		return 0;
 	}
@@ -132,7 +398,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 		if (CHECK_BIT(entry_offset, HIGH_BIT32)) {
 			entry_offset = entry_offset ^ HIGH_BIT32;
 
-			if (offset + 16 + entry_offset + 16 > max_size) {
+			if (offset + 16 + entry_offset + 16 > t_max_size) {
 				free(name);
 				ppelib_set_error("Section too small for sub-directory");
 				return 0;
@@ -176,7 +442,7 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 			size = MAX(size, subdir_size);
 
 		} else {
-			if (offset + 16 + entry_offset + 16 > max_size) {
+			if (offset + 16 + entry_offset + 16 > t_max_size) {
 				free(name);
 				ppelib_set_error("Section too small for data entry");
 				return 0;
@@ -261,8 +527,8 @@ size_t parse_resource_table(ppelib_file_t *pe) {
 		return 0;
 	}
 
-	max_size = data_size;
-	rscs_base = pe->data_directories[DIR_RESOURCE_TABLE].orig_rva;
+	t_max_size = data_size;
+	t_rscs_base = pe->data_directories[DIR_RESOURCE_TABLE].orig_rva;
 
 	return parse_directory_table(&pe->resource_table, data_table, 0, 0);
 }
@@ -312,17 +578,13 @@ void print_resource_table(const ppelib_resource_table_t *table, uint16_t indent)
 		printf(" ");
 	}
 
-	if (table->root) {
-		printf("RootDir: subdirs(%li) data_entries(%li)\n", table->subdirectories_number, table->data_entries_number);
+	if (table->name) {
+		printf("Dir: Name(%ls) subdirs(%li) data_entries(%li)\n", table->name, table->subdirectories_number,
+				table->data_entries_number);
 	} else {
-		if (table->name) {
-			printf("Dir: Name(%ls) subdirs(%li) data_entries(%li)\n", table->name, table->subdirectories_number,
-					table->data_entries_number);
-		} else {
-			printf("Dir: Type(0x%08X: (%s)) subdirs(%li) data_entries(%li)\n", table->resource_type,
-					map_lookup(table->resource_type, ppelib_resource_types_map), table->subdirectories_number,
-					table->data_entries_number);
-		}
+		printf("Dir: Type(0x%08X: (%s)) subdirs(%li) data_entries(%li)\n", table->resource_type,
+				map_lookup(table->resource_type, ppelib_resource_types_map), table->subdirectories_number,
+				table->data_entries_number);
 	}
 
 	for (size_t i = 0; i < table->subdirectories_number; ++i) {
