@@ -51,7 +51,4 @@ typedef struct ppelib_header {
   ppelib_header_data_directory_t* data_directories;
 } ppelib_header_t;
 
-void ppelib_print_pe_header(const ppelib_header_t* header);
-void ppelib_fprint_pe_header(FILE *stream, const ppelib_header_t* header);
-
 #endif /* PPELIB_HEADER_H */

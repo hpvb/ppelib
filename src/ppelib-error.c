@@ -19,10 +19,11 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "thread_local.h"
 #include "export.h"
 
-_Thread_local const char* ppelib_cur_error;
-_Thread_local char ppelib_error_str[100];
+thread_local const char* ppelib_cur_error;
+thread_local char ppelib_error_str[100];
 
 EXPORT_SYM const char* ppelib_error() {
 	return ppelib_cur_error;

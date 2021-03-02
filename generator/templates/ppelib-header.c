@@ -20,11 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <ppelib/ppelib-constants.h>
-#include <ppelib/ppelib-header.h>
-#include "ppelib-error.h"
-#include "export.h"
-#include "utils.h"
+#include "ppelib-internal.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
 

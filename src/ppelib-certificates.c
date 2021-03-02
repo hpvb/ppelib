@@ -20,13 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <ppelib/ppelib-certificate_table.h>
-#include <ppelib/ppelib-header.h>
-
-#include "ppelib-error.h"
 #include "ppelib-internal.h"
-#include "export.h"
-#include "main.h"
 
 EXPORT_SYM uint32_t ppelib_has_signature(ppelib_file_t *pe) {
 	ppelib_reset_error();

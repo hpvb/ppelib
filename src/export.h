@@ -17,12 +17,8 @@
 #ifndef PPELIB_EXPORT_H_
 #define PPELIB_EXPORT_H_
 
-#if defined _WIN32 || defined __CYGWIN__
-	#ifdef __GNUC__
-		#define EXPORT_SYM __attribute__ ((dllexport))
-	#else
-		#define EXPORT_SYM __declspec(dllexport)
-	#endif
+#if defined _WIN32
+	#define EXPORT_SYM __declspec(dllexport)
 #else
 	#if __GNUC__ >= 4
     	#define EXPORT_SYM __attribute__ ((visibility ("default")))

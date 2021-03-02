@@ -18,11 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ppelib/ppelib-constants.h>
-#include <ppelib-error.h>
-
-#include "export.h"
-#include "main.h"
+#include "ppelib-internal.h"
 
 EXPORT_SYM ppelib_header_t* ppelib_get_header(ppelib_file_t *pe) {
 	ppelib_reset_error();

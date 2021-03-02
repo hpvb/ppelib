@@ -20,11 +20,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <ppelib/ppelib-constants.h>
-#include <ppelib-error.h>
-#include <ppelib-internal.h>
-#include "export.h"
-#include "main.h"
+#include "ppelib-internal.h"
+
 
 EXPORT_SYM ppelib_file_t* ppelib_create() {
 	ppelib_reset_error();

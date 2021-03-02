@@ -37,6 +37,4 @@ typedef struct ppelib_certificate_table {
   ppelib_certificate_t* certificates;
 } ppelib_certificate_table_t;
 
-void ppelib_print_certificate_table(const ppelib_certificate_table_t* certificate_table);
-
 #endif /* PPELIB_CERTIFICATE_TABLE_H */

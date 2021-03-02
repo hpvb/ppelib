@@ -18,12 +18,11 @@
 #ifndef PPELIB_MAIN_H_
 #define PPELIB_MAIN_H_
 
+#include <ppelib/ppelib-header.h>
+#include <ppelib/ppelib-section.h>
+#include <ppelib/ppelib-certificate_table.h>
 #include <ppelib/ppelib-resource-table.h>
-
-#include "ppelib-header.h"
-#include "ppelib-section.h"
-#include "ppelib-certificate_table.h"
-#include "utils.h"
+#include <ppelib/ppelib-certificate_table.h>
 
 typedef struct ppelib_data_directory {
 	ppelib_section_t *section;

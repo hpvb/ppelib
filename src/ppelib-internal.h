@@ -21,11 +21,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <ppelib/ppelib-resource-table.h>
-#include <ppelib/ppelib-certificate_table.h>
-#include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-section.h>
-
+#include "thread_local.h"
+#include "ppelib-error.h"
+#include "export.h"
+#include "utils.h"
 #include "main.h"
 
 size_t serialize_certificate_table(const ppelib_certificate_table_t *certificate_table, uint8_t *buffer);
@@ -49,12 +48,25 @@ size_t serialize_resource_table(const ppelib_resource_table_t *resource_table, u
 
 void free_resource_directory(ppelib_file_t *pe);
 
-// Copies of <ppelib/ppelib-low-level.h>
-
-void ppelib_recalculate(ppelib_file_t *pe);
-
-ppelib_header_t* ppelib_get_header(ppelib_file_t *pe);
-void ppelib_free_header(ppelib_header_t *header);
-void ppelib_set_header(ppelib_file_t *pe, ppelib_header_t *header);
+EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map);
+EXPORT_SYM const char* ppelib_error();
+EXPORT_SYM ppelib_file_t* ppelib_create();
+EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
+EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename);
+EXPORT_SYM ppelib_header_t* ppelib_get_header(ppelib_file_t *pe);
+EXPORT_SYM ppelib_resource_table_t* ppelib_get_resource_table(ppelib_file_t *pe);
+EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, size_t buf_size);
+EXPORT_SYM size_t ppelib_write_to_file(ppelib_file_t *pe, const char *filename);
+EXPORT_SYM uint32_t ppelib_has_signature(ppelib_file_t *pe);
+EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe);
+EXPORT_SYM void ppelib_fprint_pe_header(FILE* stream, const ppelib_header_t* header);
+EXPORT_SYM void ppelib_free_header(ppelib_header_t *header);
+EXPORT_SYM void ppelib_print_certificate_table(const ppelib_certificate_table_t* certificate_table);
+EXPORT_SYM void ppelib_print_pe_header(const ppelib_header_t* header);
+EXPORT_SYM void ppelib_print_resource_table(const ppelib_resource_table_t *resource_table);
+EXPORT_SYM void ppelib_print_section(const ppelib_section_t* section);
+EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe);
+EXPORT_SYM void ppelib_set_header(ppelib_file_t *pe, ppelib_header_t *header);
+EXPORT_SYM void ppelib_signature_remove(ppelib_file_t *pe);
 
 #endif /* PPELIB_INTERNAL_H_ */

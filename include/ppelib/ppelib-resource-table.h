@@ -52,6 +52,4 @@ typedef struct ppelib_resource_table {
 	struct ppelib_resource_data **data_entries;
 } ppelib_resource_table_t;
 
-void ppelib_print_resource_table(const ppelib_resource_table_t *resource_table);
-
 #endif /* PPELIB_RESOURCE_TABLE_H_ */

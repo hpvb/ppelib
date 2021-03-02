@@ -20,14 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <ppelib/ppelib-constants.h>
-#include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-section.h>
-
-#include <ppelib-error.h>
-#include <ppelib-internal.h>
-#include "export.h"
-#include "main.h"
+#include "ppelib-internal.h"
 
 void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t start, size_t end) {
 	ppelib_reset_error();

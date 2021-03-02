@@ -43,4 +43,9 @@ size_t ppelib_write_to_file(ppelib_handle* handle, const char* filename);
 uint32_t ppelib_has_signature(ppelib_handle* handle);
 void ppelib_signature_remove(ppelib_handle* handle);
 
+void ppelib_print_section(const ppelib_section_t* section);
+void ppelib_print_pe_header(const ppelib_header_t* header);
+void ppelib_fprint_pe_header(FILE *stream, const ppelib_header_t* header);
+void ppelib_print_resource_table(const ppelib_resource_table_t *resource_table);
+
 #endif /* PPELIB_H_ */

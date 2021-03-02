@@ -20,17 +20,11 @@
 #include <string.h>
 #include <wchar.h>
 
-#include <ppelib/ppelib-section.h>
-#include <ppelib/ppelib-resource-table.h>
+#include "ppelib-internal.h"
 
-#include "main.h"
-#include "ppelib-error.h"
-#include "export.h"
-#include "utils.h"
-
-_Thread_local size_t t_max_size;
-_Thread_local size_t t_rscs_base;
-_Thread_local uint8_t t_parse_error_handled;
+thread_local size_t t_max_size;
+thread_local size_t t_rscs_base;
+thread_local uint8_t t_parse_error_handled;
 
 typedef struct string_table_string {
 	size_t offset;

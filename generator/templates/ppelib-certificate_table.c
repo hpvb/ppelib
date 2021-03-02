@@ -21,13 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ppelib/ppelib-certificate_table.h>
-#include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-constants.h>
-
-#include "ppelib-error.h"
-#include "export.h"
-#include "utils.h"
+#include "ppelib-internal.h"
 
 {% from "print-field-macro.jinja" import print_field with context %}
 

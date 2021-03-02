@@ -22,13 +22,6 @@ if get_option('use_clang_fuzzer') == true
 	)
 endif
 
-pkg = import('pkgconfig')
-lib = library('ppelib')
-pkg.generate(
-	lib,
-	description: 'Portable library for manipulating PE (Portable Executable) files',
-)
-
 prog_python = import('python').find_installation('python3', modules: ['jinja2', 'inflection'])
 
 inc = include_directories('include')
@@ -39,3 +32,9 @@ if get_option('use_clang_fuzzer') == false
 else
 	subdir('fuzz')
 endif
+
+pkg = import('pkgconfig')
+pkg.generate(
+	ppelib,
+	description: 'Portable library for manipulating PE (Portable Executable) files',
+)

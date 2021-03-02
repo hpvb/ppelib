@@ -13,22 +13,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
-#ifndef PPELIB_ERROR_H_
-#define PPELIB_ERROR_H_
+#include <windows.h>
 
-#include <stdint.h>
+BOOL WINAPI DllMain(HINSTANCE const instance, DWORD const reason, LPVOID const reserved) {
 
-#include "export.h"
-
-EXPORT_SYM const char* ppelib_error();
-
-#define ppelib_set_error(x) ppelib_set_error_func(__FUNCTION__, x)
-
-void ppelib_set_error_func(const char* function, const char* error);
-void ppelib_reset_error();
-
-uint32_t ppelib_error_peek();
-
-#endif /* PPELIB_ERROR_H_*/
+	 return TRUE;
+}

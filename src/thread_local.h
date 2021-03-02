@@ -14,21 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+#ifndef SRC_THREAD_LOCAL_H_
+#define SRC_THREAD_LOCAL_H_
 
-#ifndef PPELIB_ERROR_H_
-#define PPELIB_ERROR_H_
+#ifndef thread_local
+# if __STDC_VERSION__ >= 201112 && !defined __STDC_NO_THREADS__
+#  define thread_local _Thread_local
+# elif defined _WIN32 && ( \
+       defined _MSC_VER || \
+       defined __ICL || \
+       defined __DMC__ || \
+       defined __BORLANDC__ )
+#  define thread_local __declspec(thread)
+/* note that ICC (linux) and Clang are covered by __GNUC__ */
+# elif defined __GNUC__ || \
+       defined __SUNPRO_C || \
+       defined __xlC__
+#  define thread_local __thread
+# else
+#  error "Cannot define thread_local"
+# endif
+#endif
 
-#include <stdint.h>
-
-#include "export.h"
-
-EXPORT_SYM const char* ppelib_error();
-
-#define ppelib_set_error(x) ppelib_set_error_func(__FUNCTION__, x)
-
-void ppelib_set_error_func(const char* function, const char* error);
-void ppelib_reset_error();
-
-uint32_t ppelib_error_peek();
-
-#endif /* PPELIB_ERROR_H_*/
+#endif /* SRC_THREAD_LOCAL_H_ */

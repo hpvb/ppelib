@@ -32,6 +32,4 @@ typedef struct ppelib_section {
   uint8_t* contents;
 } ppelib_section_t;
 
-void ppelib_print_section(const ppelib_section_t* section);
-
 #endif /* PPELIB_SECTION_H */
