@@ -57,7 +57,7 @@ jobs:
           ls -l builddir
 
   linux-clang:
-    name: Build (Ubuntu 20.04 x86_64, Clang)
+    name: Build (Ubuntu 20.04 x86_64, Clang) (libfuzzer)
     runs-on: ubuntu-20.04
     steps:
 
@@ -77,9 +77,13 @@ jobs:
 
       - name: Build the library
         run: |
-          CC=clang meson builddir -Dwerror=true
+          CC=clang meson builddir -Dwerror=true -Duse_clang_fuzzer=true
           meson compile -C builddir
           ls -l builddir
+
+      - name: Run fuzzer
+        run: |
+          meson test -C builddir --print-errorlogs
 
   macos-clang:
     name: Build (macOS x86_64, Clang)
