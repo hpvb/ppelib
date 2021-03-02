@@ -13,20 +13,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #ifndef PPELIB_LOW_LEVEL_H_
 #define PPELIB_LOW_LEVEL_H_
 
 #include <ppelib/ppelib.h>
 
-void ppelib_recalculate(ppelib_handle* file);
-
-ppelib_header_t* ppelib_get_header(ppelib_handle* handle);
-void ppelib_free_header(ppelib_header_t* header);
-void ppelib_set_header(ppelib_handle* handle, ppelib_header_t* header);
-
-ppelib_resource_table_t* ppelib_get_resource_table(ppelib_handle* handle);
-void ppelib_free_resource_directory_table(ppelib_resource_table_t* table);
+ppelib_header_t* ppelib_get_header(ppelib_handle *handle);
+ppelib_resource_table_t* ppelib_get_resource_table(ppelib_handle *handle);
+void ppelib_free_header(ppelib_header_t *header);
+void ppelib_free_resource_directory_table(ppelib_resource_table_t *table);
+void ppelib_recalculate(ppelib_handle *file);
+void ppelib_set_header(ppelib_handle *handle, ppelib_header_t *header);
 
 #endif /* PPELIB_LOW_LEVEL_H_ */

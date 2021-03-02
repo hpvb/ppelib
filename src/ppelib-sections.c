@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
 
 #include "ppelib-internal.h"
@@ -53,7 +53,7 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 		return;
 	}
 
-	section->virtual_size -= (uint32_t)(end - start);
+	section->virtual_size -= (uint32_t) (end - start);
 	section->size_of_raw_data = TO_NEAREST(section->virtual_size, pe->header.file_alignment);
 }
 
@@ -85,7 +85,7 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 uint16_t ppelib_section_find_index(ppelib_file_t *pe, ppelib_section_t *section) {
 	ppelib_reset_error();
 
-	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i){
+	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		if (pe->sections[i] == section) {
 			return i;
 		}

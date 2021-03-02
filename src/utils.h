@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #ifndef PPELIB_UTILS_H
 #define PPELIB_UTILS_H
@@ -30,15 +30,15 @@
 #define TO_NEAREST(num, size) num + size - 1 - (num + size - 1) % size
 #define SWAP(x, y) do { uint8_t swap_temp[sizeof(x)]; memcpy(swap_temp, x, sizeof(x)); x = y; memcpy(y, swap_temp, sizeof(x)); }  while (0)
 
-uint8_t read_uint8_t(const uint8_t* buffer);
-void write_uint8_t(uint8_t* buffer, uint8_t val);
-uint16_t read_uint16_t(const uint8_t* buffer);
-void write_uint16_t(uint8_t* buffer, uint16_t val);
-uint32_t read_uint32_t(const uint8_t* buffer);
-void write_uint32_t(uint8_t* buffer, uint32_t val);
-uint64_t read_uint64_t(const uint8_t* buffer);
-void write_uint64_t(uint8_t* buffer, uint64_t val);
+uint8_t read_uint8_t(const uint8_t *buffer);
+void write_uint8_t(uint8_t *buffer, uint8_t val);
+uint16_t read_uint16_t(const uint8_t *buffer);
+void write_uint16_t(uint8_t *buffer, uint16_t val);
+uint32_t read_uint32_t(const uint8_t *buffer);
+void write_uint32_t(uint8_t *buffer, uint32_t val);
+uint64_t read_uint64_t(const uint8_t *buffer);
+void write_uint64_t(uint8_t *buffer, uint64_t val);
 
-uint16_t buffer_excise(uint8_t** buffer, size_t size, size_t start, size_t end);
+uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end);
 
 #endif /* PPELIB_UTILS_H */

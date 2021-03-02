@@ -13,23 +13,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 #include <string.h>
 
-#include "thread_local.h"
 #include "export.h"
+#include "thread_local.h"
 
-thread_local const char* ppelib_cur_error;
+thread_local const char *ppelib_cur_error;
 thread_local char ppelib_error_str[100];
 
 EXPORT_SYM const char* ppelib_error() {
 	return ppelib_cur_error;
 }
 
-void ppelib_set_error_func(const char* function, const char* error) {
+void ppelib_set_error_func(const char *function, const char *error) {
 	strncpy(ppelib_error_str, function, 99);
 	strncat(ppelib_error_str, "(): ", 99);
 	strncat(ppelib_error_str, error, 99);

@@ -13,16 +13,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #ifndef PPELIB_MAIN_H_
 #define PPELIB_MAIN_H_
 
+#include <ppelib/ppelib-certificate_table.h>
 #include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-section.h>
-#include <ppelib/ppelib-certificate_table.h>
 #include <ppelib/ppelib-resource-table.h>
-#include <ppelib/ppelib-certificate_table.h>
+#include <ppelib/ppelib-section.h>
 
 typedef struct ppelib_data_directory {
 	ppelib_section_t *section;

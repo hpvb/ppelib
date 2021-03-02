@@ -13,14 +13,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #ifndef PPELIB_HEADER_H
 #define PPELIB_HEADER_H
 
 #include <inttypes.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 
 enum ppelib_data_directory_type {
 {%- for d in directories %}

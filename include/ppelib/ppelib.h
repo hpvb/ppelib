@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #ifndef PPELIB_H_
 #define PPELIB_H_
@@ -30,22 +30,17 @@
 typedef void ppelib_handle;
 
 const char* ppelib_error();
-
 ppelib_handle* ppelib_create();
-void ppelib_destroy(ppelib_handle* handle);
-
-ppelib_handle* ppelib_create_from_buffer(const uint8_t* buffer, size_t size);
-ppelib_handle* ppelib_create_from_file(const char* filename);
-
-size_t ppelib_write_to_buffer(ppelib_handle* handle, uint8_t* buffer, size_t size);
-size_t ppelib_write_to_file(ppelib_handle* handle, const char* filename);
-
-uint32_t ppelib_has_signature(ppelib_handle* handle);
-void ppelib_signature_remove(ppelib_handle* handle);
-
-void ppelib_print_section(const ppelib_section_t* section);
-void ppelib_print_pe_header(const ppelib_header_t* header);
-void ppelib_fprint_pe_header(FILE *stream, const ppelib_header_t* header);
+ppelib_handle* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
+ppelib_handle* ppelib_create_from_file(const char *filename);
+size_t ppelib_write_to_buffer(ppelib_handle *handle, uint8_t *buffer, size_t size);
+size_t ppelib_write_to_file(ppelib_handle *handle, const char *filename);
+uint32_t ppelib_has_signature(ppelib_handle *handle);
+void ppelib_destroy(ppelib_handle *handle);
+void ppelib_fprint_pe_header(FILE *stream, const ppelib_header_t *header);
+void ppelib_print_pe_header(const ppelib_header_t *header);
 void ppelib_print_resource_table(const ppelib_resource_table_t *resource_table);
+void ppelib_print_section(const ppelib_section_t *section);
+void ppelib_signature_remove(ppelib_handle *handle);
 
 #endif /* PPELIB_H_ */

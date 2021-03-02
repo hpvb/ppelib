@@ -22,7 +22,7 @@
 #include <ppelib/ppelib-low-level.h>
 
 int main(int argc, char *argv[]) {
-	if (argc != 1){
+	if (argc != 1) {
 		printf("Usage: %s <filename>\n", argv[0]);
 		return 1;
 	}
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 		printf("PElib-error: %s\n", ppelib_error());
 	}
 
-	ppelib_resource_table_t* table = ppelib_get_resource_table(pe);
+	ppelib_resource_table_t *table = ppelib_get_resource_table(pe);
 	if (ppelib_error()) {
 		printf("PElib-error: %s\n", ppelib_error());
 		return (1);

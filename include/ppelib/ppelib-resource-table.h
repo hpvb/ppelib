@@ -24,20 +24,20 @@
 #include <ppelib/ppelib-constants.h>
 
 typedef struct ppelib_resource_data {
-	wchar_t* name;
+	wchar_t *name;
 	uint32_t resource_type;
 
 	uint32_t size;
 	uint32_t codepage;
 	uint32_t reserved;
 
-	uint8_t* data;
+	uint8_t *data;
 } ppelib_resource_data_t;
 
 typedef struct ppelib_resource_table {
 	uint8_t root;
 
-	wchar_t* name;
+	wchar_t *name;
 	uint32_t resource_type;
 
 	uint32_t characteristics;
