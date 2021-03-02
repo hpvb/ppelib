@@ -2,12 +2,30 @@
 
 from jinja2 import Template, Environment, FileSystemLoader
 from itertools import tee
-import inflection
 import sys
 import os
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
+
+def snake_case(string):
+    prev_upper = False
+    at_start = True
+    retval = ""
+
+    for char in string:
+        if char.isupper():
+            if not prev_upper and not at_start:
+                retval += "_"
+            prev_upper = True
+            
+        else:
+            prev_upper = False
+
+        retval += char.lower()
+        at_start = False
+
+    return retval
 
 mydir = os.path.dirname(os.path.abspath(__file__))
 outdir = sys.argv[1]
@@ -110,7 +128,7 @@ for field in pe_header:
     pe_t = ""
     peplus_t = ""
 
-    field_name = inflection.underscore(field["name"])
+    field_name = snake_case(field["name"])
     retval = { "name": field_name }
     retval["human_name"] = field["name"]
 
@@ -223,7 +241,7 @@ for field in fields:
 directories = []
 for directory in pe_header_directories:
     directories.append({
-        "name": f"dir_{inflection.underscore(directory)}".upper(),
+        "name": f"dir_{snake_case(directory)}".upper(),
         "human_name": directory
     })
 
@@ -238,8 +256,8 @@ if generate == "c":
         template = Environment(loader=FileSystemLoader(f"{mydir}/templates/")).from_string(file_.read())
         with open(f'{outdir}/ppelib-header.c', 'w') as outfile:
             outfile.write(template.render(
-                pe_magic_field=inflection.underscore('Magic'),
-                pe_rvas_field=inflection.underscore('NumberOfRvaAndSizes'),
+                pe_magic_field=snake_case('Magic'),
+                pe_rvas_field=snake_case('NumberOfRvaAndSizes'),
                 sizes=sizes,
                 common_fields=common_fields,
                 pe_fields=pe_fields,
@@ -252,7 +270,7 @@ offset = 0
 length = 0
 for field in section_header:
     t = type_map[field["pe_size"]]
-    field_name = inflection.underscore(field["name"])
+    field_name = snake_case(field["name"])
     f = {
         "name": field_name,
         "human_name": field["name"],
@@ -267,9 +285,9 @@ for field in section_header:
     if f["pe_size"] > 0:
         length = length + f['pe_size']
 
-pointer_field = inflection.underscore("PointerToRawData")
-virtualsize_field = inflection.underscore("VirtualSize")
-rawsize_field = inflection.underscore("SizeOfRawData")
+pointer_field = snake_case("PointerToRawData")
+virtualsize_field = snake_case("VirtualSize")
+rawsize_field = snake_case("SizeOfRawData")
 
 if generate == "header":
     with open(f'{mydir}/templates/ppelib-section.h') as file_:
@@ -300,7 +318,7 @@ offset = 0
 length = 0
 for field in certificate_table:
     t = type_map[field["pe_size"]]
-    field_name = inflection.underscore(field["name"])
+    field_name = snake_case(field["name"])
     f = {
         "name": field_name,
         "human_name": field["name"],
@@ -315,7 +333,7 @@ for field in certificate_table:
     if f["pe_size"] > 0:
         length = length + f['pe_size']
 
-length_field = inflection.underscore("Length")
+length_field = snake_case("Length")
 
 if generate == "header":
     with open(f'{mydir}/templates/ppelib-certificate_table.h') as file_:

@@ -23,7 +23,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -qqq build-essential ninja-build
-          python -m pip install --upgrade meson jinja2 inflection
+          python -m pip install --upgrade meson jinja2
 
       - name: Build the library
         run: |
@@ -48,7 +48,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -qqq build-essential ninja-build
-          python -m pip install --upgrade meson jinja2 inflection
+          python -m pip install --upgrade meson jinja2
 
       - name: Build the library
         run: |
@@ -73,7 +73,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -qqq build-essential ninja-build clang
-          python -m pip install --upgrade meson jinja2 inflection
+          python -m pip install --upgrade meson jinja2
 
       - name: Build the library
         run: |
@@ -100,7 +100,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew install ninja
-          python -m pip install --upgrade meson jinja2 inflection
+          python -m pip install --upgrade meson jinja2
 
       - name: Build the library
         run: |
@@ -123,7 +123,7 @@ jobs:
       - name: Install dependencies
         run: |
           choco install ninja
-          python -m pip install --upgrade meson jinja2 inflection
+          python -m pip install --upgrade meson jinja2
 
       - name: Build the library
         run: |
@@ -146,7 +146,7 @@ jobs:
       - name: Install dependencies
         run: |
           choco install ninja
-          python -m pip install --upgrade meson jinja2 inflection
+          python -m pip install --upgrade meson jinja2
 
       - name: Set up Visual Studio command prompt
         uses: ilammy/msvc-dev-cmd@v1.5.0

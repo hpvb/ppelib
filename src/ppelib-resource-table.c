@@ -463,12 +463,12 @@ size_t parse_directory_table(ppelib_resource_table_t *resource_table, uint8_t *b
 			size = MAX(size, subdir_size);
 
 		} else {
-				if (offset + 16 + entry_offset + 16 > t_max_size) {
-					free(name);
-					ppelib_set_error("Section too small for data entry");
-					t_parse_error_handled = 0;
-					return 0;
-				}
+			if (offset + 16 + entry_offset + 16 > t_max_size) {
+				free(name);
+				ppelib_set_error("Section too small for data entry");
+				t_parse_error_handled = 0;
+				return 0;
+			}
 
 			resource_table->data_entries_number++;
 			size_t datas = resource_table->data_entries_number;

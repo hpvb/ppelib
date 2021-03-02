@@ -39,7 +39,7 @@ if cc.get_id() == 'msvc'
 	)
 endif
 
-prog_python = import('python').find_installation('python3', modules: ['jinja2', 'inflection'])
+prog_python = import('python').find_installation('python3', modules: ['jinja2'])
 
 inc = include_directories('include')
 subdir('include')
