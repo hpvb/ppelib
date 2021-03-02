@@ -19,7 +19,7 @@
 #define PPELIB_H_
 
 #include <stddef.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <ppelib/ppelib-constants.h>
 #include <ppelib/ppelib-certificate_table.h>

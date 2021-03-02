@@ -17,7 +17,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #include "ppelib-internal.h"
@@ -43,7 +43,7 @@ size_t serialize_pe_header(const ppelib_header_t* header, uint8_t* buffer, size_
 
   if (header->{{pe_magic_field}} == PE32_MAGIC) {
 {%- for field in pe_fields %}
-    write_{{field.type}}(buf + {{field.offset}}, header->{{field.name}});
+    write_{{field.type}}(buf + {{field.offset}}, ({{field.type}}) header->{{field.name}});
 {%- endfor %}
 
     directories = buf + {{sizes.total_pe}};

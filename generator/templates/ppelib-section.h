@@ -18,7 +18,7 @@
 #ifndef PPELIB_SECTION_H
 #define PPELIB_SECTION_H
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stddef.h>
 
 typedef struct ppelib_section {

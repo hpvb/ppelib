@@ -22,6 +22,11 @@
 #include <ppelib/ppelib-low-level.h>
 
 int main(int argc, char *argv[]) {
+	if (argc != 1){
+		printf("Usage: %s <filename>\n", argv[0]);
+		return 1;
+	}
+
 	int retval = 0;
 
 	printf("Removing signature from %s, copying to %s\n", argv[1], argv[2]);

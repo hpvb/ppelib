@@ -18,7 +18,7 @@
 #ifndef PPELIB_ERROR_H_
 #define PPELIB_ERROR_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "export.h"
 

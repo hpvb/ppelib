@@ -29,8 +29,8 @@ typedef struct ppelib_data_directory {
 	uint32_t offset;
 	uint32_t size;
 
-	uint32_t orig_rva;
-	uint32_t orig_size;
+	size_t orig_rva;
+	size_t orig_size;
 } ppelib_data_directory_t;
 
 typedef struct ppelib_file {

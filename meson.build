@@ -1,7 +1,10 @@
 project(
 	'ppelib', 'c',
-	default_options : ['c_std=c11'],
-	version : '0.0.1',
+	default_options: [
+		'c_std=c11',
+		'warning_level=2',
+	],
+	version: '0.0.1',
 	license: 'Apache-2.0',
 )
 
@@ -19,6 +22,20 @@ if get_option('use_clang_fuzzer') == true
 	add_project_link_arguments(
 		['-fsanitize=fuzzer,address,undefined', '-Wl,--unresolved-symbols=ignore-in-object-files'],
 		language: ['c', 'cpp'],
+	)
+endif
+
+if cc.get_argument_syntax() == 'gcc'
+	add_project_arguments(
+		'-Wconversion',
+		language: ['c', 'cpp'],
+	)
+endif
+
+if cc.get_id() == 'msvc'
+	add_project_arguments(
+		'-D_CRT_SECURE_NO_WARNINGS=1',
+		language: ['c', 'cpp'],	
 	)
 endif
 

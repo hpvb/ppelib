@@ -18,7 +18,7 @@
 #ifndef PPELIB_UTILS_H
 #define PPELIB_UTILS_H
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stddef.h>
 
 #include <ppelib/ppelib-constants.h>

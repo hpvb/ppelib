@@ -18,7 +18,7 @@
 #ifndef PPELIB_INTERNAL_H_
 #define PPELIB_INTERNAL_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stddef.h>
 
 #include "thread_local.h"

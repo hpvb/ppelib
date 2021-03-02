@@ -18,7 +18,7 @@
 #ifndef PPELIB_CERTIFICATE_TABLE_H
 #define PPELIB_CERTIFICATE_TABLE_H
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stddef.h>
 
 typedef struct ppelib_certificate {
@@ -32,8 +32,8 @@ typedef struct ppelib_certificate {
 } ppelib_certificate_t;
 
 typedef struct ppelib_certificate_table {
-  size_t size;
-  size_t offset;
+  uint32_t size;
+  uint32_t offset;
   ppelib_certificate_t* certificates;
 } ppelib_certificate_table_t;
 

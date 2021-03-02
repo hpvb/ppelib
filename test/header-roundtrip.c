@@ -22,6 +22,11 @@
 #include <ppelib/ppelib-low-level.h>
 
 int main(int argc, char *argv[]) {
+	if (argc != 2){
+		printf("Usage: %s <infile> <outfile>\n", argv[0]);
+		return 1;
+	}
+
 	int retval = 0;
 
 	ppelib_handle *pe = ppelib_create_from_file(argv[1]);

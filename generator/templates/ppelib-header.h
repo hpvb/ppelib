@@ -18,7 +18,7 @@
 #ifndef PPELIB_HEADER_H
 #define PPELIB_HEADER_H
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stddef.h>
 

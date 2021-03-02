@@ -19,7 +19,7 @@
 #define PPELIB_RESOURCE_TABLE_H_
 
 #include <stddef.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <ppelib/ppelib-constants.h>
 

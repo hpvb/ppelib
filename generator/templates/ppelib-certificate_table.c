@@ -17,7 +17,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -117,7 +117,12 @@ size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* hea
     }
   }
 
-  certificate_table->offset = table_offset;
+  if (table_offset > UINT32_MAX) {
+	  ppelib_set_error("Certificate table offset out of range");
+	  return 0;
+  }
+
+  certificate_table->offset = (uint32_t) table_offset;
 
   return max_offset;
 }
@@ -126,8 +131,8 @@ EXPORT_SYM void ppelib_print_certificate_table(const ppelib_certificate_table_t*
   ppelib_reset_error();
 
   printf("Certificate table: \n");
-  for (size_t i = 0; i < certificate_table->size; ++i) {
-    printf("Certificate: %li\n", i);
+  for (uint32_t i = 0; i < certificate_table->size; ++i) {
+    printf("Certificate: %u\n", i);
     ppelib_certificate_t* certificate = &certificate_table->certificates[i];
 
 {%- for field in fields -%}

@@ -17,11 +17,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "ppelib-internal.h"
-
 
 EXPORT_SYM ppelib_file_t* ppelib_create() {
 	ppelib_reset_error();
@@ -115,7 +114,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 	pe->end_of_sections = 0;
 
-	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
+	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		pe->sections[i] = calloc(sizeof(ppelib_section_t), 1);
 		if (!pe->sections[i]) {
 			pe->header.number_of_sections = i;
@@ -126,7 +125,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	}
 	pe->allocated_sections = 1;
 
-	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
+	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = deserialize_section(buffer, pe->section_offset + (i * PE_SECTION_HEADER_SIZE), size,
 				pe->sections[i]);
 
@@ -146,10 +145,10 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		}
 
 		for (uint32_t d = 0; d < pe->header.number_of_rva_and_sizes; ++d) {
-			size_t directory_va = pe->header.data_directories[d].virtual_address;
-			size_t directory_size = pe->header.data_directories[d].size;
-			size_t section_va = pe->sections[i]->virtual_address;
-			size_t section_va_end = section_va + pe->sections[i]->size_of_raw_data;
+			uint32_t directory_va = pe->header.data_directories[d].virtual_address;
+			uint32_t directory_size = pe->header.data_directories[d].size;
+			uint32_t section_va = pe->sections[i]->virtual_address;
+			uint32_t section_va_end = section_va + pe->sections[i]->size_of_raw_data;
 
 			if (d != DIR_CERTIFICATE_TABLE) {
 				if (section_va <= directory_va && section_va_end >= directory_va) {
@@ -224,8 +223,16 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 	}
 
 	fseek(f, 0, SEEK_END);
-	file_size = ftell(f);
+	long ftell_size = ftell(f);
 	rewind(f);
+
+	if (ftell_size < 0) {
+		fclose(f);
+		ppelib_set_error("Unable to read file length");
+		return NULL;
+	}
+
+	file_size = (size_t) ftell_size;
 
 	if (!file_size) {
 		fclose(f);
@@ -416,7 +423,7 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 			+ (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
 
 	size_t next_section_virtual = pe->start_of_sections;
-	size_t next_section_physical = pe->header.size_of_headers;
+	uint32_t next_section_physical = pe->header.size_of_headers;
 
 	uint32_t base_of_code = 0;
 	uint32_t base_of_data = 0;
@@ -431,7 +438,8 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 			section->size_of_raw_data = TO_NEAREST(section->virtual_size, pe->header.file_alignment);
 		}
 
-		section->virtual_address = next_section_virtual;
+		// TODO does this need checking?
+		section->virtual_address = (uint32_t) next_section_virtual;
 
 		if (section->size_of_raw_data) {
 			section->pointer_to_raw_data = next_section_physical;
@@ -492,8 +500,17 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 		virtual_sections_end = last_section->virtual_address + last_section->virtual_size;
 	}
 
-	pe->header.size_of_image = TO_NEAREST(virtual_sections_end, pe->header.section_alignment);
-	pe->header.size_of_headers = TO_NEAREST(size_of_headers, pe->header.file_alignment);
+	if (TO_NEAREST(virtual_sections_end, pe->header.section_alignment) > UINT32_MAX) {
+		pe->header.size_of_image = 0;
+	} else {
+		pe->header.size_of_image = (uint32_t) (TO_NEAREST(virtual_sections_end, pe->header.section_alignment));
+	}
+
+	if (TO_NEAREST(size_of_headers, pe->header.file_alignment) > UINT32_MAX) {
+		pe->header.size_of_headers = 0;
+	} else {
+		pe->header.size_of_headers = (uint32_t) (TO_NEAREST(size_of_headers, pe->header.file_alignment));
+	}
 
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
 		if (!pe->data_directories[i].section) {
@@ -509,7 +526,7 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	}
 
 	if (pe->certificate_table.size) {
-		size_t size = 0;
+		uint32_t size = 0;
 		for (uint32_t i = 0; i < pe->certificate_table.size; ++i) {
 			size += pe->certificate_table.certificates[i].length;
 		}

@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "ppelib-internal.h"
@@ -48,7 +48,12 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 		return;
 	}
 
-	section->virtual_size -= (end - start);
+	if (end - start > UINT32_MAX) {
+		ppelib_set_error("Section offset out of range");
+		return;
+	}
+
+	section->virtual_size -= (uint32_t)(end - start);
 	section->size_of_raw_data = TO_NEAREST(section->virtual_size, pe->header.file_alignment);
 }
 

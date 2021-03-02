@@ -1,5 +1,3 @@
-extra_sources = []
-
 if cc.get_id() != 'msvc'
 	if cc.get_argument_syntax() == 'gcc'
 		extra_args = ['-fvisibility=hidden']
@@ -9,7 +7,6 @@ if cc.get_id() != 'msvc'
 		endif
 	endif
 else
-	extra_sources += 'dllmain.c'
 	extra_args = []
 endif
 
@@ -44,7 +41,7 @@ ppelib_sources = [
 
 ppelib = shared_library(
 	'ppelib',
-	[ ppelib_sources, extra_sources],
+	ppelib_sources,
 	c_args: extra_args,
 	include_directories: inc,
 	install: true,

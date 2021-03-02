@@ -315,7 +315,6 @@ for field in certificate_table:
     if f["pe_size"] > 0:
         length = length + f['pe_size']
 
-print(f"Certificate table length: {length}")
 length_field = inflection.underscore("Length")
 
 if generate == "header":
