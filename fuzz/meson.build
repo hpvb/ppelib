@@ -14,5 +14,5 @@ fuzz_test = executable(
 
 test('fuzzer run', fuzz_test,
 	timeout: 240,
-	args: [meson.source_root() + '/fuzz/corpus', '-max_total_time=120', '-jobs=4']
+	args: [meson.source_root() + '/fuzz/corpus', '-max_total_time=120', '-jobs=2']
 )
