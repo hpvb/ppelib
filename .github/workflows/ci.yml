@@ -32,23 +32,18 @@ jobs:
           ls -l builddir
 
   linux-gcc:
-    name: Build (Ubuntu 20.04 x86_64, GCC)
+    name: Build (Fedora 33 x86_64, GCC)
     runs-on: ubuntu-20.04
+    container:
+      image: fedora:33
     steps:
 
       - name: Checkout
         uses: actions/checkout@v2.3.4
 
-      - name: Set up Python (for Meson)
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9.1'
-
       - name: Install dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -qqq build-essential ninja-build
-          python -m pip install --upgrade meson jinja2
+          dnf install -y gcc meson python3-jinja2
 
       - name: Build the library
         run: |
@@ -57,23 +52,18 @@ jobs:
           ls -l builddir
 
   linux-clang:
-    name: Build (Ubuntu 20.04 x86_64, Clang) (libfuzzer)
+    name: Build (Fedora 33 x86_64, Clang) (libfuzzer)
     runs-on: ubuntu-20.04
+    container:
+      image: fedora:33
     steps:
 
       - name: Checkout
         uses: actions/checkout@v2.3.4
 
-      - name: Set up Python (for Meson)
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9.1'
-
       - name: Install dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -qqq build-essential ninja-build clang
-          python -m pip install --upgrade meson jinja2
+          dnf install -y clang meson python3-jinja2
 
       - name: Build the library
         run: |
