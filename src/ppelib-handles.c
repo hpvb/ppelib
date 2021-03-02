@@ -556,4 +556,3 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].size = size;
 	}
 }
-

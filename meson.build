@@ -14,10 +14,10 @@ if get_option('use_clang_fuzzer') == true
 	if cc.get_id() != 'clang'
 		error('use_clang_fuzzer must use CC=clang')
 	endif
-	
+
 	add_project_arguments(
 		'-fsanitize=fuzzer-no-link,address,undefined',
-		language: ['c', 'cpp'],	
+		language: ['c', 'cpp'],
 	)
 	add_project_link_arguments(
 		['-fsanitize=fuzzer,address,undefined', '-Wl,--unresolved-symbols=ignore-in-object-files'],
@@ -35,7 +35,7 @@ endif
 if cc.get_id() == 'msvc'
 	add_project_arguments(
 		'-D_CRT_SECURE_NO_WARNINGS=1',
-		language: ['c', 'cpp'],	
+		language: ['c', 'cpp'],
 	)
 endif
 

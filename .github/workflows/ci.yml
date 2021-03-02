@@ -5,12 +5,33 @@ on:
   - pull_request
 
 jobs:
+  static-checks:
+    name: Static checks
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Set up Python (for pre-commit)
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.1'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qqq clang-format
+          python -m pip install --upgrade pre-commit
+
+      - name: Run pre-commit hooks
+        run: |
+          pre-commit run --all-files
+
   linux-gcc-old:
     name: Build (Ubuntu 18.04 x86_64, GCC) (-Dwerror=false)
     # Test on a slightly old Linux distribution to ensure greater compatibility.
     runs-on: ubuntu-18.04
     steps:
-
       - name: Checkout
         uses: actions/checkout@v2.3.4
 
@@ -37,7 +58,6 @@ jobs:
     container:
       image: fedora:33
     steps:
-
       - name: Checkout
         uses: actions/checkout@v2.3.4
 
@@ -57,7 +77,6 @@ jobs:
     container:
       image: fedora:33
     steps:
-
       - name: Checkout
         uses: actions/checkout@v2.3.4
 

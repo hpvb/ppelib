@@ -60,4 +60,3 @@ EXPORT_SYM void ppelib_set_header(ppelib_file_t *pe, ppelib_header_t *header) {
 EXPORT_SYM void ppelib_free_header(ppelib_header_t *header) {
 	free(header);
 }
-
