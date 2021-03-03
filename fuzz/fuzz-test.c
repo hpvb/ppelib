@@ -21,6 +21,7 @@
 #include <ppelib/ppelib-low-level.h>
 
 int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
+	ppelib_handle *pe2 = NULL;
 	ppelib_handle *pe = ppelib_create_from_buffer(buffer, size);
 	if (ppelib_error()) {
 		printf("PPELib-Error: %s\n", ppelib_error());
@@ -38,8 +39,14 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 	}
 	uint8_t *b = malloc(len);
 	ppelib_write_to_buffer(pe, b, len);
+	pe2 = ppelib_create_from_buffer(b, len);
 	free(b);
+	if (ppelib_error()) {
+		printf("PPELib-Error: %s\n", ppelib_error());
+		goto out;
+	}
 
 	out: ppelib_destroy(pe);
+	ppelib_destroy(pe2);
 	return 0;  // Non-zero return values are reserved for future use.
 }
