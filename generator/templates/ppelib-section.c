@@ -48,7 +48,7 @@ size_t serialize_section(const ppelib_section_t* section, uint8_t* buffer, size_
 
   end:
   if (section->{{pointer_field}} > offset) {
-    return section->{{pointer_field}} + section->contents_size;
+    return section->{{pointer_field}} + section->size_of_raw_data;
   } else {
     return PE_SECTION_HEADER_SIZE;
   }

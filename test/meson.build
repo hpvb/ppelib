@@ -1,5 +1,6 @@
 content_roundtrip_files = [ 'content-roundtrip.c', gen_h ]
 header_roundtrip_files = [ 'header-roundtrip.c', gen_h ]
+parse_roundtrip_files = [ 'parse-roundtrip.c', gen_h ]
 print_header_files = [ 'print-header.c', gen_h ]
 print_resource_table_files = [ 'print-resource-table.c', gen_h ]
 remove_signature_files = [ 'remove-signature.c', gen_h ]
@@ -15,6 +16,13 @@ content_roundtrip = executable(
 header_roundtrip = executable(
 	'header-roundtrip',
 	header_roundtrip_files,
+	include_directories: inc,
+	link_with: ppelib
+)
+
+parse_roundtrip = executable(
+	'parse-roundtrip',
+	parse_roundtrip_files,
 	include_directories: inc,
 	link_with: ppelib
 )
