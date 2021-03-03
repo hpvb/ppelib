@@ -18,7 +18,7 @@ def snake_case(string):
             if not prev_upper and not at_start:
                 retval += "_"
             prev_upper = True
-            
+
         else:
             prev_upper = False
 
@@ -157,7 +157,7 @@ for field in pe_header:
         retval["peplus_offset"] = peplus_offset
         retval["peplus_size"] = peplus_size
         peplus_offset = peplus_offset + peplus_size
-    
+
     fields.append(retval)
 
 common_fields = []
@@ -205,7 +205,7 @@ for field in fields:
             "offset": field["pe_offset"],
             "pe_size": field["pe_size"],
         }
-        
+
         if "peplus_size" in field:
             f["size"] = field["peplus_size"]
         else:
@@ -233,7 +233,7 @@ for field in fields:
             f["size"] = field["peplus_size"]
         else:
             f["size"] = field["pe_size"]
-            
+
         peplus_fields.append(f)
 
         sizes["total_peplus"] = sizes["total_peplus"] + field["peplus_size"]

@@ -1,0 +1,23 @@
+# Exclude files which shouldn't be modified by pre-commit hooks.
+exclude: |
+  (?x)^(
+    fuzz/corpus/.+ |  # Generated files
+    generator/templates/.*  # Not valid C code until processed
+  )
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: fix-byte-order-marker
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # TODO: Uncomment this block after adding a `.clang-format` file.
+  # - repo: https://github.com/pocc/pre-commit-hooks
+  #   rev: v1.1.1
+  #   hooks:
+  #     - id: clang-format
