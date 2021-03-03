@@ -28,8 +28,6 @@
 size_t serialize_section(const ppelib_section_t* section, uint8_t* buffer, size_t offset) {
   ppelib_reset_error();
 
-  size_t data_size = MIN(section->{{virtualsize_field}}, section->{{rawsize_field}});
-
   if (! buffer) {
     goto end;
   }
@@ -44,13 +42,13 @@ size_t serialize_section(const ppelib_section_t* section, uint8_t* buffer, size_
 {%- endif %}
 {%- endfor %}
 
-  if (data_size) {
-    memcpy(buffer + section->{{pointer_field}}, section->contents, data_size);
+  if (section->contents_size) {
+    memcpy(buffer + section->{{pointer_field}}, section->contents, section->contents_size);
   }
 
   end:
   if (section->{{pointer_field}} > offset) {
-    return section->{{pointer_field}} + data_size;
+    return section->{{pointer_field}} + section->contents_size;
   } else {
     return PE_SECTION_HEADER_SIZE;
   }
@@ -84,7 +82,12 @@ size_t deserialize_section(const uint8_t* buffer, size_t offset, const size_t si
 
   if (data_size) {
     section->contents = malloc(data_size);
+    section->contents_size = data_size;
     memcpy(section->contents, buffer + section->{{pointer_field}}, data_size);
+  }
+
+  if (section->{{virtualsize_field}} > section->{{rawsize_field}}) {
+     section->virtual_padding = section->{{virtualsize_field}} - section->{{rawsize_field}};
   }
 
   if (section->{{pointer_field}} > offset) {

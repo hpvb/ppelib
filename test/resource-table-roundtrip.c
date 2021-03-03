@@ -42,6 +42,12 @@ int main(int argc, char *argv[]) {
 	ppelib_header_t *header = ppelib_get_header(pe);
 
 	// Recalculate headers
+	ppelib_update_resource_table(pe);
+	if (ppelib_error()) {
+		printf("PElib-error update_resource_table: %s\n", ppelib_error());
+		ppelib_free_header(header);
+		goto out;
+	}
 	ppelib_recalculate(pe);
 
 	// Get new headers

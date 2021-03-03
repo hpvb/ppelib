@@ -29,6 +29,9 @@ typedef struct ppelib_section {
   {{f.pe_type}} {{f.name}};
 {%- endif %}
 {%- endfor %}
+
+  size_t contents_size;
+  size_t virtual_padding;
   uint8_t* contents;
 } ppelib_section_t;
 

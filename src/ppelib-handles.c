@@ -164,7 +164,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 	if (pe->header.number_of_rva_and_sizes > DIR_CERTIFICATE_TABLE) {
 		if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
-			deserialize_certificate_table(buffer, &pe->header, size, &pe->certificate_table);
+			deserialize_certificate_table(buffer, pe, size, &pe->certificate_table);
 			if (ppelib_error_peek()) {
 				ppelib_destroy(pe);
 				return NULL;
@@ -276,6 +276,8 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	}
 
 	size += coff_header_size;
+	size += (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
+
 	size_t end_of_sections = 0;
 
 	// Write resources TODO
@@ -313,7 +315,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	size_t certificates_size = 0;
 	if (pe->header.number_of_rva_and_sizes > DIR_CERTIFICATE_TABLE) {
 		if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
-			certificates_size = serialize_certificate_table(&pe->certificate_table, NULL);
+			certificates_size = serialize_certificate_table(&pe->certificate_table, NULL, pe->end_of_sections);
 			if (ppelib_error_peek()) {
 				return 0;
 			}
@@ -367,7 +369,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	// Write certificates
 	if (pe->header.number_of_rva_and_sizes > DIR_CERTIFICATE_TABLE) {
 		if (pe->header.data_directories[DIR_CERTIFICATE_TABLE].size) {
-			serialize_certificate_table(&pe->certificate_table, buffer);
+			serialize_certificate_table(&pe->certificate_table, buffer, pe->end_of_sections);
 			if (ppelib_error_peek()) {
 				return 0;
 			}
@@ -422,6 +424,16 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size
 			+ (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
 
+	if (!pe->header.file_alignment || pe->header.file_alignment > UINT16_MAX) {
+		pe->header.file_alignment = 512;
+	}
+
+	if (TO_NEAREST(size_of_headers, pe->header.file_alignment) > UINT32_MAX) {
+		pe->header.size_of_headers = 0;
+	} else {
+		pe->header.size_of_headers = (uint32_t) (TO_NEAREST(size_of_headers, pe->header.file_alignment));
+	}
+
 	size_t next_section_virtual = pe->start_of_sections;
 	uint32_t next_section_physical = pe->header.size_of_headers;
 
@@ -431,12 +443,22 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	uint32_t size_of_uninitialized_data = 0;
 	uint32_t size_of_code = 0;
 
+	if (pe->header.section_alignment > UINT16_MAX) {
+		pe->header.section_alignment = 512;
+	}
+
+	if (pe->header.section_alignment < pe->header.file_alignment) {
+		pe->header.section_alignment = pe->header.file_alignment;
+	}
+
+	pe->header.file_alignment = TO_NEAREST(pe->header.file_alignment, 512);
+	pe->header.section_alignment = TO_NEAREST(pe->header.section_alignment, pe->header.file_alignment);
+
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		ppelib_section_t *section = pe->sections[i];
 
-		if (section->size_of_raw_data && section->virtual_size <= section->size_of_raw_data) {
-			section->size_of_raw_data = TO_NEAREST(section->virtual_size, pe->header.file_alignment);
-		}
+		section->virtual_size = (uint32_t) (section->contents_size + section->virtual_padding);
+		section->size_of_raw_data = TO_NEAREST((uint32_t )section->contents_size, pe->header.file_alignment);
 
 		// TODO does this need checking?
 		section->virtual_address = (uint32_t) next_section_virtual;
@@ -498,6 +520,7 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	if (pe->header.number_of_sections) {
 		ppelib_section_t *last_section = pe->sections[pe->header.number_of_sections - 1];
 		virtual_sections_end = last_section->virtual_address + last_section->virtual_size;
+		pe->end_of_sections = last_section->pointer_to_raw_data + last_section->size_of_raw_data;
 	}
 
 	if (TO_NEAREST(virtual_sections_end, pe->header.section_alignment) > UINT32_MAX) {
@@ -506,11 +529,8 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 		pe->header.size_of_image = (uint32_t) (TO_NEAREST(virtual_sections_end, pe->header.section_alignment));
 	}
 
-	if (TO_NEAREST(size_of_headers, pe->header.file_alignment) > UINT32_MAX) {
-		pe->header.size_of_headers = 0;
-	} else {
-		pe->header.size_of_headers = (uint32_t) (TO_NEAREST(size_of_headers, pe->header.file_alignment));
-	}
+	pe->header.data_directories = realloc(pe->header.data_directories,
+			sizeof(ppelib_header_data_directory_t) * pe->header.number_of_rva_and_sizes);
 
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
 		if (!pe->data_directories[i].section) {
@@ -531,7 +551,8 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 			size += pe->certificate_table.certificates[i].length;
 		}
 
-		pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address = pe->certificate_table.offset;
+		pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address = (uint32_t) (pe->end_of_sections
+				+ pe->certificate_table.offset);
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].size = size;
 	}
 }

@@ -33,7 +33,7 @@ typedef struct ppelib_certificate {
 
 typedef struct ppelib_certificate_table {
   uint32_t size;
-  uint32_t offset;
+  size_t offset;
   ppelib_certificate_t* certificates;
 } ppelib_certificate_table_t;
 

@@ -27,6 +27,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 		goto out;
 	}
 
+	ppelib_recalculate(pe);
+	ppelib_update_resource_table(pe);
+	ppelib_recalculate(pe);
+
 	size_t len = ppelib_write_to_buffer(pe, NULL, 0);
 	if (ppelib_error()) {
 		printf("PPELib-Error: %s\n", ppelib_error());

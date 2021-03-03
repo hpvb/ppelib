@@ -22,6 +22,55 @@
 
 #include "ppelib-internal.h"
 
+uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual_size, uint32_t raw_size,
+		uint32_t characteristics, uint8_t *data) {
+	ppelib_reset_error();
+
+	if (name[8]) {
+		ppelib_set_error("Section name not NULL terminated");
+		return 0;
+	}
+
+	void *old_ptr = pe->sections;
+	pe->sections = realloc(pe->sections, pe->header.number_of_sections + 1 * sizeof(void*));
+	if (!pe->sections) {
+		pe->sections = old_ptr;
+		ppelib_set_error("Couldn't allocate section");
+		return 0;
+	}
+
+	pe->sections[pe->header.number_of_sections] = calloc(sizeof(ppelib_section_t), 1);
+	if (!pe->sections[pe->header.number_of_sections]) {
+		pe->sections = realloc(pe->sections, pe->header.number_of_sections);
+		ppelib_set_error("Couldn't allocate section");
+		return 0;
+	}
+
+	ppelib_section_t *section = pe->sections[pe->header.number_of_sections];
+	if (raw_size) {
+		section->contents = malloc(raw_size);
+		if (!section->contents) {
+			free(section);
+			pe->sections = realloc(pe->sections, pe->header.number_of_sections);
+			ppelib_set_error("Couldn't allocate section");
+			return 0;
+		}
+
+		if (data) {
+			memcpy(section->contents, data, raw_size);
+		}
+	}
+
+	pe->header.number_of_sections++;
+	section->virtual_size = virtual_size;
+	section->size_of_raw_data = raw_size;
+	section->characteristics = characteristics;
+
+	ppelib_recalculate(pe);
+
+	return pe->header.number_of_sections;
+}
+
 void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t start, size_t end) {
 	ppelib_reset_error();
 
@@ -31,9 +80,8 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 	}
 
 	ppelib_section_t *section = pe->sections[section_index];
-	size_t data_size = MIN(section->virtual_size, section->size_of_raw_data);
 
-	if (end > data_size) {
+	if (end > section->contents_size) {
 		ppelib_set_error("Can't delete past section end");
 		return;
 	}
@@ -42,19 +90,61 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 		return;
 	}
 
-	uint16_t retval = buffer_excise(&pe->sections[section_index]->contents, data_size, start, end);
-	if (!retval) {
-		ppelib_set_error("Failed to allocate new section contents");
-		return;
-	}
-
 	if (end - start > UINT32_MAX) {
 		ppelib_set_error("Section offset out of range");
 		return;
 	}
 
-	section->virtual_size -= (uint32_t) (end - start);
-	section->size_of_raw_data = TO_NEAREST(section->virtual_size, pe->header.file_alignment);
+	uint16_t retval = buffer_excise(&pe->sections[section_index]->contents, section->contents_size, start, end);
+	if (!retval) {
+		ppelib_set_error("Failed to allocate new section contents");
+		return;
+	}
+
+	section->contents_size -= (end - start);
+
+	ppelib_recalculate(pe);
+}
+
+void ppelib_section_insert_capacity(ppelib_file_t *pe, uint16_t section_index, size_t size, size_t offset) {
+	ppelib_reset_error();
+
+	if (section_index > pe->header.number_of_sections) {
+		ppelib_set_error("Section index out of range");
+		return;
+	}
+
+	if (size > UINT32_MAX) {
+		ppelib_set_error("Section size out of range");
+		return;
+	}
+
+	ppelib_section_t *section = pe->sections[section_index];
+
+	if (section->contents_size + size > UINT32_MAX) {
+		ppelib_set_error("Section size out of range");
+		return;
+	}
+
+	if (offset > section->contents_size) {
+		ppelib_set_error("Can't insert space after total size");
+		return;
+	}
+
+	uint8_t *oldptr = section->contents;
+	section->contents = realloc(section->contents, section->contents_size + size);
+	if (!section->contents) {
+		ppelib_set_error("Failed to allocate new section contents");
+		section->contents = oldptr;
+		return;
+	}
+
+	if (offset != section->contents_size) {
+		memmove(section->contents + offset + size, section->contents + offset, section->contents_size - offset);
+	}
+
+	section->contents_size += size;
+	ppelib_recalculate(pe);
 }
 
 void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t size) {
@@ -65,11 +155,19 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 		return;
 	}
 
-	ppelib_section_t *section = pe->sections[section_index];
-	size_t data_size = MIN(section->virtual_size, section->size_of_raw_data);
+	if (size > UINT32_MAX) {
+		ppelib_set_error("Section size out of range");
+		return;
+	}
 
-	if (size < data_size) {
-		ppelib_section_excise(pe, section_index, size, data_size);
+	ppelib_section_t *section = pe->sections[section_index];
+
+	if (size == section->contents_size) {
+		return;
+	}
+
+	if (size < section->contents_size) {
+		ppelib_section_excise(pe, section_index, size, section->contents_size);
 		return;
 	}
 
@@ -80,6 +178,9 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 		section->contents = oldptr;
 		return;
 	}
+
+	section->contents_size = size;
+	ppelib_recalculate(pe);
 }
 
 uint16_t ppelib_section_find_index(ppelib_file_t *pe, ppelib_section_t *section) {

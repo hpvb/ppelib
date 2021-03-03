@@ -25,11 +25,11 @@
 
 {% from "print-field-macro.jinja" import print_field with context %}
 
-size_t serialize_certificate_table(const ppelib_certificate_table_t* certificate_table, uint8_t* buffer) {
+size_t serialize_certificate_table(const ppelib_certificate_table_t* certificate_table, uint8_t* buffer, size_t offset) {
   ppelib_reset_error();
 
   size_t size = 0;
-  size_t offset = certificate_table->offset;
+  size_t table_offset = certificate_table->offset + offset;
 
   for (uint32_t i = 0; i < certificate_table->size; ++i) {
     size += certificate_table->certificates[i].length;
@@ -37,24 +37,24 @@ size_t serialize_certificate_table(const ppelib_certificate_table_t* certificate
     if (buffer) {
 {%- for field in fields %}
 {%- if 'format' in field and 'variable_size' in field.format %}
-      memcpy(buffer + offset + {{field.offset}}, certificate_table->certificates[i].{{field.name}}, certificate_table->certificates[i].{{length_field}} - 8);
+      memcpy(buffer + table_offset + {{field.offset}}, certificate_table->certificates[i].{{field.name}}, certificate_table->certificates[i].{{length_field}} - 8);
 {%- else %}
-      write_{{field.pe_type}}(buffer + offset + {{field.offset}}, certificate_table->certificates[i].{{field.name}});
+      write_{{field.pe_type}}(buffer + table_offset + {{field.offset}}, certificate_table->certificates[i].{{field.name}});
 {%- endif %}
 {%- endfor %}
     }
 
-    offset = TO_NEAREST(offset + certificate_table->certificates[i].{{length_field}}, 8);
+    table_offset = TO_NEAREST(table_offset + certificate_table->certificates[i].{{length_field}}, 8);
   }
 
-  return size + certificate_table->offset;
+  return size + table_offset;
 }
 
-size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* header, const size_t size, ppelib_certificate_table_t* certificate_table) {
+size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_file_t* pe, const size_t size, ppelib_certificate_table_t* certificate_table) {
   ppelib_reset_error();
 
-  size_t table_offset = header->data_directories[DIR_CERTIFICATE_TABLE].virtual_address;
-  size_t table_size = header->data_directories[DIR_CERTIFICATE_TABLE].size;
+  size_t table_offset = pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address;
+  size_t table_size = pe->header.data_directories[DIR_CERTIFICATE_TABLE].size;
 
   memset(certificate_table, 0, sizeof(ppelib_certificate_table_t));
 
@@ -66,6 +66,11 @@ size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* hea
   if (table_offset + table_size > size) {
     ppelib_set_error("Buffer too small for table.");
     return 0;
+  }
+
+  if (table_offset > UINT32_MAX || table_offset < pe->end_of_sections) {
+	  ppelib_set_error("Certificate table offset out of range");
+	  return 0;
   }
 
   size_t offset = table_offset;
@@ -117,12 +122,7 @@ size_t deserialize_certificate_table(const uint8_t* buffer, ppelib_header_t* hea
     }
   }
 
-  if (table_offset > UINT32_MAX) {
-	  ppelib_set_error("Certificate table offset out of range");
-	  return 0;
-  }
-
-  certificate_table->offset = (uint32_t) table_offset;
+  certificate_table->offset = table_offset - pe->end_of_sections;
 
   return max_offset;
 }

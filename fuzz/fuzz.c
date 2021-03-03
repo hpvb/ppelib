@@ -32,6 +32,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 	ppelib_free_header(header);
 
 	ppelib_print_resource_table(ppelib_get_resource_table(pe));
+	ppelib_update_resource_table(pe);
+	ppelib_recalculate(pe);
 
 	size_t len = ppelib_write_to_buffer(pe, NULL, 0);
 	if (ppelib_error()) {

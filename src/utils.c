@@ -62,21 +62,21 @@ void write_uint64_t(uint8_t *buffer, uint64_t val) {
 
 uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end) {
 	if (start >= end) {
-		return 1;
+		return 0;
 	}
 
 	if (end != size) {
-		memcpy((*buffer) + start, (*buffer) + end, size - (end - start));
+		memmove((*buffer) + start, (*buffer) + end, size - end);
 	}
 
 	uint8_t *oldptr = *buffer;
 	*buffer = realloc(*buffer, size - (end - start));
 	if (!*buffer) {
 		*buffer = oldptr;
-		return 1;
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map) {

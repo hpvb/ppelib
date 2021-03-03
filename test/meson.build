@@ -3,6 +3,7 @@ header_roundtrip_files = [ 'header-roundtrip.c', gen_h ]
 print_header_files = [ 'print-header.c', gen_h ]
 print_resource_table_files = [ 'print-resource-table.c', gen_h ]
 remove_signature_files = [ 'remove-signature.c', gen_h ]
+resource_table_roundtrip_files = [ 'resource-table-roundtrip.c', gen_h ]
 
 content_roundtrip = executable(
 	'content-roundtrip',
@@ -35,6 +36,13 @@ print_resource_table = executable(
 remove_signature = executable(
 	'remove-signature',
 	remove_signature_files,
+	include_directories: inc,
+	link_with: ppelib
+)
+
+resource_table_roundtrip = executable(
+	'resource-table-roundtrip',
+	resource_table_roundtrip_files,
 	include_directories: inc,
 	link_with: ppelib
 )
