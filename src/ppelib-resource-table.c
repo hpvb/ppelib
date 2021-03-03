@@ -79,14 +79,19 @@ string_table_string_t* string_table_find(string_table_t *table, wchar_t *string)
 }
 
 void string_table_put(string_table_t *table, wchar_t *string) {
-	if (string_table_find(table, string)) {
+	size_t s_size = (wcslen(string) * 2) + 2;
+
+	if (!s_size) {
+		ppelib_set_error("String empty");
 		return;
 	}
 
-	size_t s_size = (wcslen(string) * 2) + 2;
-
 	if (s_size > UINT16_MAX) {
 		ppelib_set_error("String size too long");
+		return;
+	}
+
+	if (string_table_find(table, string)) {
 		return;
 	}
 
@@ -297,6 +302,10 @@ size_t serialize_resource_table(const ppelib_resource_table_t *resource_table, u
 
 	size_t data_entries = table_data_entries_number(resource_table, 0);
 	fill_string_table(resource_table, &string_table);
+	if (ppelib_error_peek()){
+		string_table_free(&string_table);
+		return 0;
+	}
 
 	size_t data_entries_offset = TO_NEAREST(string_table_offset + string_table.bytes, 4);
 	size_t data_offset = data_entries_offset + (data_entries * 16);

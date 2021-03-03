@@ -32,14 +32,15 @@ int main(int argc, char *argv[]) {
 	ppelib_handle *pe = ppelib_create_from_file(argv[1]);
 	if (ppelib_error()) {
 		printf("PElib-error: %s\n", ppelib_error());
-		return (1);
+		retval = 1;
+		goto out;
 	}
 
 	ppelib_header_t *header = ppelib_get_header(pe);
 	ppelib_print_pe_header(header);
 
 	ppelib_free_header(header);
-	ppelib_destroy(pe);
+	out: ppelib_destroy(pe);
 
 	return retval;
 }

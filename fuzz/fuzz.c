@@ -41,6 +41,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 		printf("PPELib-Error: %s\n", ppelib_error());
 		goto out;
 	}
+
 	uint8_t *b = malloc(len);
 	ppelib_write_to_buffer(pe, b, len);
 	pe2 = ppelib_create_from_buffer(b, len);
