@@ -41,9 +41,9 @@ void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.st
 	{%- endif %}
 	{%- elif field.format.bitfield %}
 	{%- if field.getset_type == "uint64_t" %}
-	fprintf(stream, "{{field.name}}: (0x%08" PRIx64 ")", {{s.structure}}->{{field.struct_name}});
+	fprintf(stream, "{{field.name}}: (0x%08" PRIx64 ") ", {{s.structure}}->{{field.struct_name}});
 	{%- else %}
-	fprintf(stream, "{{field.name}}: (0x%08X)", {{s.structure}}->{{field.struct_name}});
+	fprintf(stream, "{{field.name}}: (0x%08X) ", {{s.structure}}->{{field.struct_name}});
 	{%- endif %}
 	const ppelib_map_entry_t* {{field.struct_name}}_map_i = {{field.format.bitfield}};
 	while ({{field.struct_name}}_map_i->string) {

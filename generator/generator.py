@@ -29,6 +29,7 @@ sizes = {
     "uint16_t": 2,
     "uint32_t": 4,
     "uint64_t": 8,
+    "section_name": 8,
 }
 
 max_sizes = {

@@ -24,12 +24,22 @@ outdir = sys.argv[1]
 mydir = os.path.dirname(os.path.abspath(__file__))
 
 header = [
-        ["getset_structure.c", "header_getset.c" ],
-        ["header_deserialize.c", "header_deserialize.c"],
-        ["header_serialize.c", "header_serialize.c"],
-        ["print_structure.c", "header_print.c"],
-        ["private_header.h", "header_private.h"]
+    ["getset_structure.c", "header_getset.c" ],
+    ["header_deserialize.c", "header_deserialize.c"],
+    ["header_serialize.c", "header_serialize.c"],
+    ["print_structure.c", "header_print.c"],
+    ["private_header.h", "header_private.h"]
+]
+
+section = [
+    ["getset_structure.c", "section_getset.c" ],
+    ["print_structure.c", "section_print.c"],
+    ["private_header.h",  "section_private.h"]
+
 ]
 
 for file in header:
     generate(f"{mydir}/structures/header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
+
+for file in section:
+    generate(f"{mydir}/structures/section.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")

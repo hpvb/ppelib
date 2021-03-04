@@ -54,7 +54,12 @@ void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.str
 		}
 	}
 {%- endif %}
+{%- if field.copy == true %}
+	memset({{s.structure}}->{{field.struct_name}}, 0, sizeof({{s.structure}}));
+	memcpy({{s.structure}}->{{field.struct_name}}, value, {{field.pe_size}});
+{%- else %}
 	{{s.structure}}->{{field.struct_name}} = value;
+{%- endif %}
 }
 {% endif %}
 {%- if field.format and field.format.enum %}

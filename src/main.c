@@ -75,13 +75,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	pe->pe_header_offset = header_offset;
 	pe->coff_header_offset = header_offset + 4;
 
-	if (size < pe->coff_header_offset + COFF_HEADER_SIZE) {
-		ppelib_set_error("Not a PE file (file too small for COFF header)");
-		ppelib_destroy(pe);
-		return NULL;
-	}
-
-	ppelib_header_deserialize(buffer, pe->coff_header_offset, size, &pe->header);
+	ppelib_header_deserialize(buffer, size, pe->coff_header_offset, &pe->header);
 	if (ppelib_error_peek()) {
 		ppelib_destroy(pe);
 		return NULL;

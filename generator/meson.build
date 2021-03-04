@@ -1,5 +1,6 @@
 structures_gen = [
 	'structures/header.yaml',
+	'structures/section.yaml',
 ]
 
 files_private_gen = files([

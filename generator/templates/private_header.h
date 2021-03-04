@@ -31,6 +31,10 @@ typedef struct {{s.structure}} {
 	{% for field in s.fields -%}
 	{{field.getset_type}} {{field.struct_name}};
 	{% endfor %}
+
+	{% for field in s.extra_fields %}
+	{{field.type}} {{field.name}};
+	{% endfor %}
 } {{s.structure}}_t;
 
 {% for field in s.fields %}

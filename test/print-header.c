@@ -22,12 +22,12 @@
 #include <ppelib/ppelib-low-level.h>
 
 int main(int argc, char *argv[]) {
+	int retval = 0;
+
 	if (argc != 2) {
 		printf("Usage: %s <filename>\n", argv[0]);
 		return 1;
 	}
-
-	int retval = 0;
 
 	ppelib_handle *pe = ppelib_create_from_file(argv[1]);
 	if (ppelib_error()) {
@@ -36,8 +36,7 @@ int main(int argc, char *argv[]) {
 		goto out;
 	}
 
-	const ppelib_header *header = ppelib_header_get(pe);
-	ppelib_header_print(header);
+	ppelib_header_print(ppelib_header_get(pe));
 
 	out: ppelib_destroy(pe);
 
