@@ -15,26 +15,17 @@
  * limitations under the License.
  */
 
-#ifndef PPELIB_CERTIFICATE_TABLE_H
-#define PPELIB_CERTIFICATE_TABLE_H
+#ifndef PPELIB_{{s.structure|upper}}_LOWLEVEL_H_
+#define PPELIB_{{s.structure|upper}}_LOWLEVEL_H_
 
 #include <inttypes.h>
+#include <stdio.h>
 #include <stddef.h>
 
-typedef struct ppelib_certificate {
-{%- for f in fields %}
-{%- if 'format' in f and 'string' in f.format %}
-  uint8_t {{f.name}}[{{f.pe_size + 1}}];
-{%- else %}
-  {{f.pe_type}} {{f.name}};
-{%- endif %}
-{%- endfor %}
-} ppelib_certificate_t;
+#include <ppelib/{{s.structure}}.h>
 
-typedef struct ppelib_certificate_table {
-  uint32_t size;
-  size_t offset;
-  ppelib_certificate_t* certificates;
-} ppelib_certificate_table_t;
+size_t ppelib_{{s.structure}}_serialize(const ppelib_{{s.structure}}_t* {{s.structure}}, uint8_t* buffer, const size_t offset);
+void ppelib_{{s.structure}}_printf(FILE* stream, const ppelib_{{s.structure}}_t* {{s.structure}});
+void ppelib_{{s.structure}}_print(const ppelib_{{s.structure}}_t* {{s.structure}});
 
-#endif /* PPELIB_CERTIFICATE_TABLE_H */
+#endif /* PPELIB_{{s.structure|upper}}_LOWLEVEL_H_  */

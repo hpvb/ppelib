@@ -39,16 +39,16 @@ if cc.get_id() == 'msvc'
 	)
 endif
 
-prog_python = import('python').find_installation('python3', modules: ['jinja2'])
+prog_python = import('python').find_installation('python3', modules: ['jinja2', 'yaml'])
 
 inc = include_directories('include')
 subdir('include')
 subdir('src')
-if get_option('use_clang_fuzzer') == false
-	subdir('test')
-else
-	subdir('fuzz')
-endif
+#if get_option('use_clang_fuzzer') == false
+#	subdir('test')
+#else
+#	subdir('fuzz')
+#endif
 
 pkg = import('pkgconfig')
 pkg.generate(

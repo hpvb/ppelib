@@ -43,7 +43,6 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 void ppelib_section_insert_capacity(ppelib_file_t *pe, uint16_t section_index, size_t size, size_t offset);
 void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t size);
 
-EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map);
 EXPORT_SYM const char* ppelib_error();
 EXPORT_SYM ppelib_file_t* ppelib_create();
 EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
