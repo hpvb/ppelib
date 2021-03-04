@@ -1,0 +1,45 @@
+---
+structure: section
+fields:
+   - name: Name
+     pe_type: string_name
+     set: true
+     copy: true
+     format:
+        string: true
+   - name: VirtualSize
+     pe_type: uint32_t
+     set: true
+   - name: VirtualAddress
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: SizeOfRawData
+     pe_type: uint32_t
+   - name: PointerToRawData
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: PointerToRelocations
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: PointerToLinenumbers
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: NumberOfRelocations
+     pe_type: uint16_t
+   - name: NumberOfLinenumbers
+     pe_type: uint16_t
+   - name: Characteristics
+     pe_type: uint32_t
+     set: true
+     format:
+        bitfield: ppelib_section_flags_map
+
+extra_fields:
+   - name: contents
+     type: uint8_t*
+   - name: contents_size
+     type: size_t

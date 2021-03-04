@@ -18,8 +18,8 @@
 #ifndef PPELIB_RESOURCE_TABLE_H_
 #define PPELIB_RESOURCE_TABLE_H_
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 #include <ppelib/ppelib-constants.h>
 

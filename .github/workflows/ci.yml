@@ -44,7 +44,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -qqq build-essential ninja-build
-          python -m pip install --upgrade meson jinja2
+          python -m pip install --upgrade meson jinja2 PyYAML
 
       - name: Build the library
         run: |
@@ -63,7 +63,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          dnf install -y gcc meson python3-jinja2
+          dnf install -y gcc meson python3-jinja2 python3-pyyaml
 
       - name: Build the library
         run: |
@@ -82,7 +82,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          dnf install -y clang meson python3-jinja2
+          dnf install -y clang meson python3-jinja2 python3-pyyaml
 
       - name: Build the library
         run: |
@@ -109,7 +109,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew install ninja
-          python -m pip install --upgrade meson jinja2
+          python -m pip install --upgrade meson jinja2 PyYAML
 
       - name: Build the library
         run: |
@@ -132,7 +132,7 @@ jobs:
       - name: Install dependencies
         run: |
           choco install ninja
-          python -m pip install --upgrade meson jinja2
+          python -m pip install --upgrade meson jinja2 PyYAML
 
       - name: Build the library
         run: |
@@ -155,7 +155,7 @@ jobs:
       - name: Install dependencies
         run: |
           choco install ninja
-          python -m pip install --upgrade meson jinja2
+          python -m pip install --upgrade meson jinja2 PyYAML
 
       - name: Set up Visual Studio command prompt
         uses: ilammy/msvc-dev-cmd@v1.5.0

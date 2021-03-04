@@ -1,0 +1,9 @@
+BasedOnStyle: LLVM
+UseTab: Always
+IndentWidth: 4
+ContinuationIndentWidth: 8
+TabWidth: 4
+ColumnLimit: 0
+KeepEmptyLinesAtTheStartOfBlocks: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: DontAlign

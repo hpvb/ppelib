@@ -1,3 +1,5 @@
+subdir('generated')
+
 if cc.get_id() != 'msvc'
 	if cc.get_argument_syntax() == 'gcc'
 		extra_args = ['-fvisibility=hidden']
@@ -10,31 +12,21 @@ else
 	extra_args = []
 endif
 
-gen_src = custom_target(
-	'generate-files-c',
-	input: [
-		meson.source_root() + '/generator/templates/ppelib-certificate_table.c',
-		meson.source_root() + '/generator/templates/ppelib-header.c',
-		meson.source_root() + '/generator/templates/ppelib-section.c',
-		meson.source_root() + '/generator/templates/print-field-macro.jinja',
-		meson.source_root() + '/generator/generate-files.py',
-	],
-	output: [
-		'ppelib-certificate_table.c',
-		'ppelib-header.c',
-		'ppelib-section.c',
-	],
-	command: [prog_python, meson.source_root() + '/generator/generate-files.py', '@OUTDIR@', 'c']
-)
-
 ppelib_sources = [
-	'ppelib-certificates.c',
-	'ppelib-error.c',
-	'ppelib-handles.c',
-	'ppelib-headers.c',
-	'ppelib-resource-table.c',
-	'ppelib-sections.c',
+	'data_directory.c',
+	'dos_header/dos_header.c',
+	'dos_header/rich_table.c',
+	'dos_header/vlv_signature.c',
+	'header.c',
+	'main.c',
+	'ppe_error.c',
+	'section.c',
+	'string_table.c',
 	'utils.c',
+#	'ppelib-certificates.c',
+#	'ppelib-handles.c',
+#	'ppelib-headers.c',
+#	'ppelib-resource-table.c',
 	gen_src,
 	gen_h
 ]

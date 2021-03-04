@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "export.h"
+#include "platform.h"
 #include "utils.h"
 
 uint8_t read_uint8_t(const uint8_t *buffer) {
@@ -65,6 +65,11 @@ uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end) 
 		return 0;
 	}
 
+	if (size - (end - start) == 0) {
+		free(*buffer);
+		*buffer = NULL;
+	}
+
 	if (end != size) {
 		memmove((*buffer) + start, (*buffer) + end, size - end);
 	}
@@ -79,7 +84,32 @@ uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end) 
 	return 1;
 }
 
-EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map) {
+uint32_t next_pow2(uint32_t number) {
+	number--;
+	number |= number >> 1;
+	number |= number >> 2;
+	number |= number >> 4;
+	number |= number >> 8;
+	number |= number >> 16;
+	number++;
+
+	number = (number == 1) ? 2 : number;
+	return number;
+}
+
+// TODO find actual hard information on this
+uint32_t get_machine_page_size(enum ppelib_machine_type machine) {
+	switch (machine) {
+	case IMAGE_FILE_MACHINE_IA64:
+	case IMAGE_FILE_MACHINE_ALPHA:
+	case IMAGE_FILE_MACHINE_ALPHA64:
+		return 0x2000;
+	default:
+		return 0x1000;
+	}
+}
+
+EXPORT_SYM const char *map_lookup(uint32_t value, const ppelib_map_entry_t *map) {
 	const ppelib_map_entry_t *m = map;
 	while (m->string) {
 		if (m->value == value) {

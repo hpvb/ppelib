@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ppelib/ppelib.h>
 #include <ppelib/ppelib-low-level.h>
+#include <ppelib/ppelib.h>
 
 int main(int argc, char *argv[]) {
 	if (argc != 3) {
@@ -38,28 +38,30 @@ int main(int argc, char *argv[]) {
 		goto out;
 	}
 
-	// Get original header
-	ppelib_header_t *header = ppelib_get_header(pe);
-
-	// Recalculate headers
-	ppelib_recalculate(pe);
-
-	// Get new headers
-	ppelib_header_t *header1 = ppelib_get_header(pe);
-
-	// Fix up unstable header fields
-	header1->base_of_data = header->base_of_data;
-	header1->size_of_code = header->size_of_code;
-	header1->size_of_uninitialized_data = header->size_of_uninitialized_data;
-	header1->size_of_initialized_data = header->size_of_initialized_data;
-
-	ppelib_set_header(pe, header1);
-	if (ppelib_error()) {
-		printf("PElib-error set_header: %s\n", ppelib_error());
-	}
-
-	ppelib_free_header(header);
-	ppelib_free_header(header1);
+	ppelib_dos_header *dos_header = ppelib_dos_header_get(pe);
+	ppelib_dos_header_set_message(dos_header, "Does this even work?");
+	//	// Get original header
+	//	ppelib_header *header = ppelib_header_get(pe);
+	//
+	//	// Recalculate headers
+	//	//ppelib_recalculate(pe);
+	//
+	//	// Get new headers
+	//	ppelib_header header1 = ppelib_header_get(pe);
+	//
+	//	// Fix up unstable header fields
+	//	header1->base_of_data = header->base_of_data;
+	//	header1->size_of_code = header->size_of_code;
+	//	header1->size_of_uninitialized_data = header->size_of_uninitialized_data;
+	//	header1->size_of_initialized_data = header->size_of_initialized_data;
+	//
+	//	ppelib_set_header(pe, header1);
+	//	if (ppelib_error()) {
+	//		printf("PElib-error set_header: %s\n", ppelib_error());
+	//	}
+	//
+	//	ppelib_free_header(header);
+	//	ppelib_free_header(header1);
 
 	ppelib_write_to_file(pe, argv[2]);
 	if (ppelib_error()) {
@@ -68,7 +70,8 @@ int main(int argc, char *argv[]) {
 		goto out;
 	}
 
-	out: ppelib_destroy(pe);
+out:
+	ppelib_destroy(pe);
 
 	return retval;
 }

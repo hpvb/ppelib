@@ -20,9 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "platform.h"
 #include "ppelib-internal.h"
 
-EXPORT_SYM ppelib_file_t* ppelib_create() {
+EXPORT_SYM ppelib_file_t *ppelib_create() {
 	ppelib_reset_error();
 
 	ppelib_file_t *pe = calloc(sizeof(ppelib_file_t), 1);
@@ -56,15 +57,15 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe);
 }
 
-EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
+EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
 
-	if (size < PE_SIGNATURE_OFFSET + sizeof(uint32_t)) {
+	if (size < PE_SIGNATURE_POINTER_OFFSET + sizeof(uint32_t)) {
 		ppelib_set_error("Not a PE file (file too small)");
 		return NULL;
 	}
 
-	uint32_t header_offset = read_uint32_t(buffer + PE_SIGNATURE_OFFSET);
+	uint32_t header_offset = read_uint32_t(buffer + PE_SIGNATURE_POINTER_OFFSET);
 	if (size < header_offset + sizeof(uint32_t)) {
 		ppelib_set_error("Not a PE file (file too small for PE signature)");
 		return NULL;
@@ -82,23 +83,23 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		return NULL;
 	}
 
-	pe->pe_header_offset = header_offset;
-	pe->coff_header_offset = header_offset + 4;
+	pe->pe_signature_offset = header_offset;
+	pe->header_offset = header_offset + 4;
 
-	if (size < pe->coff_header_offset + COFF_HEADER_SIZE) {
+	if (size < pe->header_offset + COFF_HEADER_SIZE) {
 		ppelib_set_error("Not a PE file (file too small for COFF header)");
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	size_t header_size = deserialize_pe_header(buffer, pe->coff_header_offset, size, &pe->header);
+	size_t header_size = deserialize_pe_header(buffer, pe->header_offset, size, &pe->header);
 	if (ppelib_error_peek()) {
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	pe->section_offset = header_size + pe->coff_header_offset;
-	pe->sections = malloc(sizeof(ppelib_section_t*) * pe->header.number_of_sections);
+	pe->section_offset = header_size + pe->header_offset;
+	pe->sections = malloc(sizeof(ppelib_section_t *) * pe->header.number_of_sections);
 	if (!pe->sections) {
 		ppelib_set_error("Failed to allocate sections");
 		ppelib_destroy(pe);
@@ -180,13 +181,13 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	//pe.sections[4] = pe.sections[3];
 	//pe.sections[3] = t;
 
-	pe->stub = malloc(pe->pe_header_offset);
+	pe->stub = malloc(pe->pe_signature_offset);
 	if (!pe->stub) {
 		ppelib_set_error("Failed to allocate memory for PE stub");
 		ppelib_destroy(pe);
 		return NULL;
 	}
-	memcpy(pe->stub, buffer, pe->pe_header_offset);
+	memcpy(pe->stub, buffer, pe->pe_signature_offset);
 
 	if (size > pe->end_of_sections) {
 		pe->trailing_data_size = size - pe->end_of_sections;
@@ -210,7 +211,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	return pe;
 }
 
-EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
+EXPORT_SYM ppelib_file_t *ppelib_create_from_file(const char *filename) {
 	ppelib_reset_error();
 	size_t file_size;
 	uint8_t *file_contents;
@@ -232,7 +233,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 		return NULL;
 	}
 
-	file_size = (size_t) ftell_size;
+	file_size = (size_t)ftell_size;
 
 	if (!file_size) {
 		fclose(f);
@@ -268,9 +269,9 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	size_t size = 0;
 
 	// Write stub
-	size += pe->pe_header_offset;
+	size += pe->pe_signature_offset;
 	size += 4;
-	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
+	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_signature_offset);
 	if (ppelib_error_peek()) {
 		return 0;
 	}
@@ -281,19 +282,19 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	size_t end_of_sections = 0;
 
 	// Write resources TODO
-//	if (pe->header.number_of_rva_and_sizes > DIR_RESOURCE_TABLE) {
-//		if (pe->data_directories[DIR_RESOURCE_TABLE].size) {
-//			ppelib_section_t *section = pe->data_directories[DIR_RESOURCE_TABLE].section;
-//			size_t offset = pe->data_directories[DIR_RESOURCE_TABLE].offset;
-//
-//			if (buffer && section) {
-//				serialize_resource_table(&pe->resource_table, section->contents + offset,
-//						pe->data_directories[DIR_RESOURCE_TABLE].orig_rva);
-//			}
-//		}
-//	}
+	//	if (pe->header.number_of_rva_and_sizes > DIR_RESOURCE_TABLE) {
+	//		if (pe->data_directories[DIR_RESOURCE_TABLE].size) {
+	//			ppelib_section_t *section = pe->data_directories[DIR_RESOURCE_TABLE].section;
+	//			size_t offset = pe->data_directories[DIR_RESOURCE_TABLE].offset;
+	//
+	//			if (buffer && section) {
+	//				serialize_resource_table(&pe->resource_table, section->contents + offset,
+	//						pe->data_directories[DIR_RESOURCE_TABLE].orig_rva);
+	//			}
+	//		}
+	//	}
 
-	size_t section_offset = pe->pe_header_offset + coff_header_size;
+	size_t section_offset = pe->pe_signature_offset + coff_header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = serialize_section(pe->sections[i], NULL, section_offset + (i * PE_SECTION_HEADER_SIZE));
 		if (ppelib_error_peek()) {
@@ -340,15 +341,15 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	memset(buffer, 0, size);
 	//memset(buffer, 0xCC, size);
 
-	memcpy(buffer, pe->stub, pe->pe_header_offset);
-	write += pe->pe_header_offset;
+	memcpy(buffer, pe->stub, pe->pe_signature_offset);
+	write += pe->pe_signature_offset;
 
 	// Write PE header
 	memcpy(buffer + write, "PE\0", 4);
 	write += 4;
 
 	// Write COFF header
-	serialize_pe_header(&pe->header, buffer, pe->pe_header_offset + 4);
+	serialize_pe_header(&pe->header, buffer, pe->pe_signature_offset + 4);
 	if (ppelib_error_peek()) {
 		return 0;
 	}
@@ -420,9 +421,8 @@ EXPORT_SYM size_t ppelib_write_to_file(ppelib_file_t *pe, const char *filename) 
 }
 
 EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
-	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
-	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size
-			+ (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
+	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_signature_offset);
+	size_t size_of_headers = pe->pe_signature_offset + 4 + coff_header_size + (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
 
 	if (!pe->header.file_alignment || pe->header.file_alignment > UINT16_MAX) {
 		pe->header.file_alignment = 512;
@@ -431,7 +431,7 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	if (TO_NEAREST(size_of_headers, pe->header.file_alignment) > UINT32_MAX) {
 		pe->header.size_of_headers = 0;
 	} else {
-		pe->header.size_of_headers = (uint32_t) (TO_NEAREST(size_of_headers, pe->header.file_alignment));
+		pe->header.size_of_headers = (uint32_t)(TO_NEAREST(size_of_headers, pe->header.file_alignment));
 	}
 
 	size_t next_section_virtual = pe->start_of_sections;
@@ -457,20 +457,20 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		ppelib_section_t *section = pe->sections[i];
 
-		section->virtual_size = (uint32_t) (section->contents_size + section->virtual_padding);
-		section->size_of_raw_data = TO_NEAREST((uint32_t )section->contents_size, pe->header.file_alignment);
+		section->virtual_size = (uint32_t)(section->contents_size + section->virtual_padding);
+		section->size_of_raw_data = TO_NEAREST((uint32_t)section->contents_size, pe->header.file_alignment);
 
 		// TODO does this need checking?
-		section->virtual_address = (uint32_t) next_section_virtual;
+		section->virtual_address = (uint32_t)next_section_virtual;
 
 		if (section->size_of_raw_data) {
 			section->pointer_to_raw_data = next_section_physical;
 		}
 
 		next_section_virtual =
-		TO_NEAREST(section->virtual_size, pe->header.section_alignment) + next_section_virtual;
+				TO_NEAREST(section->virtual_size, pe->header.section_alignment) + next_section_virtual;
 		next_section_physical =
-		TO_NEAREST(section->size_of_raw_data, pe->header.file_alignment) + next_section_physical;
+				TO_NEAREST(section->size_of_raw_data, pe->header.file_alignment) + next_section_physical;
 
 		if (CHECK_BIT(section->characteristics, IMAGE_SCN_CNT_CODE)) {
 			if (!base_of_code) {
@@ -526,7 +526,7 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 	if (TO_NEAREST(virtual_sections_end, pe->header.section_alignment) > UINT32_MAX) {
 		pe->header.size_of_image = 0;
 	} else {
-		pe->header.size_of_image = (uint32_t) (TO_NEAREST(virtual_sections_end, pe->header.section_alignment));
+		pe->header.size_of_image = (uint32_t)(TO_NEAREST(virtual_sections_end, pe->header.section_alignment));
 	}
 
 	pe->header.data_directories = realloc(pe->header.data_directories,
@@ -551,8 +551,7 @@ EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
 			size += pe->certificate_table.certificates[i].length;
 		}
 
-		pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address = (uint32_t) (pe->end_of_sections
-				+ pe->certificate_table.offset);
+		pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address = (uint32_t)(pe->end_of_sections + pe->certificate_table.offset);
 		pe->header.data_directories[DIR_CERTIFICATE_TABLE].size = size;
 	}
 }

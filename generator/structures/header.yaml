@@ -1,0 +1,138 @@
+---
+structure: header
+fields:
+  - name: Machine
+    pe_type: uint16_t
+    set: true
+    format:
+      enum: ppelib_machine_type_map
+  - name: NumberOfSections
+    pe_type: uint16_t
+  - name: TimeDateStamp
+    pe_type: uint32_t
+    set: true
+    format:
+      time: true
+  - name: PointerToSymbolTable
+    pe_type: uint32_t
+    format:
+      hex: true
+  - name: NumberOfSymbols
+    pe_type: uint32_t
+  - name: SizeOfOptionalHeader
+    pe_type: uint16_t
+  - name: Characteristics
+    pe_type: uint16_t
+    format:
+      bitfield: ppelib_characteristics_map
+  - name: Magic
+    pe_type: uint16_t
+    format:
+      enum: ppelib_magic_type_map
+  - name: MajorLinkerVersion
+    pe_type: uint8_t
+    set: true
+  - name: MinorLinkerVersion
+    pe_type: uint8_t
+    set: true
+  - name: SizeOfCode
+    pe_type: uint32_t
+  - name: SizeOfInitializedData
+    pe_type: uint32_t
+  - name: SizeOfUninitializedData
+    pe_type: uint32_t
+  - name: AddressOfEntryPoint
+    pe_type: uint32_t
+    format:
+      hex: true
+  - name: BaseOfCode
+    pe_type: uint32_t
+    format:
+      hex: true
+  - name: BaseOfData
+    pe_only: true
+    pe_type: uint32_t
+    format:
+      hex: true
+  - name: ImageBase
+    pe_type: uint32_t
+    peplus_type: uint64_t
+    format:
+      hex: true
+    set: true
+  - name: SectionAlignment
+    pe_type: uint32_t
+    set: true
+    range:
+       start: header->file_alignment
+       end: UINT16_MAX
+  - name: FileAlignment
+    pe_type: uint32_t
+    set: true
+    range:
+       end: UINT16_MAX
+  - name: MajorOperatingSystemVersion
+    pe_type: uint16_t
+    set: true
+  - name: MinorOperatingSystemVersion
+    pe_type: uint16_t
+    set: true
+  - name: MajorImageVersion
+    pe_type: uint16_t
+    set: true
+  - name: MinorImageVersion
+    pe_type: uint16_t
+    set: true
+  - name: MajorSubsystemVersion
+    pe_type: uint16_t
+    set: true
+  - name: MinorSubsystemVersion
+    pe_type: uint16_t
+    set: true
+  - name: Win32VersionValue
+    pe_type: uint32_t
+    set: true
+  - name: SizeOfImage
+    pe_type: uint32_t
+  - name: SizeOfHeaders
+    pe_type: uint32_t
+  - name: Checksum
+    pe_type: uint32_t
+  - name: Subsystem
+    pe_type: uint16_t
+    format:
+      enum: ppelib_windows_subsystem_map
+    set: true
+  - name: DllCharacteristics
+    pe_type: uint16_t
+    format:
+      bitfield: ppelib_dll_characteristics_map
+  - name: SizeOfStackReserve
+    pe_type: uint32_t
+    peplus_type: uint64_t
+    set: true
+  - name: SizeOfStackCommit
+    pe_type: uint32_t
+    peplus_type: uint64_t
+    set: true
+  - name: SizeOfHeapReserve
+    pe_type: uint32_t
+    peplus_type: uint64_t
+    set: true
+  - name: SizeOfHeapCommit
+    pe_type: uint32_t
+    peplus_type: uint64_t
+    set: true
+  - name: LoaderFlags
+    pe_type: uint32_t
+    set: true
+  - name: NumberOfRvaAndSizes
+    pe_type: uint32_t
+
+extra_definitions:
+   - name: DATA_DIRECTORY_SIZE
+     value: 8
+   - name: PE_OPTIONAL_HEADER_SIZE
+     value: 96
+   - name: PEPLUS_OPTIONAL_HEADER_SIZE
+     value: 112

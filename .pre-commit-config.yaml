@@ -16,8 +16,7 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
 
-  # TODO: Uncomment this block after adding a `.clang-format` file.
-  # - repo: https://github.com/pocc/pre-commit-hooks
-  #   rev: v1.1.1
-  #   hooks:
-  #     - id: clang-format
+  - repo: https://github.com/pocc/pre-commit-hooks
+    rev: v1.1.1
+    hooks:
+      - id: clang-format

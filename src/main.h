@@ -18,34 +18,31 @@
 #ifndef PPELIB_MAIN_H_
 #define PPELIB_MAIN_H_
 
-#include <ppelib/ppelib-certificate_table.h>
-#include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-resource-table.h>
-#include <ppelib/ppelib-section.h>
+typedef struct data_directory data_directory_t;
 
-typedef struct ppelib_data_directory {
-	ppelib_section_t *section;
-	uint32_t offset;
-	uint32_t size;
-
-	size_t orig_rva;
-	size_t orig_size;
-} ppelib_data_directory_t;
+#include "data_directory_private.h"
+#include "generated/dos_header_private.h"
+#include "generated/header_private.h"
+#include "generated/section_private.h"
+#include "string_table_private.h"
 
 typedef struct ppelib_file {
-	size_t pe_header_offset;
-	size_t coff_header_offset;
-	size_t section_offset;
-	size_t start_of_sections;
-	size_t end_of_sections;
-	size_t allocated_sections;
+	size_t start_of_section_va;
 
-	ppelib_header_t header;
-	ppelib_section_t **sections;
-	ppelib_data_directory_t *data_directories;
+	size_t start_of_section_data;
+	size_t end_of_section_data;
 
-	ppelib_certificate_table_t certificate_table;
-	ppelib_resource_table_t resource_table;
+	size_t entrypoint_offset;
+	section_t *entrypoint_section;
+
+	dos_header_t dos_header;
+	header_t header;
+	data_directory_t *data_directories;
+	string_table_t string_table;
+	section_t **sections;
+
+	//	certificate_table_t certificate_table;
+	//	ppelib_resource_table_t resource_table;
 
 	uint8_t *stub;
 	size_t trailing_data_size;

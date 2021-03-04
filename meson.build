@@ -16,7 +16,7 @@ if get_option('use_clang_fuzzer') == true
 	endif
 
 	add_project_arguments(
-		'-fsanitize=fuzzer-no-link,address,undefined',
+		['-fsanitize=fuzzer-no-link,address,undefined', '-DFUZZ=1'],
 		language: ['c', 'cpp'],
 	)
 	add_project_link_arguments(
@@ -27,7 +27,7 @@ endif
 
 if cc.get_argument_syntax() == 'gcc'
 	add_project_arguments(
-		'-Wconversion',
+		['-Wconversion', '-D_POSIX_C_SOURCE=200809L', '-D_GNU_SOURCE=1'],
 		language: ['c', 'cpp'],
 	)
 endif
@@ -39,9 +39,10 @@ if cc.get_id() == 'msvc'
 	)
 endif
 
-prog_python = import('python').find_installation('python3', modules: ['jinja2'])
+prog_python = import('python').find_installation('python3', modules: ['jinja2', 'yaml'])
 
 inc = include_directories('include')
+subdir('generator')
 subdir('include')
 subdir('src')
 if get_option('use_clang_fuzzer') == false
