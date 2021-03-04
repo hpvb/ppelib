@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef SRC_THREAD_LOCAL_H_
-#define SRC_THREAD_LOCAL_H_
+#ifndef PPELIB_THREAD_LOCAL_H_
+#define PPELIB_THREAD_LOCAL_H_
 
 #ifndef thread_local
 # if __STDC_VERSION__ >= 201112 && !defined __STDC_NO_THREADS__
@@ -37,4 +37,4 @@
 # endif
 #endif
 
-#endif /* SRC_THREAD_LOCAL_H_ */
+#endif /* PPELIB_THREAD_LOCAL_H_ */

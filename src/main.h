@@ -18,13 +18,10 @@
 #ifndef PPELIB_MAIN_H_
 #define PPELIB_MAIN_H_
 
-#include <ppelib/ppelib-certificate_table.h>
-#include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-resource-table.h>
-#include <ppelib/ppelib-section.h>
+#include "header_private.h"
 
 typedef struct ppelib_data_directory {
-	ppelib_section_t *section;
+	//ppelib_section_t *section;
 	uint32_t offset;
 	uint32_t size;
 
@@ -40,12 +37,12 @@ typedef struct ppelib_file {
 	size_t end_of_sections;
 	size_t allocated_sections;
 
-	ppelib_header_t header;
-	ppelib_section_t **sections;
-	ppelib_data_directory_t *data_directories;
+	header_t header;
+//	section_t **sections;
+//	ppelib_data_directory_t *data_directories;
 
-	ppelib_certificate_table_t certificate_table;
-	ppelib_resource_table_t resource_table;
+//	certificate_table_t certificate_table;
+//	ppelib_resource_table_t resource_table;
 
 	uint8_t *stub;
 	size_t trailing_data_size;

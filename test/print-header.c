@@ -36,10 +36,9 @@ int main(int argc, char *argv[]) {
 		goto out;
 	}
 
-	ppelib_header_t *header = ppelib_get_header(pe);
-	ppelib_print_pe_header(header);
+	const ppelib_header *header = ppelib_header_get(pe);
+	ppelib_header_print(header);
 
-	ppelib_free_header(header);
 	out: ppelib_destroy(pe);
 
 	return retval;

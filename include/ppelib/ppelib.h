@@ -21,26 +21,22 @@
 #include <stddef.h>
 #include <inttypes.h>
 
-#include <ppelib/ppelib-constants.h>
-#include <ppelib/ppelib-certificate_table.h>
 #include <ppelib/ppelib-header.h>
-#include <ppelib/ppelib-section.h>
-#include <ppelib/ppelib-resource-table.h>
+#include <ppelib/ppelib-constants.h>
 
 typedef void ppelib_handle;
 
 const char* ppelib_error();
+
 ppelib_handle* ppelib_create();
 ppelib_handle* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
 ppelib_handle* ppelib_create_from_file(const char *filename);
-size_t ppelib_write_to_buffer(ppelib_handle *handle, uint8_t *buffer, size_t size);
-size_t ppelib_write_to_file(ppelib_handle *handle, const char *filename);
-uint32_t ppelib_has_signature(ppelib_handle *handle);
-void ppelib_destroy(ppelib_handle *handle);
-void ppelib_fprint_pe_header(FILE *stream, const ppelib_header_t *header);
-void ppelib_print_pe_header(const ppelib_header_t *header);
-void ppelib_print_resource_table(const ppelib_resource_table_t *resource_table);
-void ppelib_print_section(const ppelib_section_t *section);
-void ppelib_signature_remove(ppelib_handle *handle);
+void ppelib_destroy(ppelib_handle *pe);
+
+const ppelib_header* ppelib_header_get(ppelib_handle* handle);
+ppelib_header* ppelib_header_copy(ppelib_header* header);
+void ppelib_header_free_copy(ppelib_header* header);
+
+uint32_t ppelib_header_compare(ppelib_header* header1, ppelib_header* header2);
 
 #endif /* PPELIB_H_ */

@@ -19,8 +19,8 @@
 #include <stdio.h>
 
 #include <ppelib/ppelib-constants.h>
+#include "ppe_error.h"
 
-#include "ppelib-error.h"
 #include "utils.h"
 
 #include "{{s.structure}}_private.h"

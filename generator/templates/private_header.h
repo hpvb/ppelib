@@ -35,13 +35,13 @@ typedef struct {{s.structure}} {
 
 {% for field in s.fields %}
 EXPORT_SYM {{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}({{s.structure}}_t* {{s.structure}});
-{%- if field.set %}
+{% if field.set -%}
 EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, {{field.getset_type}} value);
-{%- endif %}
-{%- if field.format and field.format.enum %}
+{% endif -%}
+{% if field.format and field.format.enum -%}
 EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string({{s.structure}}_t* {{s.structure}});
-{%- endif %}
-{%- endfor %}
+{% endif -%}
+{% endfor %}
 
 EXPORT_SYM size_t ppelib_{{s.structure}}_serialize(const {{s.structure}}_t* {{s.structure}}, uint8_t* buffer, const size_t offset);
 EXPORT_SYM size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t size, const size_t offset, {{s.structure}}_t* {{s.structure}});

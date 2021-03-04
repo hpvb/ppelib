@@ -19,12 +19,6 @@
 #define PPELIB_LOW_LEVEL_H_
 
 #include <ppelib/ppelib.h>
+#include <ppelib/ppelib-header-lowlevel.h>
 
-ppelib_header_t* ppelib_get_header(ppelib_handle *handle);
-ppelib_resource_table_t* ppelib_get_resource_table(ppelib_handle *handle);
-void ppelib_free_header(ppelib_header_t *header);
-void ppelib_free_resource_directory_table(ppelib_resource_table_t *table);
-void ppelib_recalculate(ppelib_handle *file);
-void ppelib_set_header(ppelib_handle *handle, ppelib_header_t *header);
-void ppelib_update_resource_table(ppelib_handle *pe);
 #endif /* PPELIB_LOW_LEVEL_H_ */

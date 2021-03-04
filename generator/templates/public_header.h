@@ -22,19 +22,19 @@
 #include <stdio.h>
 #include <stddef.h>
 
-typedef void ppelib_{{s.structure}}_t;
+typedef void ppelib_{{s.structure}};
 
-{% for field in s.fields -%}
+{% for field in s.fields %}
 {{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(ppelib_{{s.structure}}* {{s.structure}});
-{% if field.set %}
+{% if field.set -%}
 void ppelib_{{s.structure}}_set_{{field.struct_name}}(ppelib_{{s.structure}}* {{s.structure}}, {{field.getset_type}} value);
-{% endif %}
-{%- if field.format and field.format.enum %}
+{% endif -%}
+{% if field.format and field.format.enum -%}
 const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(ppelib_{{s.structure}}* {{s.structure}});
-{% endif %}
-{% endfor -%}
+{% endif -%}
+{% endfor %}
 
-void ppelib_{{s.structure}}_printf(FILE* stream, const ppelib_{{s.structure}}_t* {{s.structure}});
-void ppelib_{{s.structure}}_print(const ppelib_{{s.structure}}_t* {{s.structure}});
+void ppelib_{{s.structure}}_printf(FILE* stream, const ppelib_{{s.structure}}* {{s.structure}});
+void ppelib_{{s.structure}}_print(const ppelib_{{s.structure}}* {{s.structure}});
 
 #endif /* PPELIB_{{s.structure|upper}}_H_  */

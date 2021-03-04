@@ -23,7 +23,7 @@
 
 #include "export.h"
 #include "main.h"
-#include "ppelib-error.h"
+#include "ppe_error.h"
 #include "thread_local.h"
 #include "utils.h"
 
