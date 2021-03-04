@@ -12,6 +12,8 @@ files_private_gen = files([
 	'templates/header_serialize.c',
 	'templates/print_structure.c',
 	'templates/private_header.h',
+	'templates/structure_deserialize.c',
+	'templates/structure_serialize.c',
 ])
 
 files_public_gen = files([

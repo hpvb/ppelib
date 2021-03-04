@@ -22,6 +22,7 @@ import yaml
 from jinja2 import Template, Environment, FileSystemLoader
 
 import pprint
+from builtins import max
 pp = pprint.PrettyPrinter(indent=4).pprint
 
 sizes = {
@@ -64,16 +65,12 @@ def generate_extradata(structure):
     common_size = 0
     pe_size = 0
     peplus_size = 0
-    pe_offset = 0
-    peplus_offset = 0
-    only_common = True
 
     for field in structure["fields"]:
         field["struct_name"] = snake_case(field["name"])
         field["pe_offset"] = pe_size
-
-        if not "pe_only" in field:
-            field["peplus_offset"] = peplus_size
+        field["peplus_offset"] = peplus_size
+        field["common"] = False
 
         if "peplus_type" in field:
             if field["peplus_type"]:
@@ -89,16 +86,15 @@ def generate_extradata(structure):
         pe_size += sizes[field["pe_type"]]
         if "peplus_offset" in field and field["pe_offset"] == field["peplus_offset"]:
             if "peplus_type" in field and field["pe_type"] != field["peplus_type"]:
-                only_common = False
-            else:
-                field["common"] = True
-                common_size += sizes[field["pe_type"]]
-        else:
-            only_common = False
+                continue
+            if "pe_only" in field:
+                continue
+
+            field["common"] = True
+            common_size = max(common_size, pe_size)
 
     structure["pe_size"] = pe_size
     structure["peplus_size"] = peplus_size
-    structure["only_common"] = only_common
     structure["common_size"] = common_size
     structure["max_sizes"] = max_sizes
 

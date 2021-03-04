@@ -28,28 +28,26 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 		goto out;
 	}
 
-	ppelib_header_t *header = ppelib_get_header(pe);
-	ppelib_print_pe_header(header);
-	ppelib_free_header(header);
+	ppelib_header_print(ppelib_header_get(pe));
 
-	ppelib_print_resource_table(ppelib_get_resource_table(pe));
-	ppelib_update_resource_table(pe);
-	ppelib_recalculate(pe);
+	//ppelib_print_resource_table(ppelib_get_resource_table(pe));
+	//ppelib_update_resource_table(pe);
+	//ppelib_recalculate(pe);
 
-	size_t len = ppelib_write_to_buffer(pe, NULL, 0);
-	if (ppelib_error()) {
-		printf("PPELib-Error: %s\n", ppelib_error());
-		goto out;
-	}
+//	size_t len = ppelib_write_to_buffer(pe, NULL, 0);
+//	if (ppelib_error()) {
+//		printf("PPELib-Error: %s\n", ppelib_error());
+//		goto out;
+//	}
 
-	uint8_t *b = malloc(len);
-	ppelib_write_to_buffer(pe, b, len);
-	pe2 = ppelib_create_from_buffer(b, len);
-	free(b);
-	if (ppelib_error()) {
-		printf("PPELib-Error: %s\n", ppelib_error());
-		goto out;
-	}
+//	uint8_t *b = malloc(len);
+//	ppelib_write_to_buffer(pe, b, len);
+//	pe2 = ppelib_create_from_buffer(b, len);
+//	free(b);
+//	if (ppelib_error()) {
+//		printf("PPELib-Error: %s\n", ppelib_error());
+//		goto out;
+//	}
 
 	out: ppelib_destroy(pe);
 	ppelib_destroy(pe2);

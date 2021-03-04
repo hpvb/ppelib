@@ -14,14 +14,14 @@ endif
 
 ppelib_sources = [
 	'header.c',
-#	'ppelib-certificates.c',
+	'main.c',
 	'ppe_error.c',
+	'section.c',
+	'utils.c',
+#	'ppelib-certificates.c',
 #	'ppelib-handles.c',
 #	'ppelib-headers.c',
 #	'ppelib-resource-table.c',
-#	'ppelib-sections.c',
-	'main.c',
-	'utils.c',
 	gen_src,
 	gen_h
 ]

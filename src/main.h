@@ -19,6 +19,7 @@
 #define PPELIB_MAIN_H_
 
 #include "header_private.h"
+#include "section_private.h"
 
 typedef struct ppelib_data_directory {
 	//ppelib_section_t *section;
@@ -38,7 +39,7 @@ typedef struct ppelib_file {
 	size_t allocated_sections;
 
 	header_t header;
-//	section_t **sections;
+	section_t **sections;
 //	ppelib_data_directory_t *data_directories;
 
 //	certificate_table_t certificate_table;

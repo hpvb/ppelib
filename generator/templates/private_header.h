@@ -29,7 +29,11 @@
 
 typedef struct {{s.structure}} {
 	{% for field in s.fields -%}
+	{% if field.getset_type == "section_name" -%}
+	char {{field.struct_name}}[9];
+	{% else -%}
 	{{field.getset_type}} {{field.struct_name}};
+	{% endif -%}
 	{% endfor %}
 
 	{% for field in s.extra_fields %}
@@ -38,12 +42,17 @@ typedef struct {{s.structure}} {
 } {{s.structure}}_t;
 
 {% for field in s.fields %}
-EXPORT_SYM {{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}({{s.structure}}_t* {{s.structure}});
+{% if field.getset_type == "section_name" -%}
+EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}});
+EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const char value[9]);
+{% else -%}
+EXPORT_SYM {{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}});
 {% if field.set -%}
 EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, {{field.getset_type}} value);
 {% endif -%}
 {% if field.format and field.format.enum -%}
-EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string({{s.structure}}_t* {{s.structure}});
+EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(const {{s.structure}}_t* {{s.structure}});
+{% endif -%}
 {% endif -%}
 {% endfor %}
 

@@ -20,7 +20,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ppelib-internal.h"
+#include "main.h"
+#include "ppe_error.h"
+#include "section_private.h"
+
+EXPORT_SYM const section_t* ppelib_section_get(ppelib_file_t *pe, uint16_t section_index) {
+	ppelib_reset_error();
+
+	if (section_index > pe->header.number_of_sections) {
+		ppelib_set_error("Section index out of range");
+		return NULL;
+	}
+
+	return pe->sections[section_index];
+}
 
 uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual_size, uint32_t raw_size,
 		uint32_t characteristics, uint8_t *data) {
@@ -39,14 +52,14 @@ uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual
 		return 0;
 	}
 
-	pe->sections[pe->header.number_of_sections] = calloc(sizeof(ppelib_section_t), 1);
+	pe->sections[pe->header.number_of_sections] = calloc(sizeof(section_t), 1);
 	if (!pe->sections[pe->header.number_of_sections]) {
 		pe->sections = realloc(pe->sections, pe->header.number_of_sections);
 		ppelib_set_error("Couldn't allocate section");
 		return 0;
 	}
 
-	ppelib_section_t *section = pe->sections[pe->header.number_of_sections];
+	section_t *section = pe->sections[pe->header.number_of_sections];
 	if (raw_size) {
 		section->contents = malloc(raw_size);
 		if (!section->contents) {
@@ -66,7 +79,7 @@ uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual
 	section->size_of_raw_data = raw_size;
 	section->characteristics = characteristics;
 
-	ppelib_recalculate(pe);
+	//ppelib_recalculate(pe);
 
 	return pe->header.number_of_sections;
 }
@@ -79,7 +92,7 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 		return;
 	}
 
-	ppelib_section_t *section = pe->sections[section_index];
+	section_t *section = pe->sections[section_index];
 
 	if (end > section->contents_size) {
 		ppelib_set_error("Can't delete past section end");
@@ -102,8 +115,7 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 	}
 
 	section->contents_size -= (end - start);
-
-	ppelib_recalculate(pe);
+	//ppelib_recalculate(pe);
 }
 
 void ppelib_section_insert_capacity(ppelib_file_t *pe, uint16_t section_index, size_t size, size_t offset) {
@@ -119,7 +131,7 @@ void ppelib_section_insert_capacity(ppelib_file_t *pe, uint16_t section_index, s
 		return;
 	}
 
-	ppelib_section_t *section = pe->sections[section_index];
+	section_t *section = pe->sections[section_index];
 
 	if (section->contents_size + size > UINT32_MAX) {
 		ppelib_set_error("Section size out of range");
@@ -144,7 +156,7 @@ void ppelib_section_insert_capacity(ppelib_file_t *pe, uint16_t section_index, s
 	}
 
 	section->contents_size += size;
-	ppelib_recalculate(pe);
+	//ppelib_recalculate(pe);
 }
 
 void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t size) {
@@ -160,15 +172,14 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 		return;
 	}
 
-	ppelib_section_t *section = pe->sections[section_index];
+	section_t *section = pe->sections[section_index];
 
 	if (size == section->contents_size) {
 		return;
 	}
 
 	if (size < section->contents_size) {
-		ppelib_section_excise(pe, section_index, size, section->contents_size);
-		return;
+		return ppelib_section_excise(pe, section_index, size, section->contents_size);
 	}
 
 	uint8_t *oldptr = section->contents;
@@ -180,10 +191,10 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 	}
 
 	section->contents_size = size;
-	ppelib_recalculate(pe);
+	//ppelib_recalculate(pe);
 }
 
-uint16_t ppelib_section_find_index(ppelib_file_t *pe, ppelib_section_t *section) {
+uint16_t ppelib_section_find_index(ppelib_file_t *pe, section_t *section) {
 	ppelib_reset_error();
 
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {

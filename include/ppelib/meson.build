@@ -2,6 +2,8 @@ gen_h = custom_target(
 	'generate-files-h',
 	input: [ files_public_gen ],
 	output: [
+		'ppelib-section.h',
+		'ppelib-section-lowlevel.h',
 		'ppelib-header.h',
 		'ppelib-header-lowlevel.h',
 	],

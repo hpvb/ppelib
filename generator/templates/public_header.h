@@ -22,15 +22,20 @@
 #include <stdio.h>
 #include <stddef.h>
 
-typedef void ppelib_{{s.structure}};
+typedef struct ppelib_{{s.structure}}_s ppelib_{{s.structure}};
 
 {% for field in s.fields %}
-{{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(ppelib_{{s.structure}}* {{s.structure}});
+{% if field.getset_type == "section_name" -%}
+const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const ppelib_{{s.structure}}* {{s.structure}});
+void ppelib_{{s.structure}}_set_{{field.struct_name}}(ppelib_{{s.structure}}* {{s.structure}}, const char value[9]);
+{% else -%}
+{{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(const ppelib_{{s.structure}}* {{s.structure}});
 {% if field.set -%}
 void ppelib_{{s.structure}}_set_{{field.struct_name}}(ppelib_{{s.structure}}* {{s.structure}}, {{field.getset_type}} value);
 {% endif -%}
 {% if field.format and field.format.enum -%}
-const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(ppelib_{{s.structure}}* {{s.structure}});
+const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(const ppelib_{{s.structure}}* {{s.structure}});
+{% endif -%}
 {% endif -%}
 {% endfor %}
 

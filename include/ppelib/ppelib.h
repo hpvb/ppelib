@@ -21,10 +21,11 @@
 #include <stddef.h>
 #include <inttypes.h>
 
+#include <ppelib/ppelib-section.h>
 #include <ppelib/ppelib-header.h>
 #include <ppelib/ppelib-constants.h>
 
-typedef void ppelib_handle;
+typedef struct ppelib_handle_s ppelib_handle;
 
 const char* ppelib_error();
 
@@ -33,10 +34,14 @@ ppelib_handle* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
 ppelib_handle* ppelib_create_from_file(const char *filename);
 void ppelib_destroy(ppelib_handle *pe);
 
+const ppelib_section* ppelib_section_get(ppelib_handle* handle, uint16_t section_index);
+
 const ppelib_header* ppelib_header_get(ppelib_handle* handle);
 ppelib_header* ppelib_header_copy(ppelib_header* header);
 void ppelib_header_free_copy(ppelib_header* header);
 
 uint32_t ppelib_header_compare(ppelib_header* header1, ppelib_header* header2);
+
+
 
 #endif /* PPELIB_H_ */

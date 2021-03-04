@@ -33,7 +33,7 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 	}
 
 	{% for field in s.fields -%}
-	{%- if field.common -%}
+	{%- if field.common == True -%}
 	{{s.structure}}->{{field.struct_name}} = read_{{field.pe_type}}(buffer + offset + {{field.pe_offset}});
 	{% endif -%}
 	{% endfor %}

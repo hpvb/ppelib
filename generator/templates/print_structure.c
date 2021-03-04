@@ -29,6 +29,9 @@ void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.st
 	ppelib_reset_error();
 
 {%- for field in s.fields -%}
+{%- if field.getset_type == "section_name" %}
+	fprintf(stream, "{{field.name}}: %s\n", {{s.structure}}->{{field.struct_name}});
+{%- else %}
 {%- if field.pe_only %}
 	if ({{s.structure}}->magic == PE32_MAGIC) {
 {%- endif %}
@@ -69,6 +72,7 @@ void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.st
 {%- endif %}
 {%- if field.pe_only %}
 	}
+{%- endif %}
 {%- endif %}
 {%- endfor %}
 }

@@ -36,7 +36,15 @@ int main(int argc, char *argv[]) {
 		goto out;
 	}
 
-	ppelib_header_print(ppelib_header_get(pe));
+	const ppelib_header* header = ppelib_header_get(pe);
+	printf("PE Header:\n");
+	ppelib_header_print(header);
+	printf("\nSections:\n");
+	uint16_t sections = ppelib_header_get_number_of_sections(header);
+	for (uint16_t i = 0; i < sections; ++i) {
+		ppelib_section_print(ppelib_section_get(pe, i));
+		printf("\n");
+	}
 
 	out: ppelib_destroy(pe);
 

@@ -28,5 +28,13 @@ header = [
         ["public_header_lowlevel.h", "ppelib-header-lowlevel.h"],
 ]
 
+section = [
+        ["public_header.h", "ppelib-section.h" ],
+        ["public_header_lowlevel.h", "ppelib-section-lowlevel.h"],
+]
+
 for file in header:
     generate(f"{mydir}/structures/header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
+
+for file in section:
+    generate(f"{mydir}/structures/section.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")

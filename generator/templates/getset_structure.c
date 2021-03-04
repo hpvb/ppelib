@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <string.h>
+#include <stddef.h>
 #include <inttypes.h>
 
 #include <ppelib/ppelib-constants.h>
@@ -25,12 +27,23 @@
 #include "{{s.structure}}_private.h"
 
 {% for field in s.fields -%}
-{{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}) {
+{%- if field.getset_type == "section_name" %}
+const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
+	return {{s.structure}}->{{field.struct_name}};
+}
+
+void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const char value[9]) {
+	memcpy({{s.structure}}->{{field.struct_name}}, value, 8);
+	{{s.structure}}->{{field.struct_name}}[8] = 0;
+}
+
+{%- else %}
+{{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 	return {{s.structure}}->{{field.struct_name}};
 }
 {% if field.set %}
-void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, {{field.getset_type}} value) {
+void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const {{field.getset_type}} value) {
 	ppelib_reset_error();
 {%- if field.range %}
 {%- if 'start' in field.range and 'end' in field.range %}
@@ -63,9 +76,10 @@ void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.str
 }
 {% endif %}
 {%- if field.format and field.format.enum %}
-const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string({{s.structure}}_t* {{s.structure}}) {
+const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 	return map_lookup({{s.structure}}->{{field.struct_name}}, {{field.format.enum}});
 }
+{% endif %}
 {% endif %}
 {% endfor -%}

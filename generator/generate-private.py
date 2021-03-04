@@ -34,7 +34,9 @@ header = [
 section = [
     ["getset_structure.c", "section_getset.c" ],
     ["print_structure.c", "section_print.c"],
-    ["private_header.h",  "section_private.h"]
+    ["private_header.h",  "section_private.h"],
+    ["structure_deserialize.c", "section_deserialize.c"],
+    ["structure_serialize.c", "section_serialize.c"],
 
 ]
 
