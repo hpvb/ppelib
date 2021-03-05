@@ -179,7 +179,8 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 	}
 
 	if (size < section->contents_size) {
-		return ppelib_section_excise(pe, section_index, size, section->contents_size);
+		ppelib_section_excise(pe, section_index, size, section->contents_size);
+		return;
 	}
 
 	uint8_t *oldptr = section->contents;
