@@ -1,4 +1,5 @@
 structures_gen = [
+	'structures/dos_header.yaml',
 	'structures/header.yaml',
 	'structures/section.yaml',
 ]

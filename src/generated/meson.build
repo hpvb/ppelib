@@ -2,6 +2,11 @@ gen_src = custom_target(
 	'generate-files-c',
 	input: [ files_private_gen ],
 	output: [
+		'dos_header_deserialize.c',
+		'dos_header_getset.c',
+		'dos_header_print.c',
+		'dos_header_private.h',
+		'dos_header_serialize.c',
 		'header_deserialize.c',
 		'header_getset.c',
 		'header_print.c',

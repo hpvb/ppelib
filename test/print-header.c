@@ -36,9 +36,23 @@ int main(int argc, char *argv[]) {
 		goto out;
 	}
 
+	const ppelib_dos_header* dos_header = ppelib_dos_header_get(pe);
+	//printf("DOS Header:\n");
+	//ppelib_dos_header_print(dos_header);
+	const char* message = ppelib_dos_header_get_message(dos_header);
+	printf("DOS Message: ");
+	if (message) {
+		printf("%s\n", message);
+	} else {
+		printf("Unknown\n");
+	}
+	goto out;
 	const ppelib_header* header = ppelib_header_get(pe);
-	printf("PE Header:\n");
+	printf("\nPE Header:\n");
 	ppelib_header_print(header);
+
+	printf("\nMiscellaneous\n");
+	printf("Trailing data: %zi\n", ppelib_get_trailing_data_size(pe));
 
 	printf("\nData Directories:\n");
 	uint32_t directories = ppelib_header_get_number_of_rva_and_sizes(header);

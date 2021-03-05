@@ -1,0 +1,93 @@
+---
+structure: dos_header
+fields:
+   - name: Signature
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: ExtraBytes
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: NumberOfPages
+     pe_type: uint16_t
+   - name: NumberOfRelocations
+     pe_type: uint16_t
+   - name: HeaderParagraphSize
+     pe_type: uint16_t
+   - name: MinimumParagraphAllocations
+     pe_type: uint16_t
+   - name: MaximumParagraphAllocations
+     pe_type: uint16_t
+   - name: InitialSegmentAddress
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: InitialStackPointerAddress
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: Checksum
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: InitialInstructionPointerAddress
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: InitialCodeSegmentAddress
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: RelocationTableOffset
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: Overlay
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: Reserved0
+     pe_type: uint64_t
+     format:
+        hex: true
+   - name: OEMIdentifier
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: OEMInfo
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: Reserved1
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: Reserved2
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: Reserved3
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: Reserved4
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: Reserved5
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: PEHeaderOffset
+     pe_type: uint32_t
+     format:
+        hex: true
+
+extra_fields:
+   - name: message
+     type: char*
+   - name: stub
+     type: uint8_t*
+   - name: stub_size
+     type: size_t

@@ -2,10 +2,12 @@ gen_h = custom_target(
 	'generate-files-h',
 	input: [ files_public_gen ],
 	output: [
-		'ppelib-section.h',
-		'ppelib-section-lowlevel.h',
-		'ppelib-header.h',
+		'ppelib-dos-header-lowlevel.h',
+		'ppelib-dos-header.h',
 		'ppelib-header-lowlevel.h',
+		'ppelib-header.h',
+		'ppelib-section-lowlevel.h',
+		'ppelib-section.h',
 	],
 	install: true,
 	install_dir: get_option('includedir') + '/ppelib',
@@ -15,7 +17,8 @@ gen_h = custom_target(
 install_headers(
 	'ppelib.h',
 	'ppelib-constants.h',
+	'ppelib-data-directory-lowlevel.h',
+	'ppelib-data-directory.h',
 	'ppelib-low-level.h',
-	'ppelib-resource-table.h',
 	subdir: 'ppelib'
 )

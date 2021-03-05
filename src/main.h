@@ -20,15 +20,15 @@
 
 #include "header_private.h"
 #include "section_private.h"
+#include "dos_header_private.h"
 #include "data_directory_private.h"
 
 typedef struct ppelib_file {
-	size_t pe_header_offset;
-	size_t coff_header_offset;
+	dos_header_t dos_header;
+	size_t header_offset;
 	size_t section_offset;
-	size_t start_of_sections;
-	size_t end_of_sections;
-	size_t allocated_sections;
+	size_t start_of_section_data;
+	size_t end_of_section_data;
 
 	header_t header;
 	data_directory_t *data_directories;

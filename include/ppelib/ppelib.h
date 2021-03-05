@@ -23,6 +23,7 @@
 
 #include <ppelib/ppelib-constants.h>
 
+#include <ppelib/ppelib-dos-header.h>
 #include <ppelib/ppelib-data-directory.h>
 #include <ppelib/ppelib-header.h>
 #include <ppelib/ppelib-section.h>
@@ -36,14 +37,22 @@ ppelib_handle* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
 ppelib_handle* ppelib_create_from_file(const char *filename);
 void ppelib_destroy(ppelib_handle *pe);
 
+uint8_t* ppelib_get_trailing_data(const ppelib_handle *handle);
+size_t ppelib_get_trailing_data_size(const ppelib_handle *handle);
+void ppelib_set_trailing_data(ppelib_handle *handle, const uint8_t *buffer, size_t size);
+
 const ppelib_data_directory* ppelib_data_directory_get(ppelib_handle *handle, uint32_t data_directory_index);
 
-const ppelib_section* ppelib_section_get(ppelib_handle* handle, uint16_t section_index);
+const ppelib_section* ppelib_section_get(ppelib_handle *handle, uint16_t section_index);
 
-const ppelib_header* ppelib_header_get(ppelib_handle* handle);
-ppelib_header* ppelib_header_copy(ppelib_header* header);
-void ppelib_header_free_copy(ppelib_header* header);
+const ppelib_dos_header* ppelib_dos_header_get(ppelib_handle *handle);
+const char* ppelib_dos_header_get_message(const ppelib_dos_header *dos_header);
+void ppelib_dos_header_set_message(ppelib_dos_header *dos_header, const char *message);
 
-uint32_t ppelib_header_compare(ppelib_header* header1, ppelib_header* header2);
+const ppelib_header* ppelib_header_get(ppelib_handle *handle);
+ppelib_header* ppelib_header_copy(ppelib_header *header);
+void ppelib_header_free_copy(ppelib_header *header);
+
+uint32_t ppelib_header_compare(ppelib_header *header1, ppelib_header *header2);
 
 #endif /* PPELIB_H_ */

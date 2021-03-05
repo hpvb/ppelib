@@ -14,6 +14,7 @@ endif
 
 ppelib_sources = [
 	'data_directory.c',
+	'dos_header.c',
 	'header.c',
 	'main.c',
 	'ppe_error.c',

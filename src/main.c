@@ -23,8 +23,48 @@
 
 #include <ppelib/ppelib-constants.h>
 
-#include "ppelib-internal.h"
+#include "ppelib_internal.h"
 #include "main.h"
+
+EXPORT_SYM uint8_t* ppelib_get_trailing_data(const ppelib_file_t *pe) {
+	ppelib_reset_error();
+
+	return pe->trailing_data;
+}
+
+EXPORT_SYM size_t ppelib_get_trailing_data_size(const ppelib_file_t *pe) {
+	ppelib_reset_error();
+
+	return pe->trailing_data_size;
+}
+
+EXPORT_SYM void ppelib_set_trailing_data(ppelib_file_t *pe, const uint8_t *buffer, size_t size) {
+	ppelib_reset_error();
+
+	if (!buffer && size) {
+		ppelib_set_error("Can't set data from a NULL pointer");
+		return;
+	}
+
+	void *oldptr = pe->trailing_data;
+
+	if (!buffer || !size) {
+		pe->trailing_data = NULL;
+		pe->trailing_data_size = 0;
+	} else {
+		pe->trailing_data = malloc(size);
+		if (!pe->trailing_data) {
+			ppelib_set_error("Failed to allocate new trailing data");
+			pe->trailing_data = oldptr;
+			return;
+		}
+
+		memcpy(pe->trailing_data, buffer, size);
+		pe->trailing_data_size = 0;
+	}
+
+	free(oldptr);
+}
 
 EXPORT_SYM ppelib_file_t* ppelib_create() {
 	ppelib_reset_error();
@@ -48,6 +88,9 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 			free(pe->sections[i]);
 		}
 	}
+
+	free(pe->dos_header.stub);
+	free(pe->dos_header.message);
 	free(pe->data_directories);
 	free(pe->sections);
 	free(pe->trailing_data);
@@ -58,33 +101,63 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
 
-	if (size < PE_SIGNATURE_OFFSET + sizeof(uint32_t)) {
-		ppelib_set_error("Not a PE file (file too small)");
-		return NULL;
-	}
-
-	uint32_t header_offset = read_uint32_t(buffer + PE_SIGNATURE_OFFSET);
-	if (size < header_offset + sizeof(uint32_t)) {
-		ppelib_set_error("Not a PE file (file too small for PE signature)");
-		return NULL;
-	}
-
-	uint32_t signature = read_uint32_t(buffer + header_offset);
-	if (signature != PE_SIGNATURE) {
-		ppelib_set_error("Not a PE file (PE00 signature missing)");
-		return NULL;
-	}
-
 	ppelib_file_t *pe = ppelib_create();
 	if (ppelib_error_peek()) {
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	pe->pe_header_offset = header_offset;
-	pe->coff_header_offset = header_offset + 4;
+	size_t dos_header_size = ppelib_dos_header_deserialize(buffer, size, 0, &pe->dos_header);
+	if (ppelib_error_peek()) {
+		ppelib_destroy(pe);
+		return NULL;
+	}
 
-	size_t header_size = ppelib_header_deserialize(buffer, size, pe->coff_header_offset, &pe->header);
+#ifndef FUZZ // disable some checks to allow more invalid data to pass
+	if (pe->dos_header.signature != MZ_SIGNATURE) {
+		ppelib_set_error("Not a PE file (MZ signature missing)");
+		ppelib_destroy(pe);
+		return NULL;
+	}
+#endif
+
+	if (size < pe->dos_header.pe_header_offset + sizeof(uint32_t)) {
+		ppelib_set_error("Not a PE file (file too small)");
+		ppelib_destroy(pe);
+		return NULL;
+	}
+
+	if (dos_header_size > pe->dos_header.pe_header_offset) {
+		ppelib_set_error("DOS header size larger than PE header offset");
+		ppelib_destroy(pe);
+		return NULL;
+	}
+
+	size_t dos_stub_size = pe->dos_header.pe_header_offset - dos_header_size;
+	printf("DOS Stub size: %zi\n", dos_stub_size);
+	pe->dos_header.stub = malloc(dos_stub_size);
+	if (!pe->dos_header.stub) {
+		ppelib_set_error("Couldn't allocate DOS stub");
+		ppelib_destroy(pe);
+		return NULL;
+	}
+
+	memcpy(pe->dos_header.stub, buffer + dos_header_size, dos_stub_size);
+	pe->dos_header.stub_size = dos_stub_size;
+	parse_dos_stub(&pe->dos_header);
+
+#ifndef FUZZ // disable some checks to allow more invalid data to pass
+	uint32_t signature = read_uint32_t(buffer + pe->dos_header.pe_header_offset);
+	if (signature != PE_SIGNATURE) {
+		ppelib_set_error("Not a PE file (PE00 signature missing)");
+		ppelib_destroy(pe);
+		return NULL;
+	}
+#endif
+
+	pe->header_offset = pe->dos_header.pe_header_offset + 4;
+
+	size_t header_size = ppelib_header_deserialize(buffer, size, pe->header_offset, &pe->header);
 	if (ppelib_error_peek()) {
 		ppelib_destroy(pe);
 		return NULL;
@@ -96,14 +169,15 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		return NULL;
 	}
 
-	pe->section_offset = pe->coff_header_offset + header_size + (pe->header.number_of_rva_and_sizes * 8);
+	pe->section_offset = pe->header_offset + header_size + (pe->header.number_of_rva_and_sizes * 8);
 	if (pe->section_offset > size) {
 		ppelib_set_error("File too small for directory entries");
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	if (((size_t)(pe->header.number_of_sections) * 40) + pe->section_offset > size) {
+	pe->start_of_section_data = ((size_t) (pe->header.number_of_sections) * 40) + pe->section_offset;
+	if (pe->start_of_section_data > size) {
 		ppelib_set_error("File too small for section headers");
 		ppelib_destroy(pe);
 		return NULL;
@@ -130,6 +204,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	}
 
 	size_t offset = pe->section_offset;
+	pe->end_of_section_data = pe->start_of_section_data;
 
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = ppelib_section_deserialize(buffer, size, offset, pe->sections[i]);
@@ -157,18 +232,20 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 		section->contents_size = data_size;
 		memcpy(section->contents, buffer + section->pointer_to_raw_data, section->contents_size);
+		pe->end_of_section_data = MAX(pe->end_of_section_data,
+				section->pointer_to_raw_data + section->size_of_raw_data);
 		offset += section_size;
 	}
 
 	pe->data_directories = calloc(sizeof(data_directory_t) * pe->header.number_of_rva_and_sizes, 1);
-	if (!pe->data_directories){
+	if (!pe->data_directories) {
 		ppelib_set_error("Failed to allocate data directories");
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
 	// Data directories don't have a dedicated deserialize function
-	offset = pe->coff_header_offset + header_size;
+	offset = pe->header_offset + header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
 		uint32_t dir_va = read_uint32_t(buffer + offset + 0);
 		uint32_t dir_size = read_uint32_t(buffer + offset + 4);
@@ -186,6 +263,17 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 		offset += 8;
 	}
+
+	if (size > pe->end_of_section_data) {
+		pe->trailing_data_size = size - pe->end_of_section_data;
+		pe->trailing_data = malloc(pe->trailing_data_size);
+		if (!pe->trailing_data) {
+			ppelib_set_error("Failed to allocate trailing data");
+			ppelib_destroy(pe);
+			return NULL;
+		}
+	}
+
 	return pe;
 }
 

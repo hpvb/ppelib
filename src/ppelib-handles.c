@@ -59,12 +59,12 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
 
-	if (size < PE_SIGNATURE_OFFSET + sizeof(uint32_t)) {
+	if (size < PE_SIGNATURE_POINTER_OFFSET + sizeof(uint32_t)) {
 		ppelib_set_error("Not a PE file (file too small)");
 		return NULL;
 	}
 
-	uint32_t header_offset = read_uint32_t(buffer + PE_SIGNATURE_OFFSET);
+	uint32_t header_offset = read_uint32_t(buffer + PE_SIGNATURE_POINTER_OFFSET);
 	if (size < header_offset + sizeof(uint32_t)) {
 		ppelib_set_error("Not a PE file (file too small for PE signature)");
 		return NULL;
@@ -82,22 +82,22 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		return NULL;
 	}
 
-	pe->pe_header_offset = header_offset;
-	pe->coff_header_offset = header_offset + 4;
+	pe->pe_signature_offset = header_offset;
+	pe->header_offset = header_offset + 4;
 
-	if (size < pe->coff_header_offset + COFF_HEADER_SIZE) {
+	if (size < pe->header_offset + COFF_HEADER_SIZE) {
 		ppelib_set_error("Not a PE file (file too small for COFF header)");
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	size_t header_size = deserialize_pe_header(buffer, pe->coff_header_offset, size, &pe->header);
+	size_t header_size = deserialize_pe_header(buffer, pe->header_offset, size, &pe->header);
 	if (ppelib_error_peek()) {
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	pe->section_offset = header_size + pe->coff_header_offset;
+	pe->section_offset = header_size + pe->header_offset;
 	pe->sections = malloc(sizeof(ppelib_section_t*) * pe->header.number_of_sections);
 	if (!pe->sections) {
 		ppelib_set_error("Failed to allocate sections");
@@ -180,13 +180,13 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	//pe.sections[4] = pe.sections[3];
 	//pe.sections[3] = t;
 
-	pe->stub = malloc(pe->pe_header_offset);
+	pe->stub = malloc(pe->pe_signature_offset);
 	if (!pe->stub) {
 		ppelib_set_error("Failed to allocate memory for PE stub");
 		ppelib_destroy(pe);
 		return NULL;
 	}
-	memcpy(pe->stub, buffer, pe->pe_header_offset);
+	memcpy(pe->stub, buffer, pe->pe_signature_offset);
 
 	if (size > pe->end_of_sections) {
 		pe->trailing_data_size = size - pe->end_of_sections;
@@ -268,9 +268,9 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	size_t size = 0;
 
 	// Write stub
-	size += pe->pe_header_offset;
+	size += pe->pe_signature_offset;
 	size += 4;
-	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
+	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_signature_offset);
 	if (ppelib_error_peek()) {
 		return 0;
 	}
@@ -293,7 +293,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 //		}
 //	}
 
-	size_t section_offset = pe->pe_header_offset + coff_header_size;
+	size_t section_offset = pe->pe_signature_offset + coff_header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = serialize_section(pe->sections[i], NULL, section_offset + (i * PE_SECTION_HEADER_SIZE));
 		if (ppelib_error_peek()) {
@@ -340,15 +340,15 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	memset(buffer, 0, size);
 	//memset(buffer, 0xCC, size);
 
-	memcpy(buffer, pe->stub, pe->pe_header_offset);
-	write += pe->pe_header_offset;
+	memcpy(buffer, pe->stub, pe->pe_signature_offset);
+	write += pe->pe_signature_offset;
 
 	// Write PE header
 	memcpy(buffer + write, "PE\0", 4);
 	write += 4;
 
 	// Write COFF header
-	serialize_pe_header(&pe->header, buffer, pe->pe_header_offset + 4);
+	serialize_pe_header(&pe->header, buffer, pe->pe_signature_offset + 4);
 	if (ppelib_error_peek()) {
 		return 0;
 	}
@@ -420,8 +420,8 @@ EXPORT_SYM size_t ppelib_write_to_file(ppelib_file_t *pe, const char *filename) 
 }
 
 EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe) {
-	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_header_offset);
-	size_t size_of_headers = pe->pe_header_offset + 4 + coff_header_size
+	size_t coff_header_size = serialize_pe_header(&pe->header, NULL, pe->pe_signature_offset);
+	size_t size_of_headers = pe->pe_signature_offset + 4 + coff_header_size
 			+ (pe->header.number_of_sections * PE_SECTION_HEADER_SIZE);
 
 	if (!pe->header.file_alignment || pe->header.file_alignment > UINT16_MAX) {

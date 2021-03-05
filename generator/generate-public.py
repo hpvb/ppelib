@@ -23,6 +23,11 @@ from generator import generate
 outdir = sys.argv[1]
 mydir = os.path.dirname(os.path.abspath(__file__))
 
+dos_header = [
+        ["public_header.h", "ppelib-dos-header.h" ],
+        ["public_header_lowlevel.h", "ppelib-dos-header-lowlevel.h"],
+]
+
 header = [
         ["public_header.h", "ppelib-header.h" ],
         ["public_header_lowlevel.h", "ppelib-header-lowlevel.h"],
@@ -32,6 +37,9 @@ section = [
         ["public_header.h", "ppelib-section.h" ],
         ["public_header_lowlevel.h", "ppelib-section-lowlevel.h"],
 ]
+
+for file in dos_header:
+    generate(f"{mydir}/structures/dos_header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
 
 for file in header:
     generate(f"{mydir}/structures/header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")

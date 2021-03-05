@@ -23,6 +23,14 @@ from generator import generate
 outdir = sys.argv[1]
 mydir = os.path.dirname(os.path.abspath(__file__))
 
+dos_header = [
+    ["getset_structure.c", "dos_header_getset.c" ],
+    ["print_structure.c", "dos_header_print.c"],
+    ["private_header.h",  "dos_header_private.h"],
+    ["structure_deserialize.c", "dos_header_deserialize.c"],
+    ["structure_serialize.c", "dos_header_serialize.c"],
+]
+
 header = [
     ["getset_structure.c", "header_getset.c" ],
     ["header_deserialize.c", "header_deserialize.c"],
@@ -39,6 +47,9 @@ section = [
     ["structure_serialize.c", "section_serialize.c"],
 
 ]
+
+for file in dos_header:
+    generate(f"{mydir}/structures/dos_header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
 
 for file in header:
     generate(f"{mydir}/structures/header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")

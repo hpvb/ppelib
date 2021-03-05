@@ -19,6 +19,7 @@
 import os
 import sys
 import yaml
+import itertools
 from jinja2 import Template, Environment, FileSystemLoader
 
 import pprint
@@ -42,13 +43,24 @@ max_sizes = {
 
 mydir = os.path.dirname(os.path.abspath(__file__))
 
+
 def snake_case(string):
+    block_of_upper = False
     prev_upper = False
     at_start = True
     retval = ""
 
-    for char in string:
+    char_iter, next_char_iter = itertools.tee(iter(string))
+    next_char = next(next_char_iter, 'o')
+
+    for char in char_iter:
+        next_char = next(next_char_iter, 'o')
+
         if char.isupper():
+            if prev_upper:
+                if next_char.islower():
+                    retval += "_"
+
             if not prev_upper and not at_start:
                 retval += "_"
             prev_upper = True
@@ -60,6 +72,7 @@ def snake_case(string):
         at_start = False
 
     return retval
+
 
 def generate_extradata(structure):
     common_size = 0
@@ -98,6 +111,7 @@ def generate_extradata(structure):
     structure["common_size"] = common_size
     structure["max_sizes"] = max_sizes
 
+
 def generate(template, infile, outfile):
     f = {}
     with open(template, 'r') as stream:
@@ -114,6 +128,7 @@ def generate(template, infile, outfile):
         with open(f'{outfile}', 'w') as outfile:
             outfile.write(template.render(s=f))
             outfile.write("\n")
+
 
 if __name__ == "__main__":
     template = sys.argv[1]

@@ -16,7 +16,7 @@ if get_option('use_clang_fuzzer') == true
 	endif
 
 	add_project_arguments(
-		'-fsanitize=fuzzer-no-link,address,undefined',
+		['-fsanitize=fuzzer-no-link,address,undefined', '-DFUZZ=1'],
 		language: ['c', 'cpp'],
 	)
 	add_project_link_arguments(
