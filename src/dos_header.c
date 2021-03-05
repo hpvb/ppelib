@@ -22,7 +22,7 @@
 #include <ctype.h>
 
 #include "main.h"
-#include "export.h"
+#include "platform.h"
 #include "ppe_error.h"
 #include "dos_header.h"
 #include "dos_header_private.h"
@@ -95,13 +95,10 @@ void dos_strcpy(uint8_t *buffer, const char *string) {
 
 void update_dos_stub(dos_header_t *dos_header) {
 	if (!dos_header->message) {
-		// MSVC doesn't like strdup()
-		size_t default_message_len = strlen(default_message) + 1;
-		dos_header->message = malloc(default_message_len);
+		dos_header->message = strdup(default_message);
 		if (!dos_header->message) {
 			return;
 		}
-		memcpy(dos_header->message, default_message, default_message_len);
 	}
 
 	size_t new_size = sizeof(dos_stub) + strlen(dos_header->message) + sizeof(dos_string_end);

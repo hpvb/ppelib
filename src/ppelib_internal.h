@@ -21,7 +21,7 @@
 #include <inttypes.h>
 #include <stddef.h>
 
-#include "export.h"
+#include "platform.h"
 #include "main.h"
 
 #include "section_private.h"

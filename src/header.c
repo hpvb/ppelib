@@ -22,7 +22,7 @@
 
 #include "header_private.h"
 #include "ppe_error.h"
-#include "export.h"
+#include "platform.h"
 #include "main.h"
 
 EXPORT_SYM const header_t* ppelib_header_get(ppelib_file_t *pe) {

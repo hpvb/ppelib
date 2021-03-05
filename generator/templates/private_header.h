@@ -24,7 +24,7 @@
 
 #include <ppelib/ppelib-constants.h>
 
-#include "export.h"
+#include "platform.h"
 #include "utils.h"
 
 typedef struct {{s.structure}} {

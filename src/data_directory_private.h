@@ -25,7 +25,7 @@
 #include <ppelib/ppelib-constants.h>
 
 #include "main.h"
-#include "export.h"
+#include "platform.h"
 #include "utils.h"
 
 typedef struct ppelib_file ppelib_file_t;

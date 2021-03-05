@@ -25,7 +25,7 @@
 #include <ppelib/ppelib-constants.h>
 
 #include "main.h"
-#include "export.h"
+#include "platform.h"
 #include "utils.h"
 #include "dos_header_private.h"
 

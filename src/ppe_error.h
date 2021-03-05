@@ -20,7 +20,7 @@
 
 #include <inttypes.h>
 
-#include "export.h"
+#include "platform.h"
 
 EXPORT_SYM const char* ppelib_error();
 

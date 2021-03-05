@@ -15,8 +15,18 @@
  * limitations under the License.
  */
 
-#ifndef PPELIB_THREAD_LOCAL_H_
-#define PPELIB_THREAD_LOCAL_H_
+#ifndef PPELIB_PLATFORM_H_
+#define PPELIB_PLATFORM_H_
+
+#if defined _WIN32
+	#define EXPORT_SYM __declspec(dllexport)
+#else
+	#if __GNUC__ >= 4
+    	#define EXPORT_SYM __attribute__ ((visibility ("default")))
+	#else
+    	#define EXPORT_SYM
+	#endif
+#endif
 
 #ifndef thread_local
 # if __STDC_VERSION__ >= 201112 && !defined __STDC_NO_THREADS__
@@ -37,4 +47,8 @@
 # endif
 #endif
 
-#endif /* PPELIB_THREAD_LOCAL_H_ */
+#if defined _MSC_VER
+#define strdup _strdup
+#endif
+
+#endif /* PPELIB_PLATFORM_H_ */

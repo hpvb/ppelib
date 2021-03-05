@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "export.h"
+#include "platform.h"
 #include "utils.h"
 
 uint8_t read_uint8_t(const uint8_t *buffer) {

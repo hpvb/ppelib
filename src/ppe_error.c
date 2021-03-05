@@ -19,8 +19,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "export.h"
-#include "thread_local.h"
+#include "platform.h"
 
 thread_local const char *ppelib_cur_error;
 thread_local char ppelib_error_str[100];

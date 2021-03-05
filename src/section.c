@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "main.h"
-#include "export.h"
+#include "platform.h"
 #include "ppe_error.h"
 #include "section_private.h"
 
