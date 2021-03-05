@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "export.h"
 #include "ppe_error.h"
 #include "section_private.h"
 
@@ -39,8 +40,14 @@ uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual
 		uint32_t characteristics, uint8_t *data) {
 	ppelib_reset_error();
 
-	if (name[8]) {
+	size_t name_size = strnlen(name, 9);
+	if (name_size == 9) {
 		ppelib_set_error("Section name not NULL terminated");
+		return 0;
+	}
+
+	if (name_size == 0) {
+		ppelib_set_error("Section name is NULL");
 		return 0;
 	}
 
@@ -75,13 +82,16 @@ uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual
 	}
 
 	pe->header.number_of_sections++;
+	memcpy(section->name, name, 8);
+	section->name[8] = 0;
+
 	section->virtual_size = virtual_size;
 	section->size_of_raw_data = raw_size;
 	section->characteristics = characteristics;
 
 	//ppelib_recalculate(pe);
 
-	return pe->header.number_of_sections;
+	return pe->header.number_of_sections--;
 }
 
 void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t start, size_t end) {
