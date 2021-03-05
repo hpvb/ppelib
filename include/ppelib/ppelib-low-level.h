@@ -20,5 +20,7 @@
 
 #include <ppelib/ppelib.h>
 #include <ppelib/ppelib-header-lowlevel.h>
+#include <ppelib/ppelib-section-lowlevel.h>
+#include <ppelib/ppelib-data-directory-lowlevel.h>
 
 #endif /* PPELIB_LOW_LEVEL_H_ */

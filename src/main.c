@@ -23,6 +23,7 @@
 
 #include <ppelib/ppelib-constants.h>
 
+#include "ppelib-internal.h"
 #include "main.h"
 
 EXPORT_SYM ppelib_file_t* ppelib_create() {
@@ -47,6 +48,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 			free(pe->sections[i]);
 		}
 	}
+	free(pe->data_directories);
 	free(pe->sections);
 	free(pe->trailing_data);
 
@@ -101,7 +103,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		return NULL;
 	}
 
-	if (pe->section_offset + (pe->header.number_of_sections * 40) > size) {
+	if (((size_t)(pe->header.number_of_sections) * 40) + pe->section_offset > size) {
 		ppelib_set_error("File too small for section headers");
 		ppelib_destroy(pe);
 		return NULL;
@@ -158,6 +160,32 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		offset += section_size;
 	}
 
+	pe->data_directories = calloc(sizeof(data_directory_t) * pe->header.number_of_rva_and_sizes, 1);
+	if (!pe->data_directories){
+		ppelib_set_error("Failed to allocate data directories");
+		ppelib_destroy(pe);
+		return NULL;
+	}
+
+	// Data directories don't have a dedicated deserialize function
+	offset = pe->coff_header_offset + header_size;
+	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
+		uint32_t dir_va = read_uint32_t(buffer + offset + 0);
+		uint32_t dir_size = read_uint32_t(buffer + offset + 4);
+
+		section_t *section = section_find_by_virtual_address(pe, dir_va);
+		if (i != DIR_CERTIFICATE_TABLE && section) {
+			pe->data_directories[i].section = section;
+			pe->data_directories[i].offset = dir_va - section->virtual_address;
+		} else {
+			// Certificate tables' addresses aren't virtual. Despite the name.
+			pe->data_directories[i].offset = dir_va;
+		}
+		pe->data_directories[i].size = dir_size;
+		pe->data_directories[i].id = i;
+
+		offset += 8;
+	}
 	return pe;
 }
 

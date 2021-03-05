@@ -13,6 +13,7 @@ else
 endif
 
 ppelib_sources = [
+	'data_directory.c',
 	'header.c',
 	'main.c',
 	'ppe_error.c',

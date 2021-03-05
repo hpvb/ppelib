@@ -39,6 +39,14 @@ int main(int argc, char *argv[]) {
 	const ppelib_header* header = ppelib_header_get(pe);
 	printf("PE Header:\n");
 	ppelib_header_print(header);
+
+	printf("\nData Directories:\n");
+	uint32_t directories = ppelib_header_get_number_of_rva_and_sizes(header);
+	for (uint32_t i = 0; i < directories; ++i) {
+		ppelib_data_directory_print(ppelib_data_directory_get(pe, i));
+		printf("\n");
+	}
+
 	printf("\nSections:\n");
 	uint16_t sections = ppelib_header_get_number_of_sections(header);
 	for (uint16_t i = 0; i < sections; ++i) {

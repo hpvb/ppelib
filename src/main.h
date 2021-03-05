@@ -20,15 +20,7 @@
 
 #include "header_private.h"
 #include "section_private.h"
-
-typedef struct ppelib_data_directory {
-	//ppelib_section_t *section;
-	uint32_t offset;
-	uint32_t size;
-
-	size_t orig_rva;
-	size_t orig_size;
-} ppelib_data_directory_t;
+#include "data_directory_private.h"
 
 typedef struct ppelib_file {
 	size_t pe_header_offset;
@@ -39,8 +31,8 @@ typedef struct ppelib_file {
 	size_t allocated_sections;
 
 	header_t header;
+	data_directory_t *data_directories;
 	section_t **sections;
-//	ppelib_data_directory_t *data_directories;
 
 //	certificate_table_t certificate_table;
 //	ppelib_resource_table_t resource_table;
