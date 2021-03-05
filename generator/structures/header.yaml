@@ -11,6 +11,8 @@ fields:
   - name: TimeDateStamp
     pe_type: uint32_t
     set: true
+    format:
+      time: true
   - name: PointerToSymbolTable
     pe_type: uint32_t
     format:

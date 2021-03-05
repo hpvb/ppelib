@@ -25,7 +25,7 @@
 
 #include "{{s.structure}}_private.h"
 
-size_t ppelib_serialize_{{s.structure}}(const {{s.structure}}_t* {{s.structure}}, uint8_t* buffer, const size_t offset) {
+size_t ppelib_{{s.structure}}_serialize(const {{s.structure}}_t* {{s.structure}}, uint8_t* buffer, const size_t offset) {
 	ppelib_reset_error();
 
 	if (! buffer) {
@@ -55,7 +55,7 @@ size_t ppelib_serialize_{{s.structure}}(const {{s.structure}}_t* {{s.structure}}
 		{% endif -%}
 		{% endfor %}
 	} else {
-		ppelib_error("Unknown magic type");
+		ppelib_set_error("Unknown magic type");
 		return 0;
 	}
 

@@ -49,6 +49,7 @@
 
 #if defined _MSC_VER
 #define strdup _strdup
+#define gmtime_r(x, y) gmtime_s(y, x)
 #endif
 
 #endif /* PPELIB_PLATFORM_H_ */

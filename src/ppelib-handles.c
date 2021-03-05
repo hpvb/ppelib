@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "platform.h"
 #include "ppelib-internal.h"
 
 EXPORT_SYM ppelib_file_t* ppelib_create() {

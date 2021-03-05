@@ -86,6 +86,7 @@ size_t dos_strncpy_print(char *string, const uint8_t *buffer, size_t len) {
 	return string_len;
 }
 
+// copy char* array to '$' terminated DOS string plus linefeeds
 void dos_strcpy(uint8_t *buffer, const char *string) {
 	size_t string_len = strlen(string);
 
@@ -114,7 +115,7 @@ void update_dos_stub(dos_header_t *dos_header) {
 	dos_strcpy(dos_header->stub + sizeof(dos_stub), dos_header->message);
 }
 
-// Don't error for this. IF this doesn't work it doesn't work.
+// Don't error for this. If this doesn't work it doesn't work.
 void parse_dos_stub(dos_header_t *dos_header) {
 	if (dos_header->stub_size < sizeof(dos_stub)) {
 		return;
@@ -130,7 +131,6 @@ void parse_dos_stub(dos_header_t *dos_header) {
 		return;
 	}
 
-	printf("Message_len: %zi\n", message_len);
 	dos_header->message = malloc(message_len + 1);
 	dos_strncpy_print(dos_header->message, dos_header->stub + 0xe, message_len);
 }

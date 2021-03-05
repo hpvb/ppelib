@@ -37,8 +37,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	const ppelib_dos_header* dos_header = ppelib_dos_header_get(pe);
-	//printf("DOS Header:\n");
-	//ppelib_dos_header_print(dos_header);
+	printf("DOS Header:\n");
+	ppelib_dos_header_print(dos_header);
+
 	const char* message = ppelib_dos_header_get_message(dos_header);
 	printf("DOS Message: ");
 	if (message) {
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		printf("Unknown\n");
 	}
-	goto out;
+
 	const ppelib_header* header = ppelib_header_get(pe);
 	printf("\nPE Header:\n");
 	ppelib_header_print(header);

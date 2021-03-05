@@ -52,22 +52,16 @@ EXPORT_SYM size_t ppelib_data_directory_get_size(const data_directory_t *data_di
 EXPORT_SYM uint32_t ppelib_data_directory_get_rva(const data_directory_t *data_directory) {
 	ppelib_reset_error();
 
-	uint32_t rva = data_directory->section->virtual_address + (uint32_t) data_directory->offset;
+	section_t *section = data_directory->section;
+	uint32_t rva = 0;
+
+	if (section) {
+		rva = data_directory->section->virtual_address + (uint32_t) data_directory->offset;
+	} else {
+		rva = (uint32_t) data_directory->offset;
+	}
 
 	return rva;
-}
-
-EXPORT_SYM size_t ppelib_data_directory_serialize(const data_directory_t *data_directory, uint8_t *buffer,
-		const size_t offset) {
-	ppelib_reset_error();
-
-	uint32_t rva = ppelib_data_directory_get_rva(data_directory);
-	uint32_t size = (uint32_t) data_directory->size;
-
-	write_uint32_t(buffer + offset + 0, rva);
-	write_uint32_t(buffer + offset + 4, size);
-
-	return 8;
 }
 
 EXPORT_SYM const data_directory_t* ppelib_data_directory_get(ppelib_file_t *pe, uint32_t data_directory_index) {

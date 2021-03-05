@@ -35,6 +35,9 @@ const char* ppelib_error();
 ppelib_handle* ppelib_create();
 ppelib_handle* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
 ppelib_handle* ppelib_create_from_file(const char *filename);
+size_t ppelib_write_to_buffer(ppelib_handle *pe, const uint8_t *buffer, size_t size);
+size_t ppelib_write_to_file(ppelib_handle *pe, const char *filename);
+
 void ppelib_destroy(ppelib_handle *pe);
 
 uint8_t* ppelib_get_trailing_data(const ppelib_handle *handle);

@@ -30,7 +30,7 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 	ppelib_reset_error();
 
 	if (offset + {{s.common_size}} > size) {
-		ppelib_error("Not enough space for {{s.structure}} headers");
+		ppelib_set_error("Not enough space for {{s.structure}} headers");
 		return 0;
 	}
 

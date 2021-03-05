@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
+#include <time.h>
 #include <inttypes.h>
 #include <stdio.h>
 
 #include <ppelib/ppelib-constants.h>
+#include "platform.h"
 #include "ppe_error.h"
 
 #include "utils.h"
@@ -62,6 +64,14 @@ void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.st
 	{%- else %}
 	fprintf(stream, "{{field.name}}: (0x%08X) %s\n", {{s.structure}}->{{field.struct_name}}, map_lookup({{s.structure}}->{{field.struct_name}}, {{field.format.enum}}));
 	{%- endif %}
+	{%- elif field.format.time %}
+	char time_out_{{field.struct_name}}[50];
+	struct tm tm_{{field.struct_name}};
+	time_t time_{{field.struct_name}} = (time_t){{s.structure}}->{{field.struct_name}};
+	gmtime_r(&time_{{field.struct_name}}, &tm_{{field.struct_name}});
+	strftime(time_out_{{field.struct_name}}, sizeof(time_out_{{field.struct_name}}), "%a, %d %b %Y %T %z", &tm_{{field.struct_name}});
+	time_out_{{field.struct_name}}[sizeof(time_out_{{field.struct_name}}) - 1] = 0;
+	fprintf(stream, "{{field.name}}: %s\n", time_out_{{field.struct_name}});
 	{%- endif %}
 {%- else %}
 	{%- if field.getset_type == "uint64_t" %}

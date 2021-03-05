@@ -28,7 +28,7 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 	ppelib_reset_error();
 
 	if (offset + {{s.common_size}} > size) {
-		ppelib_error("Not enough space for COFF headers");
+		ppelib_set_error("Not enough space for COFF headers");
 		return 0;
 	}
 
@@ -40,7 +40,7 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 
 	if ({{s.structure}}->magic == PE32_MAGIC) {
 		if (offset + {{s.pe_size}} > size) {
-			ppelib_error("Not enough space for PE headers");
+			ppelib_set_error("Not enough space for PE headers");
 			return 0;
 		}
 		{% for field in s.fields -%}
@@ -51,7 +51,7 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 		return {{s.pe_size}};
 	} else if ({{s.structure}}-> magic == PE32PLUS_MAGIC) {
 		if (offset + {{s.peplus_size}} > size) {
-			ppelib_error("Not enough space for PE+ headers");
+			ppelib_set_error("Not enough space for PE+ headers");
 			return 0;
 		}
 		{% for field in s.fields -%}
@@ -65,7 +65,7 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 		{% endfor %}
 		return {{s.peplus_size}};
 	} else {
-		ppelib_error("Unknown magic type");
+		ppelib_set_error("Unknown magic type");
 		return 0;
 	}
 }
