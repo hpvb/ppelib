@@ -29,10 +29,24 @@
 {% for field in s.fields -%}
 {%- if field.getset_type == "section_name" %}
 const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
+	ppelib_reset_error();
+
+	if (!{{s.structure}}) {
+		ppelib_set_error("NULL pointer");
+		return NULL;
+	}
+
 	return {{s.structure}}->{{field.struct_name}};
 }
 
 void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const char value[9]) {
+	ppelib_reset_error();
+
+	if (!{{s.structure}}) {
+		ppelib_set_error("NULL pointer");
+		return;
+	}
+
 	memcpy({{s.structure}}->{{field.struct_name}}, value, 8);
 	{{s.structure}}->{{field.struct_name}}[8] = 0;
 }
@@ -40,11 +54,20 @@ void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.str
 {%- else %}
 {{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
+	if (!{{s.structure}}) {
+		ppelib_set_error("NULL pointer");
+		return 0;
+	}
 	return {{s.structure}}->{{field.struct_name}};
 }
 {% if field.set %}
 void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const {{field.getset_type}} value) {
 	ppelib_reset_error();
+	if (!{{s.structure}}) {
+		ppelib_set_error("NULL pointer");
+		return;
+	}
+
 {%- if field.range %}
 {%- if 'start' in field.range and 'end' in field.range %}
 	if (value < {{field.range.start}} || value > {{field.range.end}}) {
@@ -78,6 +101,11 @@ void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.str
 {%- if field.format and field.format.enum %}
 const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
+
+	if (!{{s.structure}}) {
+		ppelib_set_error("NULL pointer");
+		return NULL;
+	}
 	return map_lookup({{s.structure}}->{{field.struct_name}}, {{field.format.enum}});
 }
 {% endif %}

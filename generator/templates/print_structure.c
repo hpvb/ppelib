@@ -30,6 +30,11 @@
 void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 
+	if (!{{s.structure}}) {
+		ppelib_set_error("NULL pointer");
+		return;
+	}
+
 {%- for field in s.fields -%}
 {%- if field.getset_type == "section_name" %}
 	fprintf(stream, "{{field.name}}: %s\n", {{s.structure}}->{{field.struct_name}});

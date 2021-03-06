@@ -1,0 +1,17 @@
+---
+structure: vlv_signature
+fields:
+   - name: Magic
+     pe_type: uint32_t
+   - name: Version
+     pe_type: uint32_t
+   - name: SignedDataSize
+     pe_type: uint32_t
+   - name: Timestamp
+     pe_type: uint32_t
+     format:
+       time: true
+
+extra_fields:
+   - name: signature
+     type: uint8_t*

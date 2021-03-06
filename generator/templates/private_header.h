@@ -24,6 +24,9 @@
 
 #include <ppelib/ppelib-constants.h>
 
+{% for include in s.extra_includes %}
+#include "{{include}}"
+{% endfor %}
 #include "platform.h"
 #include "utils.h"
 

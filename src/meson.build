@@ -20,6 +20,7 @@ ppelib_sources = [
 	'ppe_error.c',
 	'section.c',
 	'utils.c',
+	'vlv_signature.c',
 #	'ppelib-certificates.c',
 #	'ppelib-handles.c',
 #	'ppelib-headers.c',

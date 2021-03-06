@@ -17,6 +17,11 @@ gen_src = custom_target(
 		'section_print.c',
 		'section_private.h',
 		'section_serialize.c',
+		'vlv_signature_deserialize.c',
+		'vlv_signature_getset.c',
+		'vlv_signature_print.c',
+		'vlv_signature_private.h',
+		'vlv_signature_serialize.c',
 	],
 	command: [prog_python, meson.source_root() + '/generator/generate-private.py', '@OUTDIR@']
 )

@@ -29,6 +29,11 @@
 size_t ppelib_{{s.structure}}_serialize(const {{s.structure}}_t* {{s.structure}}, uint8_t* buffer, const size_t offset) {
 	ppelib_reset_error();
 
+	if (!{{s.structure}}) {
+		ppelib_set_error("NULL pointer");
+		return 0;
+	}
+
 	if (! buffer) {
 		goto out;
 	}

@@ -1,5 +1,8 @@
 ---
 structure: dos_header
+extra_includes:
+   - vlv_signature_private.h
+
 fields:
    - name: Signature
      pe_type: uint16_t
@@ -91,3 +94,7 @@ extra_fields:
      type: uint8_t*
    - name: stub_size
      type: size_t
+   - name: has_vlv_signature
+     type: char
+   - name: vlv_signature
+     type: vlv_signature_t

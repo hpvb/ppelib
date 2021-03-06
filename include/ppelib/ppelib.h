@@ -23,10 +23,11 @@
 
 #include <ppelib/ppelib-constants.h>
 
-#include <ppelib/ppelib-dos-header.h>
+#include <ppelib/ppelib-dos_header.h>
 #include <ppelib/ppelib-data-directory.h>
 #include <ppelib/ppelib-header.h>
 #include <ppelib/ppelib-section.h>
+#include <ppelib/ppelib-vlv_signature.h>
 
 typedef struct ppelib_handle_s ppelib_handle;
 
@@ -51,6 +52,12 @@ const ppelib_section* ppelib_section_get(ppelib_handle *handle, uint16_t section
 const ppelib_dos_header* ppelib_dos_header_get(ppelib_handle *handle);
 const char* ppelib_dos_header_get_message(const ppelib_dos_header *dos_header);
 void ppelib_dos_header_set_message(ppelib_dos_header *dos_header, const char *message);
+
+char ppelib_dos_header_has_vlv_signature(const ppelib_dos_header* dos_header);
+const ppelib_vlv_signature* ppelib_dos_header_get_vlv_signature(const ppelib_dos_header* dos_header);
+
+size_t ppelib_vlv_signature_get_signature_size(const ppelib_vlv_signature* vlv_signature);
+const uint8_t* ppelib_vlv_signature_get_signature(const ppelib_vlv_signature* vlv_signature);
 
 const ppelib_header* ppelib_header_get(ppelib_handle *handle);
 ppelib_header* ppelib_header_copy(ppelib_header *header);

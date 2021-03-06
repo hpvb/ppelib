@@ -91,6 +91,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 
 	free(pe->dos_header.stub);
 	free(pe->dos_header.message);
+	free(pe->dos_header.vlv_signature.signature);
 	free(pe->data_directories);
 	free(pe->sections);
 	free(pe->trailing_data);

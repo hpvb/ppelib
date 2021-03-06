@@ -23,26 +23,13 @@ from generator import generate
 outdir = sys.argv[1]
 mydir = os.path.dirname(os.path.abspath(__file__))
 
-dos_header = [
-        ["public_header.h", "ppelib-dos-header.h" ],
-        ["public_header_lowlevel.h", "ppelib-dos-header-lowlevel.h"],
+headers = [
+    ["header", "header"],
+    ["dos_header", "dos_header"],
+    ["section", "section"],
+    ["vlv_signature", "vlv_signature"],
 ]
 
-header = [
-        ["public_header.h", "ppelib-header.h" ],
-        ["public_header_lowlevel.h", "ppelib-header-lowlevel.h"],
-]
-
-section = [
-        ["public_header.h", "ppelib-section.h" ],
-        ["public_header_lowlevel.h", "ppelib-section-lowlevel.h"],
-]
-
-for file in dos_header:
-    generate(f"{mydir}/structures/dos_header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
-
-for file in header:
-    generate(f"{mydir}/structures/header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
-
-for file in section:
-    generate(f"{mydir}/structures/section.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
+for header in headers:
+    generate(f"{mydir}/structures/{header[0]}.yaml", f"{mydir}/templates/public_header.h", f"{outdir}/ppelib-{header[1]}.h")
+    generate(f"{mydir}/structures/{header[0]}.yaml", f"{mydir}/templates/public_header_lowlevel.h", f"{outdir}/ppelib-{header[1]}-lowlevel.h")

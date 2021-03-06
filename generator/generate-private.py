@@ -23,14 +23,6 @@ from generator import generate
 outdir = sys.argv[1]
 mydir = os.path.dirname(os.path.abspath(__file__))
 
-dos_header = [
-    ["getset_structure.c", "dos_header_getset.c" ],
-    ["print_structure.c", "dos_header_print.c"],
-    ["private_header.h",  "dos_header_private.h"],
-    ["structure_deserialize.c", "dos_header_deserialize.c"],
-    ["structure_serialize.c", "dos_header_serialize.c"],
-]
-
 header = [
     ["getset_structure.c", "header_getset.c" ],
     ["header_deserialize.c", "header_deserialize.c"],
@@ -39,20 +31,23 @@ header = [
     ["private_header.h", "header_private.h"]
 ]
 
-section = [
-    ["getset_structure.c", "section_getset.c" ],
-    ["print_structure.c", "section_print.c"],
-    ["private_header.h",  "section_private.h"],
-    ["structure_deserialize.c", "section_deserialize.c"],
-    ["structure_serialize.c", "section_serialize.c"],
-
+standard_structures = [
+    "dos_header",
+    "section",
+    "vlv_signature",
 ]
 
-for file in dos_header:
-    generate(f"{mydir}/structures/dos_header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
+standard_files = [
+    ["getset_structure.c", "_getset.c"],
+    ["print_structure.c", "_print.c"],
+    ["private_header.h", "_private.h"],
+    ["structure_deserialize.c", "_deserialize.c"],
+    ["structure_serialize.c", "_serialize.c"],
+]
 
 for file in header:
     generate(f"{mydir}/structures/header.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
 
-for file in section:
-    generate(f"{mydir}/structures/section.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{file[1]}")
+for structure in standard_structures:
+    for file in standard_files:
+        generate(f"{mydir}/structures/{structure}.yaml", f"{mydir}/templates/{file[0]}", f"{outdir}/{structure}{file[1]}")

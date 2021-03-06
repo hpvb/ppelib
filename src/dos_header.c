@@ -24,10 +24,24 @@
 #include "main.h"
 #include "platform.h"
 #include "ppe_error.h"
-#include "dos_header.h"
+
+#include "vlv_signature_private.h"
 #include "dos_header_private.h"
 
 #include "ppelib_internal.h"
+
+const char* default_message = "This program cannot be run in DOS mode.";
+const unsigned char dos_string_end[] = { 0x0d, 0x0d, 0x0a, 0x24 }; // CR CR LF $
+
+const unsigned char dos_stub[] = {
+		 0x0e,                  // push cs
+		 0x1f,                  // pop ds
+		 0xba, 0x0e, 0x00,		// mov dx,0xe
+		 0xb4, 0x09,            // mov ah,0x9
+		 0xcd, 0x21,            // int 0x21       (puts(*(char*)0xe);
+		 0xb8, 0x01, 0x4c,      // mov ax,0x4c01
+		 0xcd, 0x21,            // int 0x21       (exit())
+};
 
 EXPORT_SYM const dos_header_t* ppelib_dos_header_get(const ppelib_file_t *pe) {
 	ppelib_reset_error();
@@ -54,6 +68,24 @@ EXPORT_SYM void ppelib_dos_header_set_message(dos_header_t *dos_header, const ch
 
 	update_dos_stub(dos_header);
 	return;
+}
+
+EXPORT_SYM char ppelib_dos_header_has_vlv_signature(const dos_header_t* dos_header) {
+	if (dos_header->has_vlv_signature) {
+		return 1;
+	}
+
+	return 0;
+}
+
+EXPORT_SYM const vlv_signature_t* ppelib_dos_header_get_vlv_signature(const dos_header_t* dos_header) {
+	ppelib_reset_error();
+
+	if (dos_header->has_vlv_signature) {
+		return &dos_header->vlv_signature;
+	}
+
+	return NULL;
 }
 
 // absolute string length
@@ -102,6 +134,9 @@ void update_dos_stub(dos_header_t *dos_header) {
 		}
 	}
 
+	// This will definitely destroy the vlv signature
+	dos_header->has_vlv_signature = 0;
+
 	size_t new_size = sizeof(dos_stub) + strlen(dos_header->message) + sizeof(dos_string_end);
 
 	void *oldptr = dos_header->stub;
@@ -117,6 +152,11 @@ void update_dos_stub(dos_header_t *dos_header) {
 
 // Don't error for this. If this doesn't work it doesn't work.
 void parse_dos_stub(dos_header_t *dos_header) {
+	if (parse_vlv_signature(dos_header->stub, dos_header->stub_size, &dos_header->vlv_signature) == 0) {
+		dos_header->has_vlv_signature = 1;
+		return;
+	}
+
 	if (dos_header->stub_size < sizeof(dos_stub)) {
 		return;
 	}

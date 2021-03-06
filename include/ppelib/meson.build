@@ -2,12 +2,14 @@ gen_h = custom_target(
 	'generate-files-h',
 	input: [ files_public_gen ],
 	output: [
-		'ppelib-dos-header-lowlevel.h',
-		'ppelib-dos-header.h',
+		'ppelib-dos_header-lowlevel.h',
+		'ppelib-dos_header.h',
 		'ppelib-header-lowlevel.h',
 		'ppelib-header.h',
 		'ppelib-section-lowlevel.h',
 		'ppelib-section.h',
+		'ppelib-vlv_signature-lowlevel.h',
+		'ppelib-vlv_signature.h'
 	],
 	install: true,
 	install_dir: get_option('includedir') + '/ppelib',

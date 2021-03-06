@@ -22,5 +22,7 @@
 #include <ppelib/ppelib-header-lowlevel.h>
 #include <ppelib/ppelib-section-lowlevel.h>
 #include <ppelib/ppelib-data-directory-lowlevel.h>
+#include <ppelib/ppelib-dos_header-lowlevel.h>
+#include <ppelib/ppelib-vlv_signature-lowlevel.h>
 
 #endif /* PPELIB_LOW_LEVEL_H_ */

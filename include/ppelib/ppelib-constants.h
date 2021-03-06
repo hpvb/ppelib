@@ -21,8 +21,9 @@
 #include <inttypes.h>
 #include <stddef.h>
 
-#define MZ_SIGNATURE 0x00005A4D
-#define PE_SIGNATURE 0x00004550
+#define MZ_SIGNATURE 0x00005A4D  // MZ
+#define PE_SIGNATURE 0x00004550  // PE
+#define VLV_SIGNATURE 0x00564C56 // VLV
 
 #define COFF_HEADER_SIZE 20u
 #define PE_HEADER_DATA_DIRECTORIES_SIZE 8u
