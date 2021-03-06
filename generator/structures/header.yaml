@@ -123,3 +123,7 @@ fields:
     set: true
   - name: NumberOfRvaAndSizes
     pe_type: uint32_t
+
+extra_definitions:
+   - name: DATA_DIRECTORY_SIZE
+     value: 8

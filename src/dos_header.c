@@ -30,18 +30,18 @@
 
 #include "ppelib_internal.h"
 
-const char* default_message = "This program cannot be run in DOS mode.";
+const char *default_message = "This program cannot be run in DOS mode.";
 const unsigned char dos_string_end[] = { 0x0d, 0x0d, 0x0a, 0x24 }; // CR CR LF $
 
 const unsigned char dos_stub[] = {
-		 0x0e,                  // push cs
-		 0x1f,                  // pop ds
-		 0xba, 0x0e, 0x00,		// mov dx,0xe
-		 0xb4, 0x09,            // mov ah,0x9
-		 0xcd, 0x21,            // int 0x21       (puts(*(char*)0xe);
-		 0xb8, 0x01, 0x4c,      // mov ax,0x4c01
-		 0xcd, 0x21,            // int 0x21       (exit())
-};
+		0x0e,					// push cs
+		0x1f,					// pop ds
+		0xba, 0x0e, 0x00,		// mov dx,0xe
+		0xb4, 0x09,				// mov ah,0x9
+		0xcd, 0x21,				// int 0x21       (puts(*(char*)0xe);
+		0xb8, 0x01, 0x4c,		// mov ax,0x4c01
+		0xcd, 0x21,				// int 0x21       (exit())
+		};
 
 EXPORT_SYM const dos_header_t* ppelib_dos_header_get(const ppelib_file_t *pe) {
 	ppelib_reset_error();
@@ -58,6 +58,18 @@ EXPORT_SYM const char* ppelib_dos_header_get_message(const dos_header_t *dos_hea
 EXPORT_SYM void ppelib_dos_header_set_message(dos_header_t *dos_header, const char *message) {
 	ppelib_reset_error();
 
+	if (! message) {
+		dos_header->message = NULL;
+		return;
+	}
+
+	size_t message_len = strlen(message);
+	// Slightly arbitary but we do need space for the rest of the PE file.
+	if (message_len > INT16_MAX) {
+		ppelib_set_error("DOS header message too long");
+		return;
+	}
+
 	void *oldptr = dos_header->message;
 	dos_header->message = strdup(message);
 	if (!dos_header->message) {
@@ -70,7 +82,7 @@ EXPORT_SYM void ppelib_dos_header_set_message(dos_header_t *dos_header, const ch
 	return;
 }
 
-EXPORT_SYM char ppelib_dos_header_has_vlv_signature(const dos_header_t* dos_header) {
+EXPORT_SYM char ppelib_dos_header_has_vlv_signature(const dos_header_t *dos_header) {
 	if (dos_header->has_vlv_signature) {
 		return 1;
 	}
@@ -78,7 +90,7 @@ EXPORT_SYM char ppelib_dos_header_has_vlv_signature(const dos_header_t* dos_head
 	return 0;
 }
 
-EXPORT_SYM const vlv_signature_t* ppelib_dos_header_get_vlv_signature(const dos_header_t* dos_header) {
+EXPORT_SYM const vlv_signature_t* ppelib_dos_header_get_vlv_signature(const dos_header_t *dos_header) {
 	ppelib_reset_error();
 
 	if (dos_header->has_vlv_signature) {
@@ -146,8 +158,11 @@ void update_dos_stub(dos_header_t *dos_header) {
 		return;
 	}
 
+	dos_header->stub_size = new_size;
 	memset(dos_header->stub, 0, new_size);
 	dos_strcpy(dos_header->stub + sizeof(dos_stub), dos_header->message);
+
+	dos_header->pe_header_offset = DOS_HEADER_SIZE + (uint32_t) dos_header->stub_size;
 }
 
 // Don't error for this. If this doesn't work it doesn't work.

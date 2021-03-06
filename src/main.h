@@ -30,6 +30,9 @@ typedef struct ppelib_file {
 	size_t start_of_section_data;
 	size_t end_of_section_data;
 
+	size_t entrypoint_offset;
+	section_t *entrypoint_section;
+
 	header_t header;
 	data_directory_t *data_directories;
 	section_t **sections;

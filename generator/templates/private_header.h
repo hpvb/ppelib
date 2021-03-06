@@ -24,9 +24,16 @@
 
 #include <ppelib/ppelib-constants.h>
 
+#define {{s.structure|upper}}_SIZE {{s.common_size}}
+
+{% for extra_definition in s.extra_definitions -%}
+#define {{extra_definition.name|upper}} {{extra_definition.value}}
+{% endfor -%}
+
 {% for include in s.extra_includes %}
 #include "{{include}}"
 {% endfor %}
+
 #include "platform.h"
 #include "utils.h"
 
