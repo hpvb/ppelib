@@ -13,5 +13,9 @@ fields:
        time: true
 
 extra_fields:
+   - name: start
+     type: size_t
+   - name: end
+     type: size_t
    - name: signature
      type: uint8_t*

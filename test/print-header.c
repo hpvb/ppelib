@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
 		const ppelib_rich_table* rich_table = ppelib_dos_header_get_rich_table(dos_header);
 		printf("Rich table:\n");
 		ppelib_rich_table_print(rich_table);
+	} else {
+		printf("No Rich table\n");
 	}
 
 	const ppelib_header *header = ppelib_header_get(pe);

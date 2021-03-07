@@ -33,8 +33,7 @@
 const char *default_message = "This program cannot be run in DOS mode.";
 const unsigned char dos_string_end[] = { 0x0d, 0x0d, 0x0a, 0x24 }; // CR CR LF $
 
-const unsigned char dos_stub[] = {
-		0x0e,					// push cs
+const unsigned char dos_stub[] = { 0x0e,					// push cs
 		0x1f,					// pop ds
 		0xba, 0x0e, 0x00,		// mov dx,0xe
 		0xb4, 0x09,				// mov ah,0x9
@@ -43,10 +42,44 @@ const unsigned char dos_stub[] = {
 		0xcd, 0x21,				// int 0x21       (exit())
 		};
 
-EXPORT_SYM const dos_header_t* ppelib_dos_header_get(const ppelib_file_t *pe) {
+void align_pe_header_offset(dos_header_t *dos_header);
+
+EXPORT_SYM dos_header_t* ppelib_dos_header_get(ppelib_file_t *pe) {
 	ppelib_reset_error();
 
 	return &pe->dos_header;
+}
+
+EXPORT_SYM void ppelib_dos_header_delete_vlv_signature(dos_header_t *dos_header) {
+	ppelib_reset_error();
+
+	if (!dos_header->has_vlv_signature) {
+		return;
+	}
+
+	buffer_excise(&dos_header->stub, dos_header->stub_size, dos_header->vlv_signature.start,
+			dos_header->vlv_signature.end);
+
+	dos_header->has_vlv_signature = 0;
+	dos_header->stub_size -= dos_header->vlv_signature.end - dos_header->vlv_signature.start;
+
+	align_pe_header_offset(dos_header);
+}
+
+EXPORT_SYM void ppelib_dos_header_delete_rich_table(dos_header_t *dos_header) {
+	ppelib_reset_error();
+
+	printf("ppelib_dos_header_delete_rich_table\n");
+	if (!dos_header->has_rich_table) {
+		return;
+	}
+
+	buffer_excise(&dos_header->stub, dos_header->stub_size, dos_header->rich_table.start, dos_header->rich_table.end);
+
+	dos_header->has_rich_table = 0;
+	dos_header->stub_size -= dos_header->rich_table.end - dos_header->rich_table.start;
+
+	align_pe_header_offset(dos_header);
 }
 
 EXPORT_SYM const char* ppelib_dos_header_get_message(const dos_header_t *dos_header) {
@@ -58,7 +91,7 @@ EXPORT_SYM const char* ppelib_dos_header_get_message(const dos_header_t *dos_hea
 EXPORT_SYM void ppelib_dos_header_set_message(dos_header_t *dos_header, const char *message) {
 	ppelib_reset_error();
 
-	if (! message) {
+	if (!message) {
 		dos_header->message = NULL;
 		return;
 	}
@@ -156,6 +189,16 @@ void dos_strcpy(uint8_t *buffer, const char *string) {
 	memcpy(buffer + string_len, &dos_string_end, sizeof(dos_string_end));
 }
 
+void align_pe_header_offset(dos_header_t *dos_header) {
+
+	if (TO_NEAREST(dos_header->stub_size, 8) != dos_header->stub_size) {
+		dos_header->stub = realloc(dos_header->stub, TO_NEAREST(dos_header->stub_size, 8));
+		dos_header->stub_size = TO_NEAREST(dos_header->stub_size, 8);
+	}
+
+	dos_header->pe_header_offset = (uint32_t) dos_header->stub_size + DOS_HEADER_SIZE;
+}
+
 void update_dos_stub(dos_header_t *dos_header) {
 	if (!dos_header->message) {
 		dos_header->message = strdup(default_message);
@@ -183,7 +226,7 @@ void update_dos_stub(dos_header_t *dos_header) {
 	memset(dos_header->stub, 0, new_size);
 	dos_strcpy(dos_header->stub + sizeof(dos_stub), dos_header->message);
 
-	dos_header->pe_header_offset = DOS_HEADER_SIZE + (uint32_t) dos_header->stub_size;
+	align_pe_header_offset(dos_header);
 }
 
 // Don't error for this. If this doesn't work it doesn't work.

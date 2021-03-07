@@ -65,6 +65,11 @@ uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end) 
 		return 0;
 	}
 
+	if (size - (end - start) == 0) {
+		free(*buffer);
+		*buffer = NULL;
+	}
+
 	if (end != size) {
 		memmove((*buffer) + start, (*buffer) + end, size - end);
 	}

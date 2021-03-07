@@ -31,6 +31,8 @@
 
 #define CHECK_TABLE_INDEX if(table_index>=table->size){ppelib_set_error("Index out of range");return 0;}
 
+// Based on information from http://www.ntcore.com/files/richsign.htm
+
 EXPORT_SYM size_t ppelib_rich_table_get_size(const rich_table_t *table) {
 	ppelib_reset_error();
 
@@ -76,7 +78,7 @@ EXPORT_SYM void ppelib_rich_table_print(const rich_table_t *table) {
 }
 
 size_t find_rich_signature(uint8_t *buffer, size_t size) {
-	if (size < 4) {
+	if (size < sizeof(uint32_t)) {
 		goto out;
 	}
 
@@ -159,6 +161,21 @@ uint8_t parse_rich_table(uint8_t *buffer, size_t size, rich_table_t *rich_table)
 		value_offset += 8;
 	}
 
+	char only_null_after = 1;
+	for (size_t i = footer_offset + 8; i < size; ++i) {
+		if (buffer[i]) {
+			only_null_after = 0;
+			break;
+		}
+	}
+
 	rich_table->size = rich_table_size;
+	rich_table->start = footer_offset - (rich_table_size_padded * 4) - 4;
+	if (only_null_after) {
+		rich_table->end = size;
+	} else {
+		rich_table->end = footer_offset + 8;
+	}
+
 	return 0;
 }

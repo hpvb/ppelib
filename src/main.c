@@ -127,23 +127,19 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		return NULL;
 	}
 
-	if (dos_header_size > pe->dos_header.pe_header_offset) {
-		ppelib_set_error("DOS header size larger than PE header offset");
-		ppelib_destroy(pe);
-		return NULL;
-	}
+	if (pe->dos_header.pe_header_offset >= dos_header_size) {
+		size_t dos_stub_size = pe->dos_header.pe_header_offset - dos_header_size;
+		pe->dos_header.stub = malloc(dos_stub_size);
+		if (!pe->dos_header.stub) {
+			ppelib_set_error("Couldn't allocate DOS stub");
+			ppelib_destroy(pe);
+			return NULL;
+		}
 
-	size_t dos_stub_size = pe->dos_header.pe_header_offset - dos_header_size;
-	pe->dos_header.stub = malloc(dos_stub_size);
-	if (!pe->dos_header.stub) {
-		ppelib_set_error("Couldn't allocate DOS stub");
-		ppelib_destroy(pe);
-		return NULL;
+		memcpy(pe->dos_header.stub, buffer + dos_header_size, dos_stub_size);
+		pe->dos_header.stub_size = dos_stub_size;
+		parse_dos_stub(&pe->dos_header);
 	}
-
-	memcpy(pe->dos_header.stub, buffer + dos_header_size, dos_stub_size);
-	pe->dos_header.stub_size = dos_stub_size;
-	parse_dos_stub(&pe->dos_header);
 
 	uint32_t signature = read_uint32_t(buffer + pe->dos_header.pe_header_offset);
 	if (signature != PE_SIGNATURE) {
@@ -152,9 +148,9 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		return NULL;
 	}
 
-	pe->header_offset = pe->dos_header.pe_header_offset + 4;
+	size_t header_offset = pe->dos_header.pe_header_offset + 4;
 
-	size_t header_size = ppelib_header_deserialize(buffer, size, pe->header_offset, &pe->header);
+	size_t header_size = ppelib_header_deserialize(buffer, size, header_offset, &pe->header);
 	if (ppelib_error_peek()) {
 		ppelib_destroy(pe);
 		return NULL;
@@ -166,13 +162,14 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		return NULL;
 	}
 
-	pe->section_offset = pe->header_offset + header_size + (pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE);
-	if (pe->section_offset > size) {
+	size_t data_directories_size = (pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE);
+	if (header_offset + header_size + data_directories_size > size) {
 		ppelib_set_error("File too small for directory entries");
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
+	pe->section_offset = header_offset + COFF_HEADER_SIZE + pe->header.size_of_optional_header;
 	pe->start_of_section_data = ((size_t) (pe->header.number_of_sections) * SECTION_SIZE) + pe->section_offset;
 	if (pe->start_of_section_data > size) {
 		ppelib_set_error("File too small for section headers");
@@ -248,7 +245,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	}
 
 	// Data directories don't have a dedicated deserialize function
-	offset = pe->header_offset + header_size;
+	offset = header_offset + header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
 		uint32_t dir_va = read_uint32_t(buffer + offset + 0);
 		uint32_t dir_size = read_uint32_t(buffer + offset + 4);
@@ -267,6 +264,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		offset += DATA_DIRECTORY_SIZE;
 	}
 
+	pe->end_of_section_data = MAX(pe->end_of_section_data, header_offset + header_size);
 	if (size > pe->end_of_section_data) {
 		pe->trailing_data_size = size - pe->end_of_section_data;
 		pe->trailing_data = malloc(pe->trailing_data_size);
@@ -343,12 +341,16 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, size_t buf_size) {
 	size_t size = 0;
 
-	size_t dos_stub_size = pe->dos_header.stub_size;
+//	size_t dos_stub_size = pe->dos_header.stub_size;
 	size_t header_size = ppelib_header_serialize(&pe->header, NULL, 0);
 	size_t data_tables_size = pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE;
 	size_t section_header_size = pe->header.number_of_sections * SECTION_SIZE;
 
+	size_t first_section_start = 0;
 	size_t section_size = 0;
+
+	size_t pe_header_offset = pe->dos_header.pe_header_offset + 4;
+	size_t section_header_offset = pe_header_offset + COFF_HEADER_SIZE + pe->header.size_of_optional_header;
 
 	uint32_t file_alignment = MAX(pe->header.file_alignment, 512);
 	file_alignment = MIN(file_alignment, UINT16_MAX);
@@ -356,27 +358,37 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		section_t *section = pe->sections[i];
 
-		size_t this_section_size = TO_NEAREST(section->contents_size, file_alignment);
-		this_section_size += TO_NEAREST(section->pointer_to_raw_data, file_alignment);
+		size_t data_size = MIN(section->virtual_size, section->size_of_raw_data);
+		size_t this_section_size = section->pointer_to_raw_data;
+
+		// It seems that files with only one section are often not padded
+		if (pe->header.number_of_sections > 1) {
+			this_section_size += TO_NEAREST(data_size, file_alignment);
+		} else {
+			this_section_size += data_size;
+		}
+
 		section_size = MAX(section_size, this_section_size);
 	}
 
-	size += DOS_HEADER_SIZE;
-	size += dos_stub_size;
-	size += 4; // PE
-	size += header_size;
-	size += data_tables_size;
+	size += pe->dos_header.pe_header_offset;
+	size += 4;
+	size += pe->header.size_of_optional_header;
 	size += section_header_size;
 
 	size = MAX(size, section_size);
+	size = MAX(size, pe_header_offset + header_size);
+	size = MAX(size, pe_header_offset + header_size + data_tables_size);
+	size = MAX(size, section_header_offset + section_header_size);
+
 	size_t end_of_section_data = size;
 
 	size += pe->trailing_data_size;
 
 	printf("dos_header_size: %i\n", DOS_HEADER_SIZE);
-	printf("dos_stub_size: %zi\n", dos_stub_size);
+	//printf("dos_stub_size: %zi\n", dos_stub_size);
 	printf("header_size: %zi\n", header_size);
-	printf("data_tables_size: %zi\n", data_tables_size);
+	//printf("data_tables_size: %zi\n", data_tables_size);
 	printf("section_header_size: %zi\n", section_header_size);
 	printf("section_size: %zi\n", section_size);
 	printf("trailing_size: %zi\n", pe->trailing_data_size);
@@ -391,12 +403,16 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 		return 0;
 	}
 
-	ppelib_dos_header_serialize(&pe->dos_header, buffer, 0);
-	memcpy(buffer + DOS_HEADER_SIZE, pe->dos_header.stub, pe->dos_header.stub_size);
-	write_uint32_t(buffer + DOS_HEADER_SIZE + dos_stub_size, PE_SIGNATURE);
-	ppelib_header_serialize(&pe->header, buffer, DOS_HEADER_SIZE + dos_stub_size + 4);
+	memset(buffer, 0, size);
 
-	size_t offset = DOS_HEADER_SIZE + dos_stub_size + 4 + header_size;
+	ppelib_dos_header_serialize(&pe->dos_header, buffer, 0);
+	if (pe->dos_header.stub_size) {
+		memcpy(buffer + DOS_HEADER_SIZE, pe->dos_header.stub, pe->dos_header.stub_size);
+	}
+	write_uint32_t(buffer + pe->dos_header.pe_header_offset, PE_SIGNATURE);
+	ppelib_header_serialize(&pe->header, buffer, pe_header_offset);
+
+	size_t offset = pe_header_offset + header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
 		data_directory_t *dir = &pe->data_directories[i];
 		section_t *section = dir->section;
@@ -415,17 +431,22 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 		offset += DATA_DIRECTORY_SIZE;
 	}
 
+	offset = section_header_offset;
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		section_t *section = pe->sections[i];
-		size_t section_size = ppelib_section_serialize(section, buffer, offset);
+		ppelib_section_serialize(section, buffer, offset);
 
 		if (section->contents_size) {
-			size_t padding = TO_NEAREST(section->contents_size, file_alignment) - section->contents_size;
 			memcpy(buffer + section->pointer_to_raw_data, section->contents, section->contents_size);
-			memset(buffer + section->pointer_to_raw_data + section->contents_size, 0, padding);
+
+			if (first_section_start) {
+				first_section_start = MIN(first_section_start, section->pointer_to_raw_data);
+			} else {
+				first_section_start = section->pointer_to_raw_data;
+			}
 		}
 
-		offset += section_size;
+		offset += SECTION_SIZE;
 	}
 
 	if (pe->trailing_data_size) {

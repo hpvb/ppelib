@@ -29,7 +29,9 @@
 
 #include "ppelib_internal.h"
 
-EXPORT_SYM size_t ppelib_vlv_signature_get_signature_size(const vlv_signature_t* vlv_signature) {
+// Based on information from https://www.refla.sh/?p=66
+
+EXPORT_SYM size_t ppelib_vlv_signature_get_signature_size(const vlv_signature_t *vlv_signature) {
 	ppelib_reset_error();
 
 	if (vlv_signature->signature) {
@@ -39,14 +41,14 @@ EXPORT_SYM size_t ppelib_vlv_signature_get_signature_size(const vlv_signature_t*
 	return 0;
 }
 
-EXPORT_SYM const uint8_t* ppelib_vlv_signature_get_signature(const vlv_signature_t* vlv_signature) {
+EXPORT_SYM const uint8_t* ppelib_vlv_signature_get_signature(const vlv_signature_t *vlv_signature) {
 	ppelib_reset_error();
 
 	return vlv_signature->signature;
 }
 
 size_t find_vlv_signature(uint8_t *buffer, size_t size) {
-	if (size < 4) {
+	if (size < sizeof(uint32_t)) {
 		goto out;
 	}
 
@@ -61,30 +63,48 @@ size_t find_vlv_signature(uint8_t *buffer, size_t size) {
 }
 
 uint8_t parse_vlv_signature(uint8_t *buffer, size_t size, vlv_signature_t *vlv_signature) {
-	if (size > 128 + 16) {
-		size_t vlv_offset = find_vlv_signature(buffer, size);
+	if (128 + VLV_SIGNATURE_SIZE > size) {
+		return 1;
+	}
 
-		if (vlv_offset > size) {
-			return 1;
+	size_t vlv_offset = find_vlv_signature(buffer, size);
+
+	if (vlv_offset > size) {
+		return 1;
+	}
+
+	if (vlv_offset + 128 + VLV_SIGNATURE_SIZE > size) {
+		return 1;
+	}
+
+	ppelib_vlv_signature_deserialize(buffer, size, vlv_offset, vlv_signature);
+	if (ppelib_error_peek()) {
+		// the string VLV could just be part of a dos header
+		ppelib_reset_error();
+		return 1;
+	}
+
+	vlv_signature->signature = malloc(128);
+	if (!vlv_signature->signature) {
+		return 1;
+	}
+
+	memcpy(vlv_signature->signature, buffer + vlv_offset + VLV_SIGNATURE_SIZE, 128);
+
+	char only_null_after = 1;
+	for (size_t i = vlv_offset + VLV_SIGNATURE_SIZE + 128; i < size; ++i) {
+		if (buffer[i]) {
+			only_null_after = 0;
+			break;
 		}
+	}
 
-		if (vlv_offset + 128 + 16 > size) {
-			return 1;
-		}
+	vlv_signature->start = vlv_offset;
 
-		ppelib_vlv_signature_deserialize(buffer, size, vlv_offset, vlv_signature);
-		if (ppelib_error_peek()) {
-			// VLV could just be part of a dos header
-			ppelib_reset_error();
-			return 1;
-		}
-
-		vlv_signature->signature = malloc(128);
-		if (!vlv_signature->signature) {
-			return 1;
-		}
-
-		memcpy(vlv_signature->signature, buffer + vlv_offset + 16, 128);
+	if (only_null_after) {
+		vlv_signature->end = size;
+	} else {
+		vlv_signature->end = vlv_offset + VLV_SIGNATURE_SIZE + 128;
 	}
 
 	return 0;

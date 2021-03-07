@@ -27,7 +27,7 @@
 #define CHECK_BIT(var,val) ((var) & (val))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X ,Y) (((X) > (Y)) ? (X) : (Y))
-#define TO_NEAREST(num, size) (num == 0) ? 0 : (((num) + (size) - 1u - ((num) + (size) - 1u) % (size)))
+#define TO_NEAREST(num, size) ((num == 0) ? 0 : (((num) + (size) - 1u - ((num) + (size) - 1u) % (size))))
 #define SWAP(x, y) do { uint8_t swap_temp[sizeof(x)]; memcpy(swap_temp, x, sizeof(x)); x = y; memcpy(y, swap_temp, sizeof(x)); }  while (0)
 
 uint8_t read_uint8_t(const uint8_t *buffer);

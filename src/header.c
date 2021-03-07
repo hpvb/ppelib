@@ -26,7 +26,7 @@
 #include "platform.h"
 #include "main.h"
 
-EXPORT_SYM const header_t* ppelib_header_get(ppelib_file_t *pe) {
+EXPORT_SYM header_t* ppelib_header_get(ppelib_file_t *pe) {
 	ppelib_reset_error();
 
 	return &pe->header;

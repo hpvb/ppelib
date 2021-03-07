@@ -30,6 +30,9 @@ typedef struct rich_table_entry {
 } rich_table_entry_t;
 
 typedef struct rich_table {
+	size_t start;
+	size_t end;
+
 	size_t size;
 
 	rich_table_entry_t* entries;

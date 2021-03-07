@@ -51,9 +51,11 @@ const ppelib_data_directory* ppelib_data_directory_get(ppelib_handle *handle, ui
 const ppelib_section* ppelib_section_get(ppelib_handle *handle, uint16_t section_index);
 
 // DOS Stub API
-const ppelib_dos_header* ppelib_dos_header_get(ppelib_handle *handle);
+ppelib_dos_header* ppelib_dos_header_get(ppelib_handle *handle);
 const char* ppelib_dos_header_get_message(const ppelib_dos_header *dos_header);
 void ppelib_dos_header_set_message(ppelib_dos_header *dos_header, const char *message);
+void ppelib_dos_header_delete_vlv_signature(ppelib_dos_header *dos_header);
+void ppelib_dos_header_delete_rich_table(ppelib_dos_header *dos_header);
 
 // DOS Stub VLV API
 char ppelib_dos_header_has_vlv_signature(const ppelib_dos_header* dos_header);
@@ -72,7 +74,7 @@ void ppelib_rich_table_printf(FILE *stream, const ppelib_rich_table *table);
 void ppelib_rich_table_print(const ppelib_rich_table *table);
 
 // Header API
-const ppelib_header* ppelib_header_get(ppelib_handle *handle);
+ppelib_header* ppelib_header_get(ppelib_handle *handle);
 ppelib_header* ppelib_header_copy(ppelib_header *header);
 void ppelib_header_free_copy(ppelib_header *header);
 
