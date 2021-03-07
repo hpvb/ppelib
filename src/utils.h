@@ -41,6 +41,7 @@ void write_uint64_t(uint8_t *buffer, uint64_t val);
 
 uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end);
 uint32_t next_pow2(uint32_t number);
+uint32_t get_machine_page_size(enum ppelib_machine_type machine);
 
 EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map);
 

@@ -386,16 +386,8 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		section_t *section = pe->sections[i];
 
-		//size_t data_size = MIN(section->virtual_size, section->size_of_raw_data);
 		size_t this_section_size = section->pointer_to_raw_data;
-
-		// It seems that files with only one section are often not padded
-		//if (pe->header.number_of_sections > 1) {
-		//	this_section_size += TO_NEAREST(data_size, file_alignment);
-		//} else {
-			this_section_size += section->size_of_raw_data;
-		//}
-
+		this_section_size += section->size_of_raw_data;
 		section_size = MAX(section_size, this_section_size);
 	}
 
@@ -532,6 +524,7 @@ void recalculate_sections(ppelib_file_t *pe) {
 	uint32_t next_section_virtual = (uint32_t) pe->start_of_section_va;
 	uint32_t next_section_physical = (uint32_t) pe->start_of_section_data;
 
+	uint32_t machine_page_size = get_machine_page_size(pe->header.machine);
 	next_section_virtual = MAX(next_section_virtual, next_section_physical);
 
 	char modified = 0;
@@ -569,9 +562,11 @@ void recalculate_sections(ppelib_file_t *pe) {
 				modified = 1;
 			}
 
-			if (section->virtual_address < section->pointer_to_raw_data) {
-				section->virtual_address = section->pointer_to_raw_data;
-				modified = 1;
+			if (machine_page_size > pe->header.section_alignment) {
+				if (section->virtual_address != section->pointer_to_raw_data) {
+					section->virtual_address = section->pointer_to_raw_data;
+					modified = 1;
+				}
 			}
 		}
 
@@ -654,15 +649,19 @@ void recalculate_header(ppelib_file_t *pe) {
 		pe->header.file_alignment = 512;
 	}
 
-	pe->header.file_alignment = next_pow2(pe->header.file_alignment);
+	if (pe->header.file_alignment > 512) {
+		pe->header.file_alignment = next_pow2(pe->header.file_alignment);
+	}
 
 	if (!pe->header.section_alignment || pe->header.section_alignment > UINT16_MAX
 			|| pe->header.section_alignment < pe->header.file_alignment) {
 
-		pe->header.section_alignment = pe->header.file_alignment;
+		pe->header.section_alignment = get_machine_page_size(pe->header.machine);
 	}
 
-	pe->header.section_alignment = next_pow2(pe->header.section_alignment);
+	if (pe->header.section_alignment > get_machine_page_size(pe->header.machine)) {
+		pe->header.section_alignment = next_pow2(pe->header.section_alignment);
+	}
 
 	if (TO_NEAREST(total_header_size, pe->header.file_alignment) > UINT32_MAX) {
 		pe->header.size_of_headers = 0;

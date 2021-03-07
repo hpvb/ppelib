@@ -97,6 +97,18 @@ uint32_t next_pow2(uint32_t number) {
     return number;
 }
 
+// TODO find actual hard information on this
+uint32_t get_machine_page_size(enum ppelib_machine_type machine) {
+	switch(machine) {
+	case IMAGE_FILE_MACHINE_IA64:
+	case IMAGE_FILE_MACHINE_ALPHA:
+	case IMAGE_FILE_MACHINE_ALPHA64:
+		return 0x2000;
+	default:
+		return 0x1000;
+	}
+}
+
 EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map) {
 	const ppelib_map_entry_t *m = map;
 	while (m->string) {
