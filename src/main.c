@@ -103,20 +103,25 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
 
+	if (size < 2) {
+		ppelib_set_error("Not a PE file (too small for MZ signature)");
+		return NULL;
+	}
+
+	uint16_t mz_signature = read_uint16_t(buffer);
+	if (mz_signature != MZ_SIGNATURE) {
+		ppelib_set_error("Not a PE file (MZ signature missing)");
+		return NULL;
+	}
+
 	ppelib_file_t *pe = ppelib_create();
 	if (ppelib_error_peek()) {
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	size_t dos_header_size = ppelib_dos_header_deserialize(buffer, size, 0, &pe->dos_header);
+	size_t dos_header_size = ppelib_dos_header_deserialize(buffer, size, 2, &pe->dos_header);
 	if (ppelib_error_peek()) {
-		ppelib_destroy(pe);
-		return NULL;
-	}
-
-	if (pe->dos_header.signature != MZ_SIGNATURE) {
-		ppelib_set_error("Not a PE file (MZ signature missing)");
 		ppelib_destroy(pe);
 		return NULL;
 	}
@@ -136,7 +141,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 			return NULL;
 		}
 
-		memcpy(pe->dos_header.stub, buffer + dos_header_size, dos_stub_size);
+		memcpy(pe->dos_header.stub, buffer + 2 + dos_header_size, dos_stub_size);
 		pe->dos_header.stub_size = dos_stub_size;
 		parse_dos_stub(&pe->dos_header);
 	}
@@ -371,6 +376,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 		section_size = MAX(section_size, this_section_size);
 	}
 
+	size += 2;
 	size += pe->dos_header.pe_header_offset;
 	size += 4;
 	size += pe->header.size_of_optional_header;
@@ -405,9 +411,10 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 
 	memset(buffer, 0, size);
 
-	ppelib_dos_header_serialize(&pe->dos_header, buffer, 0);
+	write_uint16_t(buffer, MZ_SIGNATURE);
+	ppelib_dos_header_serialize(&pe->dos_header, buffer, 2);
 	if (pe->dos_header.stub_size) {
-		memcpy(buffer + DOS_HEADER_SIZE, pe->dos_header.stub, pe->dos_header.stub_size);
+		memcpy(buffer + 2 + DOS_HEADER_SIZE, pe->dos_header.stub, pe->dos_header.stub_size);
 	}
 	write_uint32_t(buffer + pe->dos_header.pe_header_offset, PE_SIGNATURE);
 	ppelib_header_serialize(&pe->header, buffer, pe_header_offset);

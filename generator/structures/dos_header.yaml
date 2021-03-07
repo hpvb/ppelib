@@ -5,10 +5,6 @@ extra_includes:
    - generated/vlv_signature_private.h
 
 fields:
-   - name: Signature
-     pe_type: uint16_t
-     format:
-        hex: true
    - name: ExtraBytes
      pe_type: uint16_t
      format:
