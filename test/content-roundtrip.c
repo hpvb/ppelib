@@ -38,8 +38,8 @@ int main(int argc, char *argv[]) {
 		goto out;
 	}
 
-	//ppelib_dos_header* dos_header = ppelib_dos_header_get(pe);
-	//ppelib_dos_header_set_message(dos_header, "Does this even work?");
+	// ppelib_dos_header* dos_header = ppelib_dos_header_get(pe);
+	// ppelib_dos_header_set_message(dos_header, "Does this even work?");
 //	// Get original header
 //	ppelib_header *header = ppelib_header_get(pe);
 //

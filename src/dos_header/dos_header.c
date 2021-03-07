@@ -213,12 +213,6 @@ void update_dos_stub(dos_header_t *dos_header) {
 		}
 	}
 
-	// This will definitely destroy the vlv signature
-	dos_header->has_vlv_signature = 0;
-
-	// TODO We don't (yet) write our own rich tables
-	dos_header->has_rich_table = 0;
-
 	size_t new_size = sizeof(dos_stub) + strlen(dos_header->message) + sizeof(dos_string_end);
 
 	void *oldptr = dos_header->stub;
@@ -228,9 +222,38 @@ void update_dos_stub(dos_header_t *dos_header) {
 		return;
 	}
 
+	// This will definitely destroy the vlv signature
+	dos_header->has_vlv_signature = 0;
+
+	// TODO We don't (yet) write our own rich tables
+	dos_header->has_rich_table = 0;
+
 	dos_header->stub_size = new_size;
 	memset(dos_header->stub, 0, new_size);
+	memcpy(dos_header->stub, dos_stub, sizeof(dos_stub));
 	dos_strcpy(dos_header->stub + sizeof(dos_stub), dos_header->message);
+
+	dos_header->extra_bytes = 0x90;
+	dos_header->number_of_pages = 3;
+	dos_header->number_of_relocations = 0;
+	dos_header->header_paragraph_size = 4;
+	dos_header->minimum_paragraph_allocations = 0;
+	dos_header->maximum_paragraph_allocations = 0xffff;
+	dos_header->initial_segment_address = 0;
+	dos_header->initial_stack_pointer_address = 0xb8;
+	dos_header->checksum = 0;
+	dos_header->initial_instruction_pointer_address = 0;
+	dos_header->initial_code_segment_address = 0;
+	dos_header->relocation_table_offset = 0x40;
+	dos_header->overlay = 0;
+	dos_header->reserved0 = 0;
+	dos_header->oem_identifier = 0;
+	dos_header->oem_info = 0;
+	dos_header->reserved1 = 0;
+	dos_header->reserved2 = 0;
+	dos_header->reserved3 = 0;
+	dos_header->reserved4 = 0;
+	dos_header->reserved5 = 0;
 
 	align_pe_header_offset(dos_header);
 }
