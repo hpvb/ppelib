@@ -75,7 +75,7 @@ EXPORT_SYM const data_directory_t* ppelib_data_directory_get(ppelib_file_t *pe, 
 	return &pe->data_directories[data_directory_index];
 }
 
-EXPORT_SYM void ppelib_data_directory_printf(FILE *stream, const data_directory_t *data_directory) {
+EXPORT_SYM void ppelib_data_directory_fprint(FILE *stream, const data_directory_t *data_directory) {
 	ppelib_reset_error();
 
 	fprintf(stream, "Type: %s\n", map_lookup(data_directory->id, ppelib_data_directories_map));
@@ -92,5 +92,5 @@ EXPORT_SYM void ppelib_data_directory_printf(FILE *stream, const data_directory_
 }
 
 EXPORT_SYM void ppelib_data_directory_print(const data_directory_t *data_directory) {
-	ppelib_data_directory_printf(stdout, data_directory);
+	ppelib_data_directory_fprint(stdout, data_directory);
 }

@@ -70,7 +70,7 @@ size_t ppelib_rich_table_get_size(const ppelib_rich_table *table);
 uint16_t ppelib_rich_table_get_id(const ppelib_rich_table *table, size_t table_index);
 uint16_t ppelib_rich_table_get_build_number(const ppelib_rich_table *table, size_t table_index);
 uint32_t ppelib_rich_table_get_use_count(const ppelib_rich_table *table, size_t table_index);
-void ppelib_rich_table_printf(FILE *stream, const ppelib_rich_table *table);
+void ppelib_rich_table_fprint(FILE *stream, const ppelib_rich_table *table);
 void ppelib_rich_table_print(const ppelib_rich_table *table);
 
 // Header API
@@ -79,6 +79,6 @@ ppelib_header* ppelib_header_copy(ppelib_header *header);
 void ppelib_header_free_copy(ppelib_header *header);
 
 uint32_t ppelib_header_compare(ppelib_header *header1, ppelib_header *header2);
-
+uint32_t ppelib_header_compare_non_volitile(ppelib_header *header1, ppelib_header *header2);
 
 #endif /* PPELIB_H_ */

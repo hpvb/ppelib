@@ -25,7 +25,7 @@
 #include <ppelib/ppelib-{{s.structure}}.h>
 
 size_t ppelib_{{s.structure}}_serialize(const ppelib_{{s.structure}}* {{s.structure}}, uint8_t* buffer, const size_t offset);
-void ppelib_{{s.structure}}_printf(FILE* stream, const ppelib_{{s.structure}}* {{s.structure}});
+void ppelib_{{s.structure}}_fprint(FILE* stream, const ppelib_{{s.structure}}* {{s.structure}});
 void ppelib_{{s.structure}}_print(const ppelib_{{s.structure}}* {{s.structure}});
 
 #endif /* PPELIB_{{s.structure|upper}}_LOWLEVEL_H_  */

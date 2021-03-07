@@ -32,6 +32,8 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 		return 0;
 	}
 
+	{{s.structure}}->modified = 0;
+
 	{% for field in s.fields -%}
 	{%- if field.common == True -%}
 	{{s.structure}}->{{field.struct_name}} = read_{{field.pe_type}}(buffer + offset + {{field.pe_offset}});

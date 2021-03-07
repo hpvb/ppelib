@@ -102,9 +102,12 @@ uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual
 	section->virtual_size = virtual_size;
 	section->size_of_raw_data = raw_size;
 	section->characteristics = characteristics;
+	section->pe = pe;
 
 //ppelib_recalculate(pe);
 
+	pe->header.modified = 1;
+	section->modified = 1;
 	return pe->header.number_of_sections--;
 }
 
@@ -139,6 +142,7 @@ void ppelib_section_excise(ppelib_file_t *pe, uint16_t section_index, size_t sta
 	}
 
 	section->contents_size -= (end - start);
+	section->modified = 1;
 //ppelib_recalculate(pe);
 }
 
@@ -180,6 +184,7 @@ void ppelib_section_insert_capacity(ppelib_file_t *pe, uint16_t section_index, s
 	}
 
 	section->contents_size += size;
+	section->modified = 1;
 //ppelib_recalculate(pe);
 }
 
@@ -216,6 +221,7 @@ void ppelib_section_resize(ppelib_file_t *pe, uint16_t section_index, size_t siz
 	}
 
 	section->contents_size = size;
+	section->modified = 1;
 //ppelib_recalculate(pe);
 }
 

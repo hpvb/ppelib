@@ -37,4 +37,6 @@ void update_dos_stub(dos_header_t *dos_header);
 uint8_t parse_vlv_signature(uint8_t *buffer, size_t size, vlv_signature_t *vlv_signature);
 uint8_t parse_rich_table(uint8_t *buffer, size_t size, rich_table_t *rich_table);
 
+EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe);
+
 #endif /* PPELIB_INTERNAL_H_ */

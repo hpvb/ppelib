@@ -25,7 +25,8 @@
 
 typedef struct ppelib_file {
 	dos_header_t dos_header;
-	size_t section_offset;
+	size_t start_of_section_va;
+
 	size_t start_of_section_data;
 	size_t end_of_section_data;
 

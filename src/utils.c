@@ -84,6 +84,19 @@ uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end) 
 	return 1;
 }
 
+uint32_t next_pow2(uint32_t number) {
+    number--;
+    number |= number >> 1;
+    number |= number >> 2;
+    number |= number >> 4;
+    number |= number >> 8;
+    number |= number >> 16;
+    number++;
+
+    number = (number == 1) ? 2 : number;
+    return number;
+}
+
 EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map) {
 	const ppelib_map_entry_t *m = map;
 	while (m->string) {

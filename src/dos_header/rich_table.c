@@ -63,7 +63,7 @@ EXPORT_SYM uint32_t ppelib_rich_table_get_use_count(const rich_table_t *table, s
 	return table->entries[table_index].use_count;
 }
 
-EXPORT_SYM void ppelib_rich_table_printf(FILE *stream, const rich_table_t *table) {
+EXPORT_SYM void ppelib_rich_table_fprint(FILE *stream, const rich_table_t *table) {
 	ppelib_reset_error();
 
 	for (size_t i = 0; i < table->size; ++i) {
@@ -74,7 +74,7 @@ EXPORT_SYM void ppelib_rich_table_printf(FILE *stream, const rich_table_t *table
 }
 
 EXPORT_SYM void ppelib_rich_table_print(const rich_table_t *table) {
-	ppelib_rich_table_printf(stdout, table);
+	ppelib_rich_table_fprint(stdout, table);
 }
 
 size_t find_rich_signature(uint8_t *buffer, size_t size) {

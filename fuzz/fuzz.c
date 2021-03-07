@@ -32,7 +32,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 
 	//ppelib_print_resource_table(ppelib_get_resource_table(pe));
 	//ppelib_update_resource_table(pe);
-	//ppelib_recalculate(pe);
+	ppelib_dos_header *dos_header = ppelib_dos_header_get(pe);
+	ppelib_dos_header_set_message(dos_header,
+			"A somewhat longer message than the default which should push the size of the dos stub past the default size");
+
+	ppelib_recalculate_force(pe);
 
 	size_t len = ppelib_write_to_buffer(pe, NULL, 0);
 	if (ppelib_error()) {

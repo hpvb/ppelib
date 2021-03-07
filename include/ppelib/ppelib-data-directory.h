@@ -36,7 +36,7 @@ uint32_t ppelib_data_directory_get_rva(const ppelib_data_directory *data_directo
 size_t ppelib_data_directory_serialize(const ppelib_data_directory *data_directory, uint8_t *buffer,
 		const size_t offset);
 
-void ppelib_data_directory_printf(FILE *stream, const ppelib_data_directory *data_directory);
+void ppelib_data_directory_fprint(FILE *stream, const ppelib_data_directory *data_directory);
 void ppelib_data_directory_print(const ppelib_data_directory *data_directory);
 
 #endif /* PPELIB_DATA_DIRECTORY_H_ */

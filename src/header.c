@@ -42,6 +42,7 @@ EXPORT_SYM header_t* ppelib_header_copy(header_t *header) {
 	}
 
 	memcpy(retval, header, sizeof(header_t));
+	retval->pe = NULL;
 	return retval;
 }
 
@@ -54,5 +55,66 @@ EXPORT_SYM void ppelib_header_free_copy(header_t *header) {
 EXPORT_SYM uint32_t ppelib_header_compare(header_t *header1, header_t *header2) {
 	ppelib_reset_error();
 
-	return memcmp(header1, header2, sizeof(header_t)) == 0;
+	header_t *header1_copy = ppelib_header_copy(header1);
+	header_t *header2_copy = ppelib_header_copy(header2);
+
+	header1_copy->modified = 0;
+	header1_copy->pe = NULL;
+	header2_copy->modified = 0;
+	header2_copy->pe = NULL;
+
+	uint32_t retval = memcmp(header1_copy, header2_copy, sizeof(header_t)) != 0;
+	free(header1_copy);
+	free(header2_copy);
+
+	return retval;
+}
+
+EXPORT_SYM uint32_t ppelib_header_compare_non_volitile(header_t *header1, header_t *header2) {
+	ppelib_reset_error();
+
+	header_t *header1_copy = ppelib_header_copy(header1);
+	header_t *header2_copy = ppelib_header_copy(header2);
+
+	header1_copy->modified = 0;
+	header1_copy->pe = NULL;
+	header2_copy->modified = 0;
+	header2_copy->pe = NULL;
+
+	header1_copy->base_of_data = header2_copy->base_of_data;
+	header1_copy->base_of_code = header2_copy->base_of_code;
+	header1_copy->size_of_code = header2_copy->size_of_code;
+	header1_copy->size_of_image = header2_copy->size_of_image;
+	header1_copy->size_of_uninitialized_data = header2_copy->size_of_uninitialized_data;
+	header1_copy->size_of_initialized_data = header2_copy->size_of_initialized_data;
+
+	uint32_t retval = memcmp(header1_copy, header2_copy, sizeof(header_t)) != 0;
+	free(header1_copy);
+	free(header2_copy);
+
+	return retval;
+}
+
+EXPORT_SYM void ppelib_set_header(ppelib_file_t *pe, header_t *header) {
+	ppelib_reset_error();
+
+	if (header->magic != PE32_MAGIC && header->magic != PE32PLUS_MAGIC) {
+		ppelib_set_error("Unknown magic");
+		return;
+	}
+
+	if (header->number_of_sections != pe->header.number_of_sections) {
+		ppelib_set_error("number_of_sections mismatch");
+		return;
+	}
+
+	if (header->number_of_rva_and_sizes != pe->header.number_of_rva_and_sizes) {
+		ppelib_set_error("number_of_rva_and_sizes mismatch");
+	}
+
+	if (header->size_of_headers != pe->header.size_of_headers) {
+		ppelib_set_error("size_of_headers mismatch");
+	}
+
+	memcpy(&pe->header, header, sizeof(header_t));
 }

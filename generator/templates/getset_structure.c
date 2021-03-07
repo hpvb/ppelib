@@ -23,6 +23,7 @@
 #include "platform.h"
 #include "ppe_error.h"
 
+#include "ppelib_internal.h"
 #include "utils.h"
 
 #include "generated/{{s.structure}}_private.h"
@@ -50,6 +51,8 @@ EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}
 
 	memcpy({{s.structure}}->{{field.struct_name}}, value, 8);
 	{{s.structure}}->{{field.struct_name}}[8] = 0;
+	{{s.structure}}->modified = 1;
+	ppelib_recalculate({{s.structure}}->pe);
 }
 
 {%- else %}
@@ -97,6 +100,8 @@ EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}
 {%- else %}
 	{{s.structure}}->{{field.struct_name}} = value;
 {%- endif %}
+	{{s.structure}}->modified = 1;
+	ppelib_recalculate({{s.structure}}->pe);
 }
 {% endif %}
 {%- if field.format and field.format.enum %}

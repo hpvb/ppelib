@@ -15,12 +15,12 @@ content_roundtrip = executable(
 	link_with: ppelib
 )
 
-#header_roundtrip = executable(
-#	'header-roundtrip',
-#	header_roundtrip_files,
-#	include_directories: inc,
-#	link_with: ppelib
-#)
+header_roundtrip = executable(
+	'header-roundtrip',
+	header_roundtrip_files,
+	include_directories: inc,
+	link_with: ppelib
+)
 
 #parse_roundtrip = executable(
 #	'parse-roundtrip',

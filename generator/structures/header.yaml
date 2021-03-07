@@ -132,3 +132,7 @@ fields:
 extra_definitions:
    - name: DATA_DIRECTORY_SIZE
      value: 8
+   - name: PE_OPTIONAL_HEADER_SIZE
+     value: 96
+   - name: PEPLUS_OPTIONAL_HEADER_SIZE
+     value: 112

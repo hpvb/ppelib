@@ -50,7 +50,7 @@ EXPORT_SYM size_t ppelib_data_directory_serialize(const data_directory_t *data_d
 		const size_t offset);
 
 EXPORT_SYM const data_directory_t* ppelib_data_directory_get(ppelib_file_t *pe, uint32_t data_directory_index);
-EXPORT_SYM void ppelib_data_directory_printf(FILE *stream, const data_directory_t *data_directory);
+EXPORT_SYM void ppelib_data_directory_fprint(FILE *stream, const data_directory_t *data_directory);
 EXPORT_SYM void ppelib_data_directory_print(const data_directory_t *data_directory);
 
 #endif /* PPELIB_DATA_DIRECTORY_PRIVATE_H_ */

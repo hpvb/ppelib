@@ -25,4 +25,7 @@
 #include <ppelib/ppelib-dos_header-lowlevel.h>
 #include <ppelib/ppelib-vlv_signature-lowlevel.h>
 
+void ppelib_recalculate(ppelib_handle *handle);
+void ppelib_recalculate_force(ppelib_handle *handle);
+
 #endif /* PPELIB_LOW_LEVEL_H_ */

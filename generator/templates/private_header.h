@@ -24,6 +24,8 @@
 
 #include <ppelib/ppelib-constants.h>
 
+typedef struct ppelib_file ppelib_file_t;
+
 #define {{s.structure|upper}}_SIZE {{s.common_size}}
 
 {% for extra_definition in s.extra_definitions -%}
@@ -49,6 +51,9 @@ typedef struct {{s.structure}} {
 	{% for field in s.extra_fields %}
 	{{field.type}} {{field.name}};
 	{% endfor %}
+
+	ppelib_file_t *pe;
+	char modified;
 } {{s.structure}}_t;
 
 {% for field in s.fields %}
@@ -68,7 +73,7 @@ EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(c
 
 EXPORT_SYM size_t ppelib_{{s.structure}}_serialize(const {{s.structure}}_t* {{s.structure}}, uint8_t* buffer, const size_t offset);
 EXPORT_SYM size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t size, const size_t offset, {{s.structure}}_t* {{s.structure}});
-EXPORT_SYM void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.structure}});
+EXPORT_SYM void ppelib_{{s.structure}}_fprint(FILE* stream, const {{s.structure}}_t* {{s.structure}});
 EXPORT_SYM void ppelib_{{s.structure}}_print(const {{s.structure}}_t* {{s.structure}});
 
 #endif /* PPELIB_{{s.structure|upper}}_PRIVATE_H_  */

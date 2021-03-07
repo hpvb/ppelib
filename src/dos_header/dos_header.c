@@ -110,6 +110,7 @@ EXPORT_SYM void ppelib_dos_header_set_message(dos_header_t *dos_header, const ch
 		dos_header->message = oldptr;
 		return;
 	}
+	free(oldptr);
 
 	update_dos_stub(dos_header);
 	return;
@@ -196,7 +197,12 @@ void align_pe_header_offset(dos_header_t *dos_header) {
 		dos_header->stub_size = TO_NEAREST(dos_header->stub_size, 8);
 	}
 
-	dos_header->pe_header_offset = (uint32_t) dos_header->stub_size + DOS_HEADER_SIZE;
+	uint32_t new_offset = (uint32_t) dos_header->stub_size + DOS_HEADER_SIZE;
+	if (new_offset != dos_header->pe_header_offset) {
+		dos_header->pe_header_offset = new_offset;
+		dos_header->modified = 1;
+		ppelib_recalculate(dos_header->pe);
+	}
 }
 
 void update_dos_stub(dos_header_t *dos_header) {

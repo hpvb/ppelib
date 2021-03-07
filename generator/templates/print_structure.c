@@ -27,7 +27,7 @@
 
 #include "generated/{{s.structure}}_private.h"
 
-void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.structure}}) {
+EXPORT_SYM void ppelib_{{s.structure}}_fprint(FILE* stream, const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 
 	if (!{{s.structure}}) {
@@ -92,7 +92,7 @@ void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.st
 {%- endfor %}
 }
 
-void ppelib_{{s.structure}}_print(const {{s.structure}}_t* {{s.structure}}) {
-	ppelib_{{s.structure}}_printf(stdout, {{s.structure}});
+EXPORT_SYM void ppelib_{{s.structure}}_print(const {{s.structure}}_t* {{s.structure}}) {
+	ppelib_{{s.structure}}_fprint(stdout, {{s.structure}});
 }
 
