@@ -92,6 +92,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe->dos_header.stub);
 	free(pe->dos_header.message);
 	free(pe->dos_header.vlv_signature.signature);
+	free(pe->dos_header.rich_table.entries);
 	free(pe->data_directories);
 	free(pe->sections);
 	free(pe->trailing_data);
@@ -342,7 +343,6 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, size_t buf_size) {
 	size_t size = 0;
 
-	size_t dos_header_size = DOS_HEADER_SIZE;
 	size_t dos_stub_size = pe->dos_header.stub_size;
 	size_t header_size = ppelib_header_serialize(&pe->header, NULL, 0);
 	size_t data_tables_size = pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE;
@@ -361,7 +361,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 		section_size = MAX(section_size, this_section_size);
 	}
 
-	size += dos_header_size;
+	size += DOS_HEADER_SIZE;
 	size += dos_stub_size;
 	size += 4; // PE
 	size += header_size;
@@ -373,7 +373,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 
 	size += pe->trailing_data_size;
 
-	printf("dos_header_size: %zi\n", dos_header_size);
+	printf("dos_header_size: %i\n", DOS_HEADER_SIZE);
 	printf("dos_stub_size: %zi\n", dos_stub_size);
 	printf("header_size: %zi\n", header_size);
 	printf("data_tables_size: %zi\n", data_tables_size);
@@ -392,11 +392,11 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	}
 
 	ppelib_dos_header_serialize(&pe->dos_header, buffer, 0);
-	memcpy(buffer + dos_header_size, pe->dos_header.stub, pe->dos_header.stub_size);
-	write_uint32_t(buffer + dos_header_size + dos_stub_size, PE_SIGNATURE);
-	ppelib_header_serialize(&pe->header, buffer, dos_header_size + dos_stub_size + 4);
+	memcpy(buffer + DOS_HEADER_SIZE, pe->dos_header.stub, pe->dos_header.stub_size);
+	write_uint32_t(buffer + DOS_HEADER_SIZE + dos_stub_size, PE_SIGNATURE);
+	ppelib_header_serialize(&pe->header, buffer, DOS_HEADER_SIZE + dos_stub_size + 4);
 
-	size_t offset = dos_header_size + dos_stub_size + 4 + header_size;
+	size_t offset = DOS_HEADER_SIZE + dos_stub_size + 4 + header_size;
 	for (uint32_t i = 0; i < pe->header.number_of_rva_and_sizes; ++i) {
 		data_directory_t *dir = &pe->data_directories[i];
 		section_t *section = dir->section;

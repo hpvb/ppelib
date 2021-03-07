@@ -23,7 +23,8 @@
 #include "main.h"
 #include "platform.h"
 #include "ppe_error.h"
-#include "section_private.h"
+
+#include "generated/section_private.h"
 
 EXPORT_SYM const section_t* ppelib_section_get(ppelib_file_t *pe, uint16_t section_index) {
 	ppelib_reset_error();

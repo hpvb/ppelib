@@ -20,7 +20,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "header_private.h"
+#include "generated/header_private.h"
+
 #include "ppe_error.h"
 #include "platform.h"
 #include "main.h"

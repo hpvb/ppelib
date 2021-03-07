@@ -24,14 +24,17 @@
 #include "platform.h"
 #include "main.h"
 
-#include "section_private.h"
-#include "dos_header_private.h"
-#include "vlv_signature_private.h"
+#include "generated/section_private.h"
+#include "generated/dos_header_private.h"
+#include "generated/vlv_signature_private.h"
+
+#include "dos_header/rich_table.h"
 
 section_t* section_find_by_virtual_address(ppelib_file_t *pe, size_t va);
 void parse_dos_stub(dos_header_t *dos_header);
 void update_dos_stub(dos_header_t *dos_header);
 
 uint8_t parse_vlv_signature(uint8_t *buffer, size_t size, vlv_signature_t *vlv_signature);
+uint8_t parse_rich_table(uint8_t *buffer, size_t size, rich_table_t *rich_table);
 
 #endif /* PPELIB_INTERNAL_H_ */

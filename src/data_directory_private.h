@@ -24,6 +24,8 @@
 
 #include <ppelib/ppelib-constants.h>
 
+#include "generated/section_private.h"
+
 #include "main.h"
 #include "platform.h"
 #include "utils.h"

@@ -25,7 +25,7 @@
 
 #include "utils.h"
 
-#include "{{s.structure}}_private.h"
+#include "generated/{{s.structure}}_private.h"
 
 void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
@@ -82,7 +82,7 @@ void ppelib_{{s.structure}}_printf(FILE* stream, const {{s.structure}}_t* {{s.st
 	{%- if field.getset_type == "uint64_t" %}
 	fprintf(stream, "{{field.name}}: %" PRIu64 "\n", {{s.structure}}->{{field.struct_name}});
 	{%- else %}
-	fprintf(stream, "{{field.name}}: %i\n", {{s.structure}}->{{field.struct_name}});
+	fprintf(stream, "{{field.name}}: %u\n", {{s.structure}}->{{field.struct_name}});
 	{%- endif %}
 {%- endif %}
 {%- if field.pe_only %}

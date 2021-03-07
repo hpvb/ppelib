@@ -18,10 +18,10 @@
 #ifndef PPELIB_MAIN_H_
 #define PPELIB_MAIN_H_
 
-#include "header_private.h"
-#include "section_private.h"
-#include "dos_header_private.h"
 #include "data_directory_private.h"
+#include "generated/dos_header_private.h"
+#include "generated/header_private.h"
+#include "generated/section_private.h"
 
 typedef struct ppelib_file {
 	dos_header_t dos_header;

@@ -14,13 +14,14 @@ endif
 
 ppelib_sources = [
 	'data_directory.c',
-	'dos_header.c',
+	'dos_header/dos_header.c',
+	'dos_header/rich_table.c',
+	'dos_header/vlv_signature.c',
 	'header.c',
 	'main.c',
 	'ppe_error.c',
 	'section.c',
 	'utils.c',
-	'vlv_signature.c',
 #	'ppelib-certificates.c',
 #	'ppelib-handles.c',
 #	'ppelib-headers.c',

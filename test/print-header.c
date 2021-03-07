@@ -67,6 +67,12 @@ int main(int argc, char *argv[]) {
 		printf("No VLV signature\n");
 	}
 
+	if (ppelib_dos_header_has_rich_table(dos_header)) {
+		const ppelib_rich_table* rich_table = ppelib_dos_header_get_rich_table(dos_header);
+		printf("Rich table:\n");
+		ppelib_rich_table_print(rich_table);
+	}
+
 	const ppelib_header *header = ppelib_header_get(pe);
 	printf("\nPE Header:\n");
 	ppelib_header_print(header);

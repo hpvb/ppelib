@@ -63,9 +63,14 @@ fields:
   - name: SectionAlignment
     pe_type: uint32_t
     set: true
+    range:
+       start: header->file_alignment
+       end: UINT16_MAX
   - name: FileAlignment
     pe_type: uint32_t
     set: true
+    range:
+       end: UINT16_MAX
   - name: MajorOperatingSystemVersion
     pe_type: uint16_t
     set: true

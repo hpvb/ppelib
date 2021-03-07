@@ -1,7 +1,8 @@
 ---
 structure: dos_header
 extra_includes:
-   - vlv_signature_private.h
+   - dos_header/rich_table.h
+   - generated/vlv_signature_private.h
 
 fields:
    - name: Signature
@@ -58,10 +59,12 @@ fields:
      pe_type: uint16_t
      format:
         hex: true
+     set: true
    - name: OEMInfo
      pe_type: uint16_t
      format:
         hex: true
+     set: true
    - name: Reserved1
      pe_type: uint32_t
      format:
@@ -98,3 +101,7 @@ extra_fields:
      type: char
    - name: vlv_signature
      type: vlv_signature_t
+   - name: has_rich_table
+     type: char
+   - name: rich_table
+     type: rich_table_t

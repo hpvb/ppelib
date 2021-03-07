@@ -24,7 +24,7 @@
 
 #include "utils.h"
 
-#include "{{s.structure}}_private.h"
+#include "generated/{{s.structure}}_private.h"
 
 size_t ppelib_{{s.structure}}_serialize(const {{s.structure}}_t* {{s.structure}}, uint8_t* buffer, const size_t offset) {
 	ppelib_reset_error();

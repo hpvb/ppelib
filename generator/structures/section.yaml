@@ -37,6 +37,7 @@ fields:
      set: true
      format:
         bitfield: ppelib_section_flags_map
+
 extra_fields:
    - name: contents
      type: uint8_t*

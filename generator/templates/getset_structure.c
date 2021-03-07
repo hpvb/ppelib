@@ -20,15 +20,16 @@
 #include <inttypes.h>
 
 #include <ppelib/ppelib-constants.h>
+#include "platform.h"
 #include "ppe_error.h"
 
 #include "utils.h"
 
-#include "{{s.structure}}_private.h"
+#include "generated/{{s.structure}}_private.h"
 
 {% for field in s.fields -%}
 {%- if field.getset_type == "section_name" %}
-const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
+EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 
 	if (!{{s.structure}}) {
@@ -39,7 +40,7 @@ const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure
 	return {{s.structure}}->{{field.struct_name}};
 }
 
-void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const char value[9]) {
+EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const char value[9]) {
 	ppelib_reset_error();
 
 	if (!{{s.structure}}) {
@@ -52,7 +53,7 @@ void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.str
 }
 
 {%- else %}
-{{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
+EXPORT_SYM {{field.getset_type}} ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 	if (!{{s.structure}}) {
 		ppelib_set_error("NULL pointer");
@@ -61,7 +62,7 @@ void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.str
 	return {{s.structure}}->{{field.struct_name}};
 }
 {% if field.set %}
-void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const {{field.getset_type}} value) {
+EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const {{field.getset_type}} value) {
 	ppelib_reset_error();
 	if (!{{s.structure}}) {
 		ppelib_set_error("NULL pointer");
@@ -99,7 +100,7 @@ void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.str
 }
 {% endif %}
 {%- if field.format and field.format.enum %}
-const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(const {{s.structure}}_t* {{s.structure}}) {
+EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 
 	if (!{{s.structure}}) {
