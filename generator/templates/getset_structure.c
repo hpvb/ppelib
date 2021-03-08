@@ -29,7 +29,7 @@
 #include "generated/{{s.structure}}_private.h"
 
 {% for field in s.fields -%}
-{%- if field.getset_type == "section_name" %}
+{%- if field.getset_type == "string_name" %}
 EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}}) {
 	ppelib_reset_error();
 

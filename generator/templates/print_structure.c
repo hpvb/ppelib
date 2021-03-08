@@ -17,6 +17,7 @@
 
 #include <time.h>
 #include <inttypes.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include <ppelib/ppelib-constants.h>
@@ -25,6 +26,7 @@
 
 #include "utils.h"
 
+#include "ppelib_internal.h"
 #include "generated/{{s.structure}}_private.h"
 
 EXPORT_SYM void ppelib_{{s.structure}}_fprint(FILE* stream, const {{s.structure}}_t* {{s.structure}}) {
@@ -36,8 +38,19 @@ EXPORT_SYM void ppelib_{{s.structure}}_fprint(FILE* stream, const {{s.structure}
 	}
 
 {%- for field in s.fields -%}
-{%- if field.getset_type == "section_name" %}
-	fprintf(stream, "{{field.name}}: %s\n", {{s.structure}}->{{field.struct_name}});
+{%- if field.getset_type == "string_name" %}
+	const char* {{field.struct_name}}_name = NULL;
+	uint32_t {{field.struct_name}}_index = 0;
+	if ({{s.structure}}->{{field.struct_name}}[0] == '/') {
+		{{field.struct_name}}_index = (uint32_t) atoi({{s.structure}}->{{field.struct_name}} + 1);
+		{{field.struct_name}}_name = string_table_get(&{{s.structure}}->pe->string_table, {{field.struct_name}}_index);
+		ppelib_reset_error();
+	}
+	if ({{field.struct_name}}_name) {
+		fprintf(stream, "{{field.name}}: %s (%i)\n", {{field.struct_name}}_name, {{field.struct_name}}_index);
+	} else {
+		fprintf(stream, "{{field.name}}: %s\n", {{s.structure}}->{{field.struct_name}});
+	}
 {%- else %}
 {%- if field.pe_only %}
 	if ({{s.structure}}->magic == PE32_MAGIC) {

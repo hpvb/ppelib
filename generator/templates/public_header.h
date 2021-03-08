@@ -25,7 +25,7 @@
 typedef struct ppelib_{{s.structure}}_s ppelib_{{s.structure}};
 
 {% for field in s.fields %}
-{% if field.getset_type == "section_name" -%}
+{% if field.getset_type == "string_name" -%}
 const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const ppelib_{{s.structure}}* {{s.structure}});
 void ppelib_{{s.structure}}_set_{{field.struct_name}}(ppelib_{{s.structure}}* {{s.structure}}, const char value[9]);
 {% else -%}

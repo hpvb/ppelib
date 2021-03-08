@@ -50,6 +50,19 @@ section_t* section_find_by_virtual_address(ppelib_file_t *pe, size_t va) {
 	return NULL;
 }
 
+section_t* section_find_by_physical_address(ppelib_file_t *pe, size_t address) {
+	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
+		section_t* section = pe->sections[i];
+		size_t section_va_end = section->pointer_to_raw_data + section->contents_size;
+
+		if (section->pointer_to_raw_data <= address && section_va_end >= address) {
+			return section;
+		}
+	}
+
+	return NULL;
+}
+
 uint16_t ppelib_section_create(ppelib_file_t *pe, char name[9], uint32_t virtual_size, uint32_t raw_size,
 		uint32_t characteristics, uint8_t *data) {
 	ppelib_reset_error();

@@ -31,6 +31,8 @@
 #include "dos_header/rich_table.h"
 
 section_t* section_find_by_virtual_address(ppelib_file_t *pe, size_t va);
+section_t* section_find_by_physical_address(ppelib_file_t *pe, size_t address);
+
 void parse_dos_stub(dos_header_t *dos_header);
 void update_dos_stub(dos_header_t *dos_header);
 
@@ -38,5 +40,9 @@ uint8_t parse_vlv_signature(uint8_t *buffer, size_t size, vlv_signature_t *vlv_s
 uint8_t parse_rich_table(uint8_t *buffer, size_t size, rich_table_t *rich_table);
 
 EXPORT_SYM void ppelib_recalculate(ppelib_file_t *pe);
+
+const char* string_table_get(string_table_t* string_table, size_t offset);
+void string_table_free(string_table_t* string_table);
+void parse_string_table(const uint8_t *buffer, size_t size, size_t offset, string_table_t *string_table);
 
 #endif /* PPELIB_INTERNAL_H_ */

@@ -23,6 +23,8 @@
 
 #include <ppelib/ppelib-constants.h>
 
+#include "generated/coff_symbol_private.h"
+
 #include "ppelib_internal.h"
 #include "main.h"
 
@@ -97,6 +99,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe->sections);
 	free(pe->trailing_data);
 
+	string_table_free(&pe->string_table);
 	free(pe);
 }
 
@@ -165,6 +168,13 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 	pe->header.pe = pe;
 
+	if (pe->header.pointer_to_symbol_table) {
+		size_t symbol_offset = pe->header.pointer_to_symbol_table;
+
+		size_t string_table_offset = symbol_offset + pe->header.number_of_symbols * 18;
+		parse_string_table(buffer, size, string_table_offset, &pe->string_table);
+	}
+
 	if (pe->header.number_of_rva_and_sizes > (UINT32_MAX / DATA_DIRECTORY_SIZE)) {
 		ppelib_set_error("File too small for directory entries (overflow)");
 		ppelib_destroy(pe);
@@ -204,6 +214,12 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 			ppelib_destroy(pe);
 			return NULL;
 		}
+	}
+
+	pe->entrypoint_section = section_find_by_virtual_address(pe, pe->header.address_of_entry_point);
+
+	if (pe->entrypoint_section) {
+		pe->entrypoint_offset = pe->header.address_of_entry_point - pe->entrypoint_section->virtual_address;
 	}
 
 	size_t offset = section_offset;
@@ -263,6 +279,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 		pe->end_of_section_data = MAX(pe->end_of_section_data,
 				section->pointer_to_raw_data + section->size_of_raw_data);
+
 		offset += section_size;
 	}
 
@@ -304,12 +321,6 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 		}
 
 		memcpy(pe->trailing_data, buffer + pe->end_of_section_data, pe->trailing_data_size);
-	}
-
-	pe->entrypoint_section = section_find_by_virtual_address(pe, pe->header.address_of_entry_point);
-
-	if (pe->entrypoint_section) {
-		pe->entrypoint_offset = pe->header.address_of_entry_point - pe->entrypoint_section->virtual_address;
 	}
 
 	return pe;
@@ -535,7 +546,9 @@ void recalculate_sections(ppelib_file_t *pe) {
 		if (section->modified) {
 			modified = 1;
 			//section->virtual_size = (uint32_t) (section->contents_size + section->virtual_padding);
-			section->size_of_raw_data = TO_NEAREST((uint32_t )section->contents_size, pe->header.file_alignment);
+			if (section->contents_size) {
+				section->size_of_raw_data = TO_NEAREST((uint32_t )section->contents_size, pe->header.file_alignment);
+			}
 		}
 
 		// SizeOfRawData can't be more than the aligned amount of the data we actually have

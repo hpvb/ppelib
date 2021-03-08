@@ -37,7 +37,7 @@ size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t si
 	{{s.structure}}->modified = 0;
 
 	{% for field in s.fields -%}
-	{% if field.getset_type == "section_name" -%}
+	{% if field.getset_type == "string_name" -%}
 	memcpy({{s.structure}}->{{field.struct_name}}, buffer + offset + {{field.pe_offset}}, 8);
 	{{s.structure}}->{{field.struct_name}}[8] = 0;
 	{% else -%}

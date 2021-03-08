@@ -1,0 +1,23 @@
+---
+structure: coff_symbol
+fields:
+   - name: Name
+     pe_type: string_name
+     format:
+        string: true
+   - name: Value
+     pe_type: uint32_t
+     format:
+        hex: true
+   - name: SectionNumber
+     pe_type: uint16_t
+   - name: Type
+     pe_type: uint16_t
+     format:
+        hex: true
+   - name: StorageClass
+     pe_type: uint8_t
+     format:
+        hex: true
+   - name: NumberOfAuxSymbols
+     pe_type: uint8_t

@@ -41,7 +41,7 @@ typedef struct ppelib_file ppelib_file_t;
 
 typedef struct {{s.structure}} {
 	{% for field in s.fields -%}
-	{% if field.getset_type == "section_name" -%}
+	{% if field.getset_type == "string_name" -%}
 	char {{field.struct_name}}[9];
 	{% else -%}
 	{{field.getset_type}} {{field.struct_name}};
@@ -57,7 +57,7 @@ typedef struct {{s.structure}} {
 } {{s.structure}}_t;
 
 {% for field in s.fields %}
-{% if field.getset_type == "section_name" -%}
+{% if field.getset_type == "string_name" -%}
 EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}(const {{s.structure}}_t* {{s.structure}});
 EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}_t* {{s.structure}}, const char value[9]);
 {% else -%}

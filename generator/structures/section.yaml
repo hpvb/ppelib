@@ -2,7 +2,7 @@
 structure: section
 fields:
    - name: Name
-     pe_type: section_name
+     pe_type: string_name
      set: true
      copy: true
      format:

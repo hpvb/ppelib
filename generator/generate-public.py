@@ -24,6 +24,7 @@ outdir = sys.argv[1]
 mydir = os.path.dirname(os.path.abspath(__file__))
 
 headers = [
+    ["coff_symbol", "coff_symbol"],
     ["header", "header"],
     ["dos_header", "dos_header"],
     ["section", "section"],

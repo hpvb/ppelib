@@ -39,7 +39,7 @@ size_t ppelib_{{s.structure}}_serialize(const {{s.structure}}_t* {{s.structure}}
 	}
 
 	{% for field in s.fields -%}
-	{% if field.getset_type == "section_name" -%}
+	{% if field.getset_type == "string_name" -%}
 	memcpy(buffer + offset + {{field.pe_offset}}, {{s.structure}}->{{field.struct_name}}, 8);
 	{%- else -%}
 	write_{{field.pe_type}}(buffer + offset + {{field.pe_offset}}, {{s.structure}}->{{field.struct_name}});

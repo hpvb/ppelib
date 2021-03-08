@@ -32,6 +32,7 @@ header = [
 ]
 
 standard_structures = [
+    "coff_symbol",
     "dos_header",
     "section",
     "vlv_signature",

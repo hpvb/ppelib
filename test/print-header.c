@@ -86,7 +86,6 @@ int main(int argc, char *argv[]) {
 	uint32_t directories = ppelib_header_get_number_of_rva_and_sizes(header);
 	for (uint32_t i = 0; i < directories; ++i) {
 		ppelib_data_directory_print(ppelib_data_directory_get(pe, i));
-		printf("\n");
 	}
 
 	printf("\nSections:\n");

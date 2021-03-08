@@ -2,6 +2,11 @@ gen_src = custom_target(
 	'generate-files-c',
 	input: [ files_private_gen ],
 	output: [
+		'coff_symbol_deserialize.c',
+		'coff_symbol_getset.c',
+		'coff_symbol_print.c',
+		'coff_symbol_private.h',
+		'coff_symbol_serialize.c',
 		'dos_header_deserialize.c',
 		'dos_header_getset.c',
 		'dos_header_print.c',

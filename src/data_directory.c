@@ -78,16 +78,16 @@ EXPORT_SYM const data_directory_t* ppelib_data_directory_get(ppelib_file_t *pe, 
 EXPORT_SYM void ppelib_data_directory_fprint(FILE *stream, const data_directory_t *data_directory) {
 	ppelib_reset_error();
 
-	fprintf(stream, "Type: %s\n", map_lookup(data_directory->id, ppelib_data_directories_map));
+	fprintf(stream, "Type: %s, ", map_lookup(data_directory->id, ppelib_data_directories_map));
 	if (data_directory->section) {
-		fprintf(stream, "Section: %s\n", ppelib_section_get_name(data_directory->section));
+		fprintf(stream, "Section: %s ", ppelib_section_get_name(data_directory->section));
 	} else if (data_directory->size) {
-		fprintf(stream, "Section: After section data\n");
+		fprintf(stream, "Section: After section data, ");
 	} else {
-		fprintf(stream, "Section: Empty\n");
+		fprintf(stream, "Section: Empty, ");
 	}
 
-	fprintf(stream, "Offset: %zi\n", data_directory->offset);
+	fprintf(stream, "Offset: %zi, ", data_directory->offset);
 	fprintf(stream, "Size: %zi\n", data_directory->size);
 }
 

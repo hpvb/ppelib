@@ -21,6 +21,7 @@ ppelib_sources = [
 	'main.c',
 	'ppe_error.c',
 	'section.c',
+	'string_table.c',
 	'utils.c',
 #	'ppelib-certificates.c',
 #	'ppelib-handles.c',

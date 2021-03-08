@@ -2,6 +2,8 @@ gen_h = custom_target(
 	'generate-files-h',
 	input: [ files_public_gen ],
 	output: [
+		'ppelib-coff_symbol-lowlevel.h',
+		'ppelib-coff_symbol.h',
 		'ppelib-dos_header-lowlevel.h',
 		'ppelib-dos_header.h',
 		'ppelib-header-lowlevel.h',
