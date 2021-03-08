@@ -39,6 +39,7 @@ const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(const ppelib
 {% endif -%}
 {% endfor %}
 
+uint8_t ppelib_{{s.structure}}_is_null(const ppelib_{{s.structure}}* {{s.structure}});
 void ppelib_{{s.structure}}_fprint(FILE* stream, const ppelib_{{s.structure}}* {{s.structure}});
 void ppelib_{{s.structure}}_print(const ppelib_{{s.structure}}* {{s.structure}});
 

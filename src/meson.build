@@ -13,11 +13,12 @@ else
 endif
 
 ppelib_sources = [
-	'data_directory.c',
 	'dos_header/dos_header.c',
 	'dos_header/rich_table.c',
 	'dos_header/vlv_signature.c',
-	'header.c',
+	'header/data_directory.c',
+	'header/header.c',
+	'header/import_table.c',
 	'main.c',
 	'ppe_error.c',
 	'section.c',

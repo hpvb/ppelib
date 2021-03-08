@@ -34,6 +34,7 @@ header = [
 standard_structures = [
     "coff_symbol",
     "dos_header",
+    "import_directory_table",
     "section",
     "vlv_signature",
 ]

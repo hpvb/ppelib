@@ -31,6 +31,7 @@
 
 typedef struct ppelib_handle_s ppelib_handle;
 typedef struct ppelib_rich_table_s ppelib_rich_table;
+typedef struct ppelib_import_table_s ppelib_import_table;
 
 const char *ppelib_error();
 
@@ -81,4 +82,7 @@ void ppelib_header_free_copy(ppelib_header *header);
 uint32_t ppelib_header_compare(ppelib_header *header1, ppelib_header *header2);
 uint32_t ppelib_header_compare_non_volitile(ppelib_header *header1, ppelib_header *header2);
 
+// Import table
+ppelib_import_table *ppelib_get_import_table(ppelib_handle *handle);
+void ppelib_import_table_print(ppelib_import_table *import_table);
 #endif /* PPELIB_H_ */

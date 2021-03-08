@@ -20,10 +20,11 @@
 
 typedef struct data_directory data_directory_t;
 
-#include "data_directory_private.h"
 #include "generated/dos_header_private.h"
 #include "generated/header_private.h"
 #include "generated/section_private.h"
+#include "header/data_directory_private.h"
+#include "header/import_table.h"
 #include "string_table_private.h"
 
 typedef struct ppelib_file {
@@ -38,6 +39,8 @@ typedef struct ppelib_file {
 	dos_header_t dos_header;
 	header_t header;
 	data_directory_t *data_directories;
+	import_table_t import_table;
+
 	string_table_t string_table;
 	section_t **sections;
 

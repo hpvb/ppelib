@@ -1,0 +1,13 @@
+---
+structure: import_directory_table
+fields:
+   - name: ImportLookupTableRva
+     pe_type: uint32_t
+   - name: TimeDateStamp
+     pe_type: uint32_t
+   - name: ForwarderChain
+     pe_type: uint32_t
+   - name: NameRva
+     pe_type: uint32_t
+   - name: ImportAddressTableRva
+     pe_type: uint32_t

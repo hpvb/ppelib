@@ -100,6 +100,8 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe->overlay);
 
 	string_table_free(&pe->string_table);
+	import_table_free(&pe->import_table);
+
 	free(pe);
 	pe = NULL;
 }
@@ -317,6 +319,18 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 		pe->data_directories[i].id = i;
 
 		offset += DATA_DIRECTORY_SIZE;
+	}
+
+	if (pe->header.number_of_rva_and_sizes > DIR_IMPORT_TABLE) {
+		section_t *section = pe->data_directories[DIR_IMPORT_TABLE].section;
+		size_t offset = pe->data_directories[DIR_IMPORT_TABLE].offset;
+
+		if (section) {
+			parse_import_table(section->contents, section->contents_size, offset, &pe->import_table);
+			if (ppelib_error_peek()) {
+				goto out;
+			}
+		}
 	}
 
 	pe->end_of_section_data = MAX(pe->end_of_section_data, header_offset + header_size);

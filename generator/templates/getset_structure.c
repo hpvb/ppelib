@@ -52,7 +52,9 @@ EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}
 	memcpy({{s.structure}}->{{field.struct_name}}, value, 8);
 	{{s.structure}}->{{field.struct_name}}[8] = 0;
 	{{s.structure}}->modified = 1;
-	ppelib_recalculate({{s.structure}}->pe);
+	if ({{s.structure}}->pe) {
+		ppelib_recalculate({{s.structure}}->pe);
+	}
 }
 
 {%- else %}
@@ -101,7 +103,9 @@ EXPORT_SYM void ppelib_{{s.structure}}_set_{{field.struct_name}}({{s.structure}}
 	{{s.structure}}->{{field.struct_name}} = value;
 {%- endif %}
 	{{s.structure}}->modified = 1;
-	ppelib_recalculate({{s.structure}}->pe);
+	if ({{s.structure}}->pe) {
+		ppelib_recalculate({{s.structure}}->pe);
+	}
 }
 {% endif %}
 {%- if field.format and field.format.enum %}
@@ -117,3 +121,15 @@ EXPORT_SYM const char* ppelib_{{s.structure}}_get_{{field.struct_name}}_string(c
 {% endif %}
 {% endif %}
 {% endfor -%}
+
+EXPORT_SYM uint8_t ppelib_{{s.structure}}_is_null(const {{s.structure}}_t* {{s.structure}}) {
+	return (
+	{% for field in s.fields -%}
+	{%- if field.getset_type == "string_name" %}
+	(((uint64_t){{s.structure}}->{{field.struct_name}}) == 0) &&
+	{%- else %}
+	({{s.structure}}->{{field.struct_name}} == 0) &&
+	{%- endif %}
+	{% endfor %}
+	1);
+}

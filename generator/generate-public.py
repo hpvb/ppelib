@@ -25,8 +25,9 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 
 headers = [
     ["coff_symbol", "coff_symbol"],
-    ["header", "header"],
     ["dos_header", "dos_header"],
+    ["header", "header"],
+    ["import_directory_table", "import_directory_table"],
     ["section", "section"],
     ["vlv_signature", "vlv_signature"],
 ]

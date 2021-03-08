@@ -88,6 +88,12 @@ int main(int argc, char *argv[]) {
 		ppelib_data_directory_print(ppelib_data_directory_get(pe, i));
 	}
 
+	ppelib_import_table *import_table = ppelib_get_import_table(pe);
+	if (import_table) {
+		printf("\nImport Table:\n");
+		ppelib_import_table_print(import_table);
+	}
+
 	printf("\nSections:\n");
 	uint16_t sections = ppelib_header_get_number_of_sections(header);
 	for (uint16_t i = 0; i < sections; ++i) {

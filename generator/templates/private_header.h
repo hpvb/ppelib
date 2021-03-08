@@ -75,5 +75,6 @@ EXPORT_SYM size_t ppelib_{{s.structure}}_serialize(const {{s.structure}}_t* {{s.
 EXPORT_SYM size_t ppelib_{{s.structure}}_deserialize(const uint8_t* buffer, const size_t size, const size_t offset, {{s.structure}}_t* {{s.structure}});
 EXPORT_SYM void ppelib_{{s.structure}}_fprint(FILE* stream, const {{s.structure}}_t* {{s.structure}});
 EXPORT_SYM void ppelib_{{s.structure}}_print(const {{s.structure}}_t* {{s.structure}});
+EXPORT_SYM uint8_t ppelib_{{s.structure}}_is_null(const {{s.structure}}_t* {{s.structure}});
 
 #endif /* PPELIB_{{s.structure|upper}}_PRIVATE_H_  */

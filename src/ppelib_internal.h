@@ -45,4 +45,6 @@ const char *string_table_get(string_table_t *string_table, size_t offset);
 void string_table_free(string_table_t *string_table);
 void parse_string_table(const uint8_t *buffer, size_t size, size_t offset, string_table_t *string_table);
 
+void parse_import_table(const uint8_t *buffer, size_t size, size_t offset, import_table_t *import_table);
+void import_table_free(import_table_t *import_table);
 #endif /* PPELIB_INTERNAL_H_ */

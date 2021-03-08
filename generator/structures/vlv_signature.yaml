@@ -7,7 +7,7 @@ fields:
      pe_type: uint32_t
    - name: SignedDataSize
      pe_type: uint32_t
-   - name: Timestamp
+   - name: TimeDateStamp
      pe_type: uint32_t
      format:
        time: true
