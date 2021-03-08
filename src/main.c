@@ -109,6 +109,7 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 	uint8_t *zeropage = NULL;
 	const uint8_t *oldptr = NULL;
+	size_t orig_size = size;
 
 	if (size < 2) {
 		ppelib_set_error("Not a PE file (too small for MZ signature)");
@@ -319,7 +320,7 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 	}
 
 	pe->end_of_section_data = MAX(pe->end_of_section_data, header_offset + header_size);
-	if (size > pe->end_of_section_data && !zeropage) {
+	if (orig_size > pe->end_of_section_data) {
 		pe->trailing_data_size = size - pe->end_of_section_data;
 		pe->trailing_data = malloc(pe->trailing_data_size);
 		if (!pe->trailing_data) {

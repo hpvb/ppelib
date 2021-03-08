@@ -9,6 +9,7 @@ vgcore*
 *.dll
 *.swp
 *.sh
+*.pyc
 /tests/
 /failed/
 /build/
