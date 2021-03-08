@@ -62,7 +62,6 @@ void parse_string_table(const uint8_t *buffer, size_t size, size_t offset, strin
 	}
 
 	size_t string_table_size = read_uint32_t(buffer + offset);
-	printf("String table size: %zi\n", string_table_size);
 	if (string_table_size < 5) {
 		return;
 	}

@@ -101,10 +101,14 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 
 	string_table_free(&pe->string_table);
 	free(pe);
+	pe = NULL;
 }
 
 EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
+
+	uint8_t *zeropage = NULL;
+	const uint8_t *oldptr = NULL;
 
 	if (size < 2) {
 		ppelib_set_error("Not a PE file (too small for MZ signature)");
@@ -119,22 +123,32 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 	ppelib_file_t *pe = ppelib_create();
 	if (ppelib_error_peek()) {
-		ppelib_destroy(pe);
 		return NULL;
+	}
+
+	if (size < 0x1000) {
+		zeropage = calloc(0x1000, 1);
+		if (!zeropage) {
+			ppelib_set_error("Failed to allocate zeropage");
+			goto out;
+		}
+
+		memcpy(zeropage, buffer, size);
+		oldptr = buffer;
+		size = 0x1000;
+		buffer = zeropage;
 	}
 
 	size_t dos_header_size = ppelib_dos_header_deserialize(buffer, size, 2, &pe->dos_header);
 	if (ppelib_error_peek()) {
-		ppelib_destroy(pe);
-		return NULL;
+		goto out;
 	}
 
 	pe->dos_header.pe = pe;
 
 	if (size < pe->dos_header.pe_header_offset + sizeof(uint32_t)) {
 		ppelib_set_error("Not a PE file (file too small)");
-		ppelib_destroy(pe);
-		return NULL;
+		goto out;
 	}
 
 	if (pe->dos_header.pe_header_offset >= dos_header_size) {
@@ -142,8 +156,7 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 		pe->dos_header.stub = malloc(dos_stub_size);
 		if (!pe->dos_header.stub) {
 			ppelib_set_error("Couldn't allocate DOS stub");
-			ppelib_destroy(pe);
-			return NULL;
+			goto out;
 		}
 
 		memcpy(pe->dos_header.stub, buffer + 2 + dos_header_size, dos_stub_size);
@@ -154,16 +167,14 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 	uint32_t signature = read_uint32_t(buffer + pe->dos_header.pe_header_offset);
 	if (signature != PE_SIGNATURE) {
 		ppelib_set_error("Not a PE file (PE00 signature missing)");
-		ppelib_destroy(pe);
-		return NULL;
+		goto out;
 	}
 
 	size_t header_offset = pe->dos_header.pe_header_offset + 4;
 
 	size_t header_size = ppelib_header_deserialize(buffer, size, header_offset, &pe->header);
 	if (ppelib_error_peek()) {
-		ppelib_destroy(pe);
-		return NULL;
+		goto out;
 	}
 
 	pe->header.pe = pe;
@@ -173,34 +184,38 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 		size_t string_table_offset = symbol_offset + pe->header.number_of_symbols * 18;
 		parse_string_table(buffer, size, string_table_offset, &pe->string_table);
+		ppelib_reset_error();
 	}
 
 	if (pe->header.number_of_rva_and_sizes > (UINT32_MAX / DATA_DIRECTORY_SIZE)) {
-		ppelib_set_error("File too small for directory entries (overflow)");
-		ppelib_destroy(pe);
-		return NULL;
+		//ppelib_set_error("File too small for directory entries (overflow)");
+		//goto out;
+		// Apparently this is what the Windows loader does for *any* value over 16?
+		pe->header.number_of_rva_and_sizes = 16;
 	}
 
 	size_t data_directories_size = (pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE);
 	if (header_offset + header_size + data_directories_size > size) {
-		ppelib_set_error("File too small for directory entries");
-		ppelib_destroy(pe);
-		return NULL;
+		pe->header.number_of_rva_and_sizes = MIN(pe->header.number_of_rva_and_sizes, 16);
+
+		data_directories_size = (pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE);
+		if (header_offset + header_size + data_directories_size > size) {
+			ppelib_set_error("File too small for directory entries");
+			goto out;
+		}
 	}
 
 	size_t section_offset = header_offset + COFF_HEADER_SIZE + pe->header.size_of_optional_header;
 	pe->start_of_section_data = ((size_t)(pe->header.number_of_sections) * SECTION_SIZE) + section_offset;
-	if (pe->start_of_section_data > size) {
+	if (pe->start_of_section_data > size && pe->header.number_of_sections) {
 		ppelib_set_error("File too small for section headers");
-		ppelib_destroy(pe);
-		return NULL;
+		goto out;
 	}
 
 	pe->sections = calloc(sizeof(void *) * pe->header.number_of_sections, 1);
 	if (!pe->sections) {
 		ppelib_set_error("Failed to allocate sections array");
-		ppelib_destroy(pe);
-		return NULL;
+		goto out;
 	}
 
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
@@ -211,15 +226,8 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 			}
 			memset(pe->sections, 0, sizeof(void *) * pe->header.number_of_sections);
 			ppelib_set_error("Failed to allocate sections");
-			ppelib_destroy(pe);
-			return NULL;
+			goto out;
 		}
-	}
-
-	pe->entrypoint_section = section_find_by_virtual_address(pe, pe->header.address_of_entry_point);
-
-	if (pe->entrypoint_section) {
-		pe->entrypoint_offset = pe->header.address_of_entry_point - pe->entrypoint_section->virtual_address;
 	}
 
 	size_t offset = section_offset;
@@ -230,8 +238,7 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		size_t section_size = ppelib_section_deserialize(buffer, size, offset, pe->sections[i]);
 		if (ppelib_error_peek()) {
-			ppelib_destroy(pe);
-			return NULL;
+			goto out;
 		}
 
 		section_t *section = pe->sections[i];
@@ -245,23 +252,20 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 		if (section->size_of_raw_data > section->size_of_raw_data + section->virtual_size) {
 			ppelib_set_error("Section data size out of range");
-			ppelib_destroy(pe);
-			return NULL;
+			goto out;
 		}
 
 		size_t data_size = MIN(section->virtual_size, section->size_of_raw_data);
 
 		if (section->pointer_to_raw_data + data_size > size || section->pointer_to_raw_data > size || data_size > size) {
 			ppelib_set_error("Section data outside of file");
-			ppelib_destroy(pe);
-			return NULL;
+			goto out;
 		}
 
 		section->contents = malloc(data_size);
 		if (!section->contents) {
 			ppelib_set_error("Failed to allocate section data");
-			ppelib_destroy(pe);
-			return NULL;
+			goto out;
 		}
 
 		section->contents_size = data_size;
@@ -282,11 +286,16 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 		offset += section_size;
 	}
 
+	pe->entrypoint_section = section_find_by_virtual_address(pe, pe->header.address_of_entry_point);
+
+	if (pe->entrypoint_section) {
+		pe->entrypoint_offset = pe->header.address_of_entry_point - pe->entrypoint_section->virtual_address;
+	}
+
 	pe->data_directories = calloc(sizeof(data_directory_t) * pe->header.number_of_rva_and_sizes, 1);
 	if (!pe->data_directories) {
 		ppelib_set_error("Failed to allocate data directories");
-		ppelib_destroy(pe);
-		return NULL;
+		goto out;
 	}
 
 	// Data directories don't have a dedicated deserialize function
@@ -310,18 +319,26 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 	}
 
 	pe->end_of_section_data = MAX(pe->end_of_section_data, header_offset + header_size);
-	if (size > pe->end_of_section_data) {
+	if (size > pe->end_of_section_data && !zeropage) {
 		pe->trailing_data_size = size - pe->end_of_section_data;
 		pe->trailing_data = malloc(pe->trailing_data_size);
 		if (!pe->trailing_data) {
 			ppelib_set_error("Failed to allocate trailing data");
-			ppelib_destroy(pe);
-			return NULL;
+			goto out;
 		}
 
 		memcpy(pe->trailing_data, buffer + pe->end_of_section_data, pe->trailing_data_size);
 	}
 
+out:
+	if (oldptr) {
+		buffer = oldptr;
+		free(zeropage);
+	}
+	if (ppelib_error_peek()) {
+		ppelib_destroy(pe);
+		return NULL;
+	}
 	return pe;
 }
 
