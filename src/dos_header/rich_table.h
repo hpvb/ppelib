@@ -35,7 +35,7 @@ typedef struct rich_table {
 
 	size_t size;
 
-	rich_table_entry_t* entries;
+	rich_table_entry_t *entries;
 } rich_table_t;
 
 #endif /* PPELIB_RICH_TABLE_H_ */

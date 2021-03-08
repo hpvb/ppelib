@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ppelib/ppelib.h>
 #include <ppelib/ppelib-low-level.h>
+#include <ppelib/ppelib.h>
 
 int main(int argc, char *argv[]) {
 	if (argc != 2) {

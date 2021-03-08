@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "main.h"
 #include "platform.h"
@@ -29,10 +29,10 @@
 
 #include "ppelib_internal.h"
 
-const char* string_table_get(string_table_t *string_table, size_t offset) {
+const char *string_table_get(string_table_t *string_table, size_t offset) {
 	if (offset > string_table->highest_offset) {
 		ppelib_set_error("Offset out of range");
-		return NULL ;
+		return NULL;
 	}
 
 	return string_table->strings + offset;

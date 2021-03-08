@@ -24,11 +24,17 @@
 #include <ppelib/ppelib-constants.h>
 
 #define HIGH_BIT32 ((uint32_t)(1) << 31)
-#define CHECK_BIT(var,val) ((var) & (val))
+#define CHECK_BIT(var, val) ((var) & (val))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-#define MAX(X ,Y) (((X) > (Y)) ? (X) : (Y))
-#define TO_NEAREST(num, size) ((num == 0) ? 0 : (((num) + (size) - 1u - ((num) + (size) - 1u) % (size))))
-#define SWAP(x, y) do { uint8_t swap_temp[sizeof(x)]; memcpy(swap_temp, x, sizeof(x)); x = y; memcpy(y, swap_temp, sizeof(x)); }  while (0)
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#define TO_NEAREST(num, size) ((num == 0) ? 0 : (((num) + (size)-1u - ((num) + (size)-1u) % (size))))
+#define SWAP(x, y)                       \
+	do {                                 \
+		uint8_t swap_temp[sizeof(x)];    \
+		memcpy(swap_temp, x, sizeof(x)); \
+		x = y;                           \
+		memcpy(y, swap_temp, sizeof(x)); \
+	} while (0)
 
 uint8_t read_uint8_t(const uint8_t *buffer);
 void write_uint8_t(uint8_t *buffer, uint8_t val);
@@ -43,6 +49,6 @@ uint16_t buffer_excise(uint8_t **buffer, size_t size, size_t start, size_t end);
 uint32_t next_pow2(uint32_t number);
 uint32_t get_machine_page_size(enum ppelib_machine_type machine);
 
-EXPORT_SYM const char* map_lookup(uint32_t value, const ppelib_map_entry_t *map);
+EXPORT_SYM const char *map_lookup(uint32_t value, const ppelib_map_entry_t *map);
 
 #endif /* PPELIB_UTILS_H */

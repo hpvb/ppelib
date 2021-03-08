@@ -18,6 +18,8 @@
 #ifndef PPELIB_MAIN_H_
 #define PPELIB_MAIN_H_
 
+typedef struct data_directory data_directory_t;
+
 #include "data_directory_private.h"
 #include "generated/dos_header_private.h"
 #include "generated/header_private.h"
@@ -39,8 +41,8 @@ typedef struct ppelib_file {
 	string_table_t string_table;
 	section_t **sections;
 
-//	certificate_table_t certificate_table;
-//	ppelib_resource_table_t resource_table;
+	//	certificate_table_t certificate_table;
+	//	ppelib_resource_table_t resource_table;
 
 	uint8_t *stub;
 	size_t trailing_data_size;

@@ -15,36 +15,37 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "main.h"
 #include "platform.h"
 #include "ppe_error.h"
 
-#include "generated/vlv_signature_private.h"
 #include "generated/dos_header_private.h"
+#include "generated/vlv_signature_private.h"
 
 #include "ppelib_internal.h"
 
 const char *default_message = "This program cannot be run in DOS mode.";
-const unsigned char dos_string_end[] = { 0x0d, 0x0d, 0x0a, 0x24 }; // CR CR LF $
+const unsigned char dos_string_end[] = {0x0d, 0x0d, 0x0a, 0x24}; // CR CR LF $
 
-const unsigned char dos_stub[] = { 0x0e,					// push cs
-		0x1f,					// pop ds
-		0xba, 0x0e, 0x00,		// mov dx,0xe
-		0xb4, 0x09,				// mov ah,0x9
-		0xcd, 0x21,				// int 0x21       (puts(*(char*)0xe);
-		0xb8, 0x01, 0x4c,		// mov ax,0x4c01
-		0xcd, 0x21,				// int 0x21       (exit())
-		};
+const unsigned char dos_stub[] = {
+		0x0e,			  // push cs
+		0x1f,			  // pop ds
+		0xba, 0x0e, 0x00, // mov dx,0xe
+		0xb4, 0x09,		  // mov ah,0x9
+		0xcd, 0x21,		  // int 0x21       (puts(*(char*)0xe);
+		0xb8, 0x01, 0x4c, // mov ax,0x4c01
+		0xcd, 0x21,		  // int 0x21       (exit())
+};
 
 void align_pe_header_offset(dos_header_t *dos_header);
 
-EXPORT_SYM dos_header_t* ppelib_dos_header_get(ppelib_file_t *pe) {
+EXPORT_SYM dos_header_t *ppelib_dos_header_get(ppelib_file_t *pe) {
 	ppelib_reset_error();
 
 	return &pe->dos_header;
@@ -82,7 +83,7 @@ EXPORT_SYM void ppelib_dos_header_delete_rich_table(dos_header_t *dos_header) {
 	align_pe_header_offset(dos_header);
 }
 
-EXPORT_SYM const char* ppelib_dos_header_get_message(const dos_header_t *dos_header) {
+EXPORT_SYM const char *ppelib_dos_header_get_message(const dos_header_t *dos_header) {
 	ppelib_reset_error();
 
 	return dos_header->message;
@@ -124,7 +125,7 @@ EXPORT_SYM char ppelib_dos_header_has_vlv_signature(const dos_header_t *dos_head
 	return 0;
 }
 
-EXPORT_SYM const vlv_signature_t* ppelib_dos_header_get_vlv_signature(const dos_header_t *dos_header) {
+EXPORT_SYM const vlv_signature_t *ppelib_dos_header_get_vlv_signature(const dos_header_t *dos_header) {
 	ppelib_reset_error();
 
 	if (dos_header->has_vlv_signature) {
@@ -142,7 +143,7 @@ EXPORT_SYM char ppelib_dos_header_has_rich_table(const dos_header_t *dos_header)
 	return 0;
 }
 
-EXPORT_SYM const rich_table_t* ppelib_dos_header_get_rich_table(const dos_header_t *dos_header) {
+EXPORT_SYM const rich_table_t *ppelib_dos_header_get_rich_table(const dos_header_t *dos_header) {
 	ppelib_reset_error();
 
 	if (dos_header->has_rich_table) {
@@ -173,7 +174,7 @@ size_t dos_strncpy_print(char *string, const uint8_t *buffer, size_t len) {
 		}
 
 		if (isprint(buffer[i])) {
-			string[string_len] = (char) buffer[i];
+			string[string_len] = (char)buffer[i];
 			string_len++;
 		}
 	}
@@ -191,13 +192,12 @@ void dos_strcpy(uint8_t *buffer, const char *string) {
 }
 
 void align_pe_header_offset(dos_header_t *dos_header) {
-
 	if (TO_NEAREST(dos_header->stub_size, 8) != dos_header->stub_size) {
 		dos_header->stub = realloc(dos_header->stub, TO_NEAREST(dos_header->stub_size, 8));
 		dos_header->stub_size = TO_NEAREST(dos_header->stub_size, 8);
 	}
 
-	uint32_t new_offset = (uint32_t) dos_header->stub_size + DOS_HEADER_SIZE;
+	uint32_t new_offset = (uint32_t)dos_header->stub_size + DOS_HEADER_SIZE;
 	if (new_offset != dos_header->pe_header_offset) {
 		dos_header->pe_header_offset = new_offset;
 		dos_header->modified = 1;

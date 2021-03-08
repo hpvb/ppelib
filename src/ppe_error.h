@@ -22,7 +22,7 @@
 
 #include "platform.h"
 
-EXPORT_SYM const char* ppelib_error();
+EXPORT_SYM const char *ppelib_error();
 
 #define ppelib_set_error(x) ppelib_set_error_func(__FUNCTION__, x)
 

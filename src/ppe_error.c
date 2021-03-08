@@ -24,7 +24,7 @@
 thread_local const char *ppelib_cur_error;
 thread_local char ppelib_error_str[100];
 
-EXPORT_SYM const char* ppelib_error() {
+EXPORT_SYM const char *ppelib_error() {
 	return ppelib_cur_error;
 }
 

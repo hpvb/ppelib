@@ -16,23 +16,23 @@
  */
 
 #include <inttypes.h>
-#include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "generated/header_private.h"
 
-#include "ppe_error.h"
-#include "platform.h"
 #include "main.h"
+#include "platform.h"
+#include "ppe_error.h"
 
-EXPORT_SYM header_t* ppelib_header_get(ppelib_file_t *pe) {
+EXPORT_SYM header_t *ppelib_header_get(ppelib_file_t *pe) {
 	ppelib_reset_error();
 
 	return &pe->header;
 }
 
-EXPORT_SYM header_t* ppelib_header_copy(header_t *header) {
+EXPORT_SYM header_t *ppelib_header_copy(header_t *header) {
 	ppelib_reset_error();
 
 	header_t *retval = malloc(sizeof(header_t));

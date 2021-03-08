@@ -18,8 +18,8 @@
 #ifndef PPELIB_DATA_DIRECTORY_LOWLEVEL_H_
 #define PPELIB_DATA_DIRECTORY_LOWLEVEL_H_
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 #include <ppelib/ppelib-data-directory.h>
 

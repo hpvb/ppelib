@@ -20,10 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "data_directory_private.h"
 #include "main.h"
 #include "platform.h"
 #include "ppe_error.h"
-#include "data_directory_private.h"
 
 EXPORT_SYM uint32_t ppelib_data_directory_get_id(const data_directory_t *data_directory) {
 	ppelib_reset_error();
@@ -31,7 +31,7 @@ EXPORT_SYM uint32_t ppelib_data_directory_get_id(const data_directory_t *data_di
 	return data_directory->id;
 }
 
-EXPORT_SYM const section_t* ppelib_data_directory_get_section(const data_directory_t *data_directory) {
+EXPORT_SYM const section_t *ppelib_data_directory_get_section(const data_directory_t *data_directory) {
 	ppelib_reset_error();
 
 	return data_directory->section;
@@ -56,20 +56,20 @@ EXPORT_SYM uint32_t ppelib_data_directory_get_rva(const data_directory_t *data_d
 	uint32_t rva = 0;
 
 	if (section) {
-		rva = data_directory->section->virtual_address + (uint32_t) data_directory->offset;
+		rva = data_directory->section->virtual_address + (uint32_t)data_directory->offset;
 	} else {
-		rva = (uint32_t) data_directory->offset;
+		rva = (uint32_t)data_directory->offset;
 	}
 
 	return rva;
 }
 
-EXPORT_SYM const data_directory_t* ppelib_data_directory_get(ppelib_file_t *pe, uint32_t data_directory_index) {
+EXPORT_SYM const data_directory_t *ppelib_data_directory_get(ppelib_file_t *pe, uint32_t data_directory_index) {
 	ppelib_reset_error();
 
 	if (data_directory_index > pe->header.number_of_rva_and_sizes) {
 		ppelib_set_error("Data directory index out of range");
-		return NULL ;
+		return NULL;
 	}
 
 	return &pe->data_directories[data_directory_index];

@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "main.h"
 #include "platform.h"
@@ -41,7 +41,7 @@ EXPORT_SYM size_t ppelib_vlv_signature_get_signature_size(const vlv_signature_t 
 	return 0;
 }
 
-EXPORT_SYM const uint8_t* ppelib_vlv_signature_get_signature(const vlv_signature_t *vlv_signature) {
+EXPORT_SYM const uint8_t *ppelib_vlv_signature_get_signature(const vlv_signature_t *vlv_signature) {
 	ppelib_reset_error();
 
 	return vlv_signature->signature;
@@ -59,7 +59,8 @@ size_t find_vlv_signature(uint8_t *buffer, size_t size) {
 		}
 	}
 
-	out: return size + 1;
+out:
+	return size + 1;
 }
 
 uint8_t parse_vlv_signature(uint8_t *buffer, size_t size, vlv_signature_t *vlv_signature) {

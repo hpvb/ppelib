@@ -18,10 +18,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ppelib/ppelib.h>
 #include <ppelib/ppelib-low-level.h>
+#include <ppelib/ppelib.h>
 
-void write_header(ppelib_handle *pe, ppelib_header* header, const char* filename) {
+void write_header(ppelib_handle *pe, ppelib_header *header, const char *filename) {
 	FILE *f = fopen(filename, "wb");
 	ppelib_header_fprint(f, header);
 
@@ -33,9 +33,9 @@ void write_header(ppelib_handle *pe, ppelib_header* header, const char* filename
 	fclose(f);
 }
 
-void write_headers(ppelib_handle* pe, ppelib_handle* pe2) {
-
-	ppelib_header *header_new = ppelib_header_get(pe);;
+void write_headers(ppelib_handle *pe, ppelib_handle *pe2) {
+	ppelib_header *header_new = ppelib_header_get(pe);
+	;
 	ppelib_header *header_orig = ppelib_header_get(pe2);
 
 	write_header(pe, header_new, "header_new.txt");
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 		printf("%s: Header force match\n", argv[1]);
 	}
 
-	out:
+out:
 
 	ppelib_destroy(pe);
 	ppelib_destroy(pe2);

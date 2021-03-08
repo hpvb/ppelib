@@ -18,8 +18,8 @@
 #ifndef PPELIB_STRING_TABLE_PRIVATE_H_
 #define PPELIB_STRING_TABLE_PRIVATE_H_
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 typedef struct string_table {
 	size_t size;

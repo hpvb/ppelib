@@ -18,12 +18,12 @@
 #ifndef PPELIB_LOW_LEVEL_H_
 #define PPELIB_LOW_LEVEL_H_
 
-#include <ppelib/ppelib.h>
-#include <ppelib/ppelib-header-lowlevel.h>
-#include <ppelib/ppelib-section-lowlevel.h>
 #include <ppelib/ppelib-data-directory-lowlevel.h>
 #include <ppelib/ppelib-dos_header-lowlevel.h>
+#include <ppelib/ppelib-header-lowlevel.h>
+#include <ppelib/ppelib-section-lowlevel.h>
 #include <ppelib/ppelib-vlv_signature-lowlevel.h>
+#include <ppelib/ppelib.h>
 
 void ppelib_recalculate(ppelib_handle *handle);
 void ppelib_recalculate_force(ppelib_handle *handle);

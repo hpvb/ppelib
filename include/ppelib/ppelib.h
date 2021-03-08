@@ -18,13 +18,13 @@
 #ifndef PPELIB_H_
 #define PPELIB_H_
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 #include <ppelib/ppelib-constants.h>
 
-#include <ppelib/ppelib-dos_header.h>
 #include <ppelib/ppelib-data-directory.h>
+#include <ppelib/ppelib-dos_header.h>
 #include <ppelib/ppelib-header.h>
 #include <ppelib/ppelib-section.h>
 #include <ppelib/ppelib-vlv_signature.h>
@@ -32,40 +32,40 @@
 typedef struct ppelib_handle_s ppelib_handle;
 typedef struct ppelib_rich_table_s ppelib_rich_table;
 
-const char* ppelib_error();
+const char *ppelib_error();
 
-ppelib_handle* ppelib_create();
-ppelib_handle* ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
-ppelib_handle* ppelib_create_from_file(const char *filename);
+ppelib_handle *ppelib_create();
+ppelib_handle *ppelib_create_from_buffer(const uint8_t *buffer, size_t size);
+ppelib_handle *ppelib_create_from_file(const char *filename);
 size_t ppelib_write_to_buffer(ppelib_handle *pe, const uint8_t *buffer, size_t size);
 size_t ppelib_write_to_file(ppelib_handle *pe, const char *filename);
 
 void ppelib_destroy(ppelib_handle *pe);
 
-uint8_t* ppelib_get_trailing_data(const ppelib_handle *handle);
+uint8_t *ppelib_get_trailing_data(const ppelib_handle *handle);
 size_t ppelib_get_trailing_data_size(const ppelib_handle *handle);
 void ppelib_set_trailing_data(ppelib_handle *handle, const uint8_t *buffer, size_t size);
 
-const ppelib_data_directory* ppelib_data_directory_get(ppelib_handle *handle, uint32_t data_directory_index);
+const ppelib_data_directory *ppelib_data_directory_get(ppelib_handle *handle, uint32_t data_directory_index);
 
-const ppelib_section* ppelib_section_get(ppelib_handle *handle, uint16_t section_index);
+const ppelib_section *ppelib_section_get(ppelib_handle *handle, uint16_t section_index);
 
 // DOS Stub API
-ppelib_dos_header* ppelib_dos_header_get(ppelib_handle *handle);
-const char* ppelib_dos_header_get_message(const ppelib_dos_header *dos_header);
+ppelib_dos_header *ppelib_dos_header_get(ppelib_handle *handle);
+const char *ppelib_dos_header_get_message(const ppelib_dos_header *dos_header);
 void ppelib_dos_header_set_message(ppelib_dos_header *dos_header, const char *message);
 void ppelib_dos_header_delete_vlv_signature(ppelib_dos_header *dos_header);
 void ppelib_dos_header_delete_rich_table(ppelib_dos_header *dos_header);
 
 // DOS Stub VLV API
-char ppelib_dos_header_has_vlv_signature(const ppelib_dos_header* dos_header);
-const ppelib_vlv_signature* ppelib_dos_header_get_vlv_signature(const ppelib_dos_header* dos_header);
-size_t ppelib_vlv_signature_get_signature_size(const ppelib_vlv_signature* vlv_signature);
-const uint8_t* ppelib_vlv_signature_get_signature(const ppelib_vlv_signature* vlv_signature);
+char ppelib_dos_header_has_vlv_signature(const ppelib_dos_header *dos_header);
+const ppelib_vlv_signature *ppelib_dos_header_get_vlv_signature(const ppelib_dos_header *dos_header);
+size_t ppelib_vlv_signature_get_signature_size(const ppelib_vlv_signature *vlv_signature);
+const uint8_t *ppelib_vlv_signature_get_signature(const ppelib_vlv_signature *vlv_signature);
 
 // DOS Stub Rich table API
 char ppelib_dos_header_has_rich_table(const ppelib_dos_header *dos_header);
-const ppelib_rich_table* ppelib_dos_header_get_rich_table(const ppelib_dos_header *dos_header);
+const ppelib_rich_table *ppelib_dos_header_get_rich_table(const ppelib_dos_header *dos_header);
 size_t ppelib_rich_table_get_size(const ppelib_rich_table *table);
 uint16_t ppelib_rich_table_get_id(const ppelib_rich_table *table, size_t table_index);
 uint16_t ppelib_rich_table_get_build_number(const ppelib_rich_table *table, size_t table_index);
@@ -74,8 +74,8 @@ void ppelib_rich_table_fprint(FILE *stream, const ppelib_rich_table *table);
 void ppelib_rich_table_print(const ppelib_rich_table *table);
 
 // Header API
-ppelib_header* ppelib_header_get(ppelib_handle *handle);
-ppelib_header* ppelib_header_copy(ppelib_header *header);
+ppelib_header *ppelib_header_get(ppelib_handle *handle);
+ppelib_header *ppelib_header_copy(ppelib_header *header);
 void ppelib_header_free_copy(ppelib_header *header);
 
 uint32_t ppelib_header_compare(ppelib_header *header1, ppelib_header *header2);

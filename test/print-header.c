@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ppelib/ppelib.h>
 #include <ppelib/ppelib-low-level.h>
+#include <ppelib/ppelib.h>
 
 int main(int argc, char *argv[]) {
 	int retval = 0;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (ppelib_dos_header_has_rich_table(dos_header)) {
-		const ppelib_rich_table* rich_table = ppelib_dos_header_get_rich_table(dos_header);
+		const ppelib_rich_table *rich_table = ppelib_dos_header_get_rich_table(dos_header);
 		printf("Rich table:\n");
 		ppelib_rich_table_print(rich_table);
 	} else {
@@ -95,7 +95,8 @@ int main(int argc, char *argv[]) {
 		printf("\n");
 	}
 
-	out: ppelib_destroy(pe);
+out:
+	ppelib_destroy(pe);
 
 	return retval;
 }

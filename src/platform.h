@@ -19,32 +19,32 @@
 #define PPELIB_PLATFORM_H_
 
 #if defined _WIN32
-#	define EXPORT_SYM __declspec(dllexport)
+#define EXPORT_SYM __declspec(dllexport)
 #else
-#	if __GNUC__ >= 4
-#		define EXPORT_SYM __attribute__ ((visibility ("default")))
-#	else
-#		define EXPORT_SYM
-#	endif
+#if __GNUC__ >= 4
+#define EXPORT_SYM __attribute__((visibility("default")))
+#else
+#define EXPORT_SYM
+#endif
 #endif
 
 #ifndef thread_local
-#	if defined __STDC_NO_THREADS__
-#		define thread_local
-#	elif __STDC_VERSION__ >= 201112
-#		define thread_local _Thread_local
-#	elif defined __GNUC__
-#		define thread_local __thread
-#	elif defined _WIN32
-#		define thread_local __declspec(thread)
-#	else
-#		error "Cannot define thread_local"
-#	endif
+#if defined __STDC_NO_THREADS__
+#define thread_local
+#elif __STDC_VERSION__ >= 201112
+#define thread_local _Thread_local
+#elif defined __GNUC__
+#define thread_local __thread
+#elif defined _WIN32
+#define thread_local __declspec(thread)
+#else
+#error "Cannot define thread_local"
+#endif
 #endif
 
 #if defined _MSC_VER
-#	define strdup _strdup
-#	define gmtime_r(x, y) gmtime_s(y, x)
+#define strdup _strdup
+#define gmtime_r(x, y) gmtime_s(y, x)
 #endif
 
 #endif /* PPELIB_PLATFORM_H_ */

@@ -18,17 +18,16 @@
 #ifndef PPELIB_DATA_DIRECTORY_H_
 #define PPELIB_DATA_DIRECTORY_H_
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 
-#include <ppelib/ppelib.h>
-#include <ppelib/ppelib-section.h>
 #include <ppelib/ppelib-constants.h>
+#include <ppelib/ppelib-section.h>
 
 typedef struct ppelib_data_directory_s ppelib_data_directory;
 
 uint32_t ppelib_data_directory_get_id(const ppelib_data_directory *data_directory);
-const ppelib_section* ppelib_data_directory_get_section(const ppelib_data_directory *data_directory);
+const ppelib_section *ppelib_data_directory_get_section(const ppelib_data_directory *data_directory);
 size_t ppelib_data_directory_get_offset(const ppelib_data_directory *data_directory);
 size_t ppelib_data_directory_get_size(const ppelib_data_directory *data_directory);
 uint32_t ppelib_data_directory_get_rva(const ppelib_data_directory *data_directory);

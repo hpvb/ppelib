@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "main.h"
 #include "platform.h"
@@ -29,7 +29,11 @@
 
 #include "rich_table.h"
 
-#define CHECK_TABLE_INDEX if(table_index>=table->size){ppelib_set_error("Index out of range");return 0;}
+#define CHECK_TABLE_INDEX                       \
+	if (table_index >= table->size) {           \
+		ppelib_set_error("Index out of range"); \
+		return 0;                               \
+	}
 
 // Based on information from http://www.ntcore.com/files/richsign.htm
 
@@ -89,7 +93,8 @@ size_t find_rich_signature(uint8_t *buffer, size_t size) {
 		}
 	}
 
-	out: return size + 1;
+out:
+	return size + 1;
 }
 
 uint8_t parse_rich_table(uint8_t *buffer, size_t size, rich_table_t *rich_table) {
@@ -115,7 +120,7 @@ uint8_t parse_rich_table(uint8_t *buffer, size_t size, rich_table_t *rich_table)
 	size_t rich_table_size_padded = 0;
 	char dans_marker_found = 0;
 
-	for (uint32_t i = (uint32_t) footer_offset - 4; i >= 4; i -= 4) {
+	for (uint32_t i = (uint32_t)footer_offset - 4; i >= 4; i -= 4) {
 		uint32_t value = read_uint32_t(buffer + i) ^ key;
 		if (value == DANS_MARKER) {
 			dans_marker_found = 1;
@@ -154,7 +159,7 @@ uint8_t parse_rich_table(uint8_t *buffer, size_t size, rich_table_t *rich_table)
 	for (size_t i = 0; i < rich_table_size; ++i) {
 		uint32_t id_value = read_uint32_t(buffer + value_offset + 0) ^ key;
 
-		rich_table->entries[i].id = (uint16_t) ((id_value & 0xffff0000) >> 16);
+		rich_table->entries[i].id = (uint16_t)((id_value & 0xffff0000) >> 16);
 		rich_table->entries[i].build_number = id_value & 0x0000ffff;
 		rich_table->entries[i].use_count = read_uint32_t(buffer + value_offset + 4) ^ key;
 

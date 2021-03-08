@@ -25,10 +25,10 @@
 
 #include "generated/coff_symbol_private.h"
 
-#include "ppelib_internal.h"
 #include "main.h"
+#include "ppelib_internal.h"
 
-EXPORT_SYM uint8_t* ppelib_get_trailing_data(const ppelib_file_t *pe) {
+EXPORT_SYM uint8_t *ppelib_get_trailing_data(const ppelib_file_t *pe) {
 	ppelib_reset_error();
 
 	return pe->trailing_data;
@@ -68,7 +68,7 @@ EXPORT_SYM void ppelib_set_trailing_data(ppelib_file_t *pe, const uint8_t *buffe
 	free(oldptr);
 }
 
-EXPORT_SYM ppelib_file_t* ppelib_create() {
+EXPORT_SYM ppelib_file_t *ppelib_create() {
 	ppelib_reset_error();
 
 	ppelib_file_t *pe = calloc(sizeof(ppelib_file_t), 1);
@@ -103,7 +103,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe);
 }
 
-EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
+EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
 
 	if (size < 2) {
@@ -189,14 +189,14 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	}
 
 	size_t section_offset = header_offset + COFF_HEADER_SIZE + pe->header.size_of_optional_header;
-	pe->start_of_section_data = ((size_t) (pe->header.number_of_sections) * SECTION_SIZE) + section_offset;
+	pe->start_of_section_data = ((size_t)(pe->header.number_of_sections) * SECTION_SIZE) + section_offset;
 	if (pe->start_of_section_data > size) {
 		ppelib_set_error("File too small for section headers");
 		ppelib_destroy(pe);
 		return NULL;
 	}
 
-	pe->sections = calloc(sizeof(void*) * pe->header.number_of_sections, 1);
+	pe->sections = calloc(sizeof(void *) * pe->header.number_of_sections, 1);
 	if (!pe->sections) {
 		ppelib_set_error("Failed to allocate sections array");
 		ppelib_destroy(pe);
@@ -209,7 +209,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 			for (uint16_t s = 0; s < i; ++s) {
 				free(pe->sections[s]);
 			}
-			memset(pe->sections, 0, sizeof(void*) * pe->header.number_of_sections);
+			memset(pe->sections, 0, sizeof(void *) * pe->header.number_of_sections);
 			ppelib_set_error("Failed to allocate sections");
 			ppelib_destroy(pe);
 			return NULL;
@@ -251,8 +251,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 		size_t data_size = MIN(section->virtual_size, section->size_of_raw_data);
 
-		if (section->pointer_to_raw_data + data_size > size || section->pointer_to_raw_data > size
-				|| data_size > size) {
+		if (section->pointer_to_raw_data + data_size > size || section->pointer_to_raw_data > size || data_size > size) {
 			ppelib_set_error("Section data outside of file");
 			ppelib_destroy(pe);
 			return NULL;
@@ -326,7 +325,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_buffer(const uint8_t *buffer, size_
 	return pe;
 }
 
-EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
+EXPORT_SYM ppelib_file_t *ppelib_create_from_file(const char *filename) {
 	ppelib_reset_error();
 	size_t file_size;
 	uint8_t *file_contents;
@@ -348,7 +347,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 		return NULL;
 	}
 
-	file_size = (size_t) ftell_size;
+	file_size = (size_t)ftell_size;
 
 	if (!file_size) {
 		fclose(f);
@@ -381,7 +380,7 @@ EXPORT_SYM ppelib_file_t* ppelib_create_from_file(const char *filename) {
 EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, size_t buf_size) {
 	size_t size = 0;
 
-//	size_t dos_stub_size = pe->dos_header.stub_size;
+	//	size_t dos_stub_size = pe->dos_header.stub_size;
 	size_t header_size = ppelib_header_serialize(&pe->header, NULL, 0);
 	size_t data_tables_size = pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE;
 	size_t section_header_size = pe->header.number_of_sections * SECTION_SIZE;
@@ -452,12 +451,12 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 		data_directory_t *dir = &pe->data_directories[i];
 		section_t *section = dir->section;
 		uint32_t dir_va = 0;
-		uint32_t dir_size = (uint32_t) dir->size;
+		uint32_t dir_size = (uint32_t)dir->size;
 
 		if (section) {
-			dir_va = (uint32_t) (section->virtual_address + dir->offset);
+			dir_va = (uint32_t)(section->virtual_address + dir->offset);
 		} else if (dir->size) {
-			dir_va = (uint32_t) (end_of_section_data + dir->offset);
+			dir_va = (uint32_t)(end_of_section_data + dir->offset);
 		}
 
 		write_uint32_t(buffer + offset + 0, dir_va);
@@ -532,8 +531,8 @@ void recalculate_sections(ppelib_file_t *pe) {
 	uint32_t size_of_uninitialized_data = 0;
 	uint32_t size_of_code = 0;
 
-	uint32_t next_section_virtual = (uint32_t) pe->start_of_section_va;
-	uint32_t next_section_physical = (uint32_t) pe->start_of_section_data;
+	uint32_t next_section_virtual = (uint32_t)pe->start_of_section_va;
+	uint32_t next_section_physical = (uint32_t)pe->start_of_section_data;
 
 	uint32_t machine_page_size = get_machine_page_size(pe->header.machine);
 	next_section_virtual = MAX(next_section_virtual, next_section_physical);
@@ -547,14 +546,14 @@ void recalculate_sections(ppelib_file_t *pe) {
 			modified = 1;
 			//section->virtual_size = (uint32_t) (section->contents_size + section->virtual_padding);
 			if (section->contents_size) {
-				section->size_of_raw_data = TO_NEAREST((uint32_t )section->contents_size, pe->header.file_alignment);
+				section->size_of_raw_data = TO_NEAREST((uint32_t)section->contents_size, pe->header.file_alignment);
 			}
 		}
 
 		// SizeOfRawData can't be more than the aligned amount of the data we actually have
 		if (section->size_of_raw_data > TO_NEAREST(section->contents_size, pe->header.file_alignment)) {
 			modified = 1;
-			section->size_of_raw_data = TO_NEAREST((uint32_t ) section->contents_size, pe->header.file_alignment);
+			section->size_of_raw_data = TO_NEAREST((uint32_t)section->contents_size, pe->header.file_alignment);
 		}
 
 		if (section->size_of_raw_data) {
@@ -644,19 +643,17 @@ void recalculate_sections(ppelib_file_t *pe) {
 		pe->header.size_of_code = TO_NEAREST(size_of_code, pe->header.file_alignment);
 		pe->header.size_of_image = next_section_virtual;
 		if (pe->entrypoint_section) {
-			pe->header.address_of_entry_point = pe->entrypoint_section->virtual_address
-					+ (uint32_t) pe->entrypoint_offset;
+			pe->header.address_of_entry_point = pe->entrypoint_section->virtual_address + (uint32_t)pe->entrypoint_offset;
 		}
 	}
 }
 
 void recalculate_header(ppelib_file_t *pe) {
-	uint16_t header_size = (uint16_t) ppelib_header_serialize(&pe->header, NULL, 0);
+	uint16_t header_size = (uint16_t)ppelib_header_serialize(&pe->header, NULL, 0);
 	size_t data_tables_size = pe->header.number_of_rva_and_sizes * DATA_DIRECTORY_SIZE;
 	size_t section_header_size = pe->header.number_of_sections * SECTION_SIZE;
 
-	size_t total_header_size = pe->dos_header.pe_header_offset + 4 + header_size + data_tables_size
-			+ section_header_size;
+	size_t total_header_size = pe->dos_header.pe_header_offset + 4 + header_size + data_tables_size + section_header_size;
 
 	if (!pe->header.file_alignment || pe->header.file_alignment > UINT16_MAX) {
 		pe->header.file_alignment = 512;
@@ -666,9 +663,7 @@ void recalculate_header(ppelib_file_t *pe) {
 		pe->header.file_alignment = next_pow2(pe->header.file_alignment);
 	}
 
-	if (!pe->header.section_alignment || pe->header.section_alignment > UINT16_MAX
-			|| pe->header.section_alignment < pe->header.file_alignment) {
-
+	if (!pe->header.section_alignment || pe->header.section_alignment > UINT16_MAX || pe->header.section_alignment < pe->header.file_alignment) {
 		pe->header.section_alignment = get_machine_page_size(pe->header.machine);
 	}
 
@@ -679,11 +674,11 @@ void recalculate_header(ppelib_file_t *pe) {
 	if (TO_NEAREST(total_header_size, pe->header.file_alignment) > UINT32_MAX) {
 		pe->header.size_of_headers = 0;
 	} else {
-		pe->header.size_of_headers = (uint32_t) (TO_NEAREST(total_header_size, pe->header.file_alignment));
+		pe->header.size_of_headers = (uint32_t)(TO_NEAREST(total_header_size, pe->header.file_alignment));
 	}
 
 	uint16_t old_size_of_optional_header = pe->header.size_of_optional_header;
-	pe->header.size_of_optional_header = (uint16_t) data_tables_size;
+	pe->header.size_of_optional_header = (uint16_t)data_tables_size;
 
 	if (pe->header.magic == PE32_MAGIC) {
 		pe->header.size_of_optional_header += PE_OPTIONAL_HEADER_SIZE;
@@ -696,8 +691,7 @@ void recalculate_header(ppelib_file_t *pe) {
 	size_t old_start_of_section_data = pe->start_of_section_data;
 	pe->start_of_section_data = MAX(pe->start_of_section_data, pe->header.size_of_headers);
 
-	if (old_size_of_optional_header != pe->header.size_of_optional_header
-			|| old_start_of_section_data != pe->start_of_section_data) {
+	if (old_size_of_optional_header != pe->header.size_of_optional_header || old_start_of_section_data != pe->start_of_section_data) {
 		recalculate_sections(pe);
 	}
 

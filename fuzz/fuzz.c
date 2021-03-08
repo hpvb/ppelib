@@ -17,8 +17,8 @@
 
 #include <stdlib.h>
 
-#include <ppelib/ppelib.h>
 #include <ppelib/ppelib-low-level.h>
+#include <ppelib/ppelib.h>
 
 int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 	ppelib_handle *pe2 = NULL;
@@ -57,7 +57,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buffer, size_t size) {
 		goto out;
 	}
 
-	out: ppelib_destroy(pe);
+out:
+	ppelib_destroy(pe);
 	ppelib_destroy(pe2);
-	return 0;  // Non-zero return values are reserved for future use.
+	return 0; // Non-zero return values are reserved for future use.
 }
