@@ -28,19 +28,19 @@
 #include "main.h"
 #include "ppelib_internal.h"
 
-EXPORT_SYM uint8_t *ppelib_get_trailing_data(const ppelib_file_t *pe) {
+EXPORT_SYM uint8_t *ppelib_get_overlay_data(const ppelib_file_t *pe) {
 	ppelib_reset_error();
 
-	return pe->trailing_data;
+	return pe->overlay;
 }
 
-EXPORT_SYM size_t ppelib_get_trailing_data_size(const ppelib_file_t *pe) {
+EXPORT_SYM size_t ppelib_get_overlay_size(const ppelib_file_t *pe) {
 	ppelib_reset_error();
 
-	return pe->trailing_data_size;
+	return pe->overlay_size;
 }
 
-EXPORT_SYM void ppelib_set_trailing_data(ppelib_file_t *pe, const uint8_t *buffer, size_t size) {
+EXPORT_SYM void ppelib_set_overlay_data(ppelib_file_t *pe, const uint8_t *buffer, size_t size) {
 	ppelib_reset_error();
 
 	if (!buffer && size) {
@@ -48,21 +48,21 @@ EXPORT_SYM void ppelib_set_trailing_data(ppelib_file_t *pe, const uint8_t *buffe
 		return;
 	}
 
-	void *oldptr = pe->trailing_data;
+	void *oldptr = pe->overlay;
 
 	if (!buffer || !size) {
-		pe->trailing_data = NULL;
-		pe->trailing_data_size = 0;
+		pe->overlay = NULL;
+		pe->overlay_size = 0;
 	} else {
-		pe->trailing_data = malloc(size);
-		if (!pe->trailing_data) {
-			ppelib_set_error("Failed to allocate new trailing data");
-			pe->trailing_data = oldptr;
+		pe->overlay = malloc(size);
+		if (!pe->overlay) {
+			ppelib_set_error("Failed to allocate new overlay data");
+			pe->overlay = oldptr;
 			return;
 		}
 
-		memcpy(pe->trailing_data, buffer, size);
-		pe->trailing_data_size = 0;
+		memcpy(pe->overlay, buffer, size);
+		pe->overlay_size = 0;
 	}
 
 	free(oldptr);
@@ -97,7 +97,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe->dos_header.rich_table.entries);
 	free(pe->data_directories);
 	free(pe->sections);
-	free(pe->trailing_data);
+	free(pe->overlay);
 
 	string_table_free(&pe->string_table);
 	free(pe);
@@ -321,14 +321,14 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 
 	pe->end_of_section_data = MAX(pe->end_of_section_data, header_offset + header_size);
 	if (orig_size > pe->end_of_section_data) {
-		pe->trailing_data_size = size - pe->end_of_section_data;
-		pe->trailing_data = malloc(pe->trailing_data_size);
-		if (!pe->trailing_data) {
-			ppelib_set_error("Failed to allocate trailing data");
+		pe->overlay_size = size - pe->end_of_section_data;
+		pe->overlay = malloc(pe->overlay_size);
+		if (!pe->overlay) {
+			ppelib_set_error("Failed to allocate overlay data");
 			goto out;
 		}
 
-		memcpy(pe->trailing_data, buffer + pe->end_of_section_data, pe->trailing_data_size);
+		memcpy(pe->overlay, buffer + pe->end_of_section_data, pe->overlay_size);
 	}
 
 out:
@@ -434,7 +434,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 
 	size_t end_of_section_data = size;
 
-	size += pe->trailing_data_size;
+	size += pe->overlay_size;
 
 	printf("dos_header_size: %i\n", DOS_HEADER_SIZE);
 	//printf("dos_stub_size: %zi\n", dos_stub_size);
@@ -442,7 +442,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	//printf("data_tables_size: %zi\n", data_tables_size);
 	printf("section_header_size: %zi\n", section_header_size);
 	printf("section_size: %zi\n", section_size);
-	printf("trailing_size: %zi\n", pe->trailing_data_size);
+	printf("overlay_size: %zi\n", pe->overlay_size);
 	printf("total: %zi\n", size);
 
 	if (!buffer) {
@@ -495,8 +495,8 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 		offset += SECTION_SIZE;
 	}
 
-	if (pe->trailing_data_size) {
-		memcpy(buffer + end_of_section_data, pe->trailing_data, pe->trailing_data_size);
+	if (pe->overlay_size) {
+		memcpy(buffer + end_of_section_data, pe->overlay, pe->overlay_size);
 	}
 
 	return size;

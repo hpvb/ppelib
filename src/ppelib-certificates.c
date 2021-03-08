@@ -47,12 +47,12 @@ EXPORT_SYM void ppelib_signature_remove(ppelib_file_t *pe) {
 		size_t offset = pe->header.data_directories[DIR_CERTIFICATE_TABLE].virtual_address - pe->end_of_sections;
 		size_t size = pe->header.data_directories[DIR_CERTIFICATE_TABLE].size;
 
-		if (buffer_excise(&pe->trailing_data, pe->trailing_data_size, offset, offset + size)) {
+		if (buffer_excise(&pe->overlay, pe->overlay_size, offset, offset + size)) {
 			ppelib_set_error("Failed to resize trailing data");
 			return;
 		}
 
-		pe->trailing_data_size -= size;
+		pe->overlay_size -= size;
 	}
 
 	ppelib_free_certificate_table(&pe->certificate_table);

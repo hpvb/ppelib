@@ -42,9 +42,9 @@ size_t ppelib_write_to_file(ppelib_handle *pe, const char *filename);
 
 void ppelib_destroy(ppelib_handle *pe);
 
-uint8_t *ppelib_get_trailing_data(const ppelib_handle *handle);
-size_t ppelib_get_trailing_data_size(const ppelib_handle *handle);
-void ppelib_set_trailing_data(ppelib_handle *handle, const uint8_t *buffer, size_t size);
+uint8_t *ppelib_get_overlay_data(const ppelib_handle *handle);
+size_t ppelib_get_overlay_size(const ppelib_handle *handle);
+void ppelib_set_overlay_data(ppelib_handle *handle, const uint8_t *buffer, size_t size);
 
 const ppelib_data_directory *ppelib_data_directory_get(ppelib_handle *handle, uint32_t data_directory_index);
 

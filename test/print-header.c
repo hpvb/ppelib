@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 	ppelib_header_print(header);
 
 	printf("\nMiscellaneous\n");
-	printf("Trailing data: %zi\n", ppelib_get_trailing_data_size(pe));
+	printf("Overlay size: %zi\n", ppelib_get_overlay_size(pe));
 
 	printf("\nData Directories:\n");
 	uint32_t directories = ppelib_header_get_number_of_rva_and_sizes(header);

@@ -52,7 +52,7 @@ EXPORT_SYM void ppelib_destroy(ppelib_file_t *pe) {
 	free(pe->data_directories);
 	free(pe->header.data_directories);
 	free(pe->sections);
-	free(pe->trailing_data);
+	free(pe->overlay);
 
 	free(pe);
 }
@@ -190,16 +190,16 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 	memcpy(pe->stub, buffer, pe->pe_signature_offset);
 
 	if (size > pe->end_of_sections) {
-		pe->trailing_data_size = size - pe->end_of_sections;
-		pe->trailing_data = malloc(pe->trailing_data_size);
+		pe->overlay_size = size - pe->end_of_sections;
+		pe->overlay = malloc(pe->overlay_size);
 
-		if (!pe->trailing_data) {
+		if (!pe->overlay) {
 			ppelib_set_error("Failed to allocate memory for trailing data");
 			ppelib_destroy(pe);
 			return NULL;
 		}
 
-		memcpy(pe->trailing_data, buffer + pe->end_of_sections, pe->trailing_data_size);
+		memcpy(pe->overlay, buffer + pe->end_of_sections, pe->overlay_size);
 	}
 
 	if (pe->header.number_of_rva_and_sizes > DIR_RESOURCE_TABLE) {
@@ -311,7 +311,7 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 		size = end_of_sections;
 	}
 
-	size += pe->trailing_data_size;
+	size += pe->overlay_size;
 
 	size_t certificates_size = 0;
 	if (pe->header.number_of_rva_and_sizes > DIR_CERTIFICATE_TABLE) {
@@ -363,8 +363,8 @@ EXPORT_SYM size_t ppelib_write_to_buffer(ppelib_file_t *pe, uint8_t *buffer, siz
 	}
 
 	// Write trailing data
-	if (pe->trailing_data_size) {
-		memcpy(buffer + end_of_sections, pe->trailing_data, pe->trailing_data_size);
+	if (pe->overlay_size) {
+		memcpy(buffer + end_of_sections, pe->overlay, pe->overlay_size);
 	}
 
 	// Write certificates

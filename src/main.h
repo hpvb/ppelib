@@ -45,8 +45,8 @@ typedef struct ppelib_file {
 	//	ppelib_resource_table_t resource_table;
 
 	uint8_t *stub;
-	size_t trailing_data_size;
-	uint8_t *trailing_data;
+	size_t overlay_size;
+	uint8_t *overlay;
 } ppelib_file_t;
 
 #endif /* PPELIB_MAIN_H_ */
