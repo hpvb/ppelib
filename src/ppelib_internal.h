@@ -30,8 +30,10 @@
 
 #include "dos_header/rich_table.h"
 
-section_t *section_find_by_virtual_address(ppelib_file_t *pe, size_t va);
 section_t *section_find_by_physical_address(ppelib_file_t *pe, size_t address);
+section_t *section_find_by_virtual_address(ppelib_file_t *pe, size_t va);
+size_t section_rva_to_offset(const section_t *section, size_t rva);
+void *section_rva_to_pointer(const section_t *section, size_t rva);
 
 void parse_dos_stub(dos_header_t *dos_header);
 void update_dos_stub(dos_header_t *dos_header);
@@ -45,6 +47,6 @@ const char *string_table_get(string_table_t *string_table, size_t offset);
 void string_table_free(string_table_t *string_table);
 void parse_string_table(const uint8_t *buffer, size_t size, size_t offset, string_table_t *string_table);
 
-void parse_import_table(const uint8_t *buffer, size_t size, size_t offset, import_table_t *import_table);
+void parse_import_table(const section_t *section, size_t offset, import_table_t *import_table);
 void import_table_free(import_table_t *import_table);
 #endif /* PPELIB_INTERNAL_H_ */

@@ -37,6 +37,14 @@ EXPORT_SYM void ppelib_{{s.structure}}_fprint(FILE* stream, const {{s.structure}
 		return;
 	}
 
+{%- for field in s.extra_fields -%}
+{%- if field.format -%}
+{%- if field.format == "string" -%}
+	fprintf(stream, "{{field.name}}: %s\n", {{s.structure}}->{{field.name}});
+{%- endif -%}
+{%- endif -%}
+{%- endfor -%}
+
 {%- for field in s.fields -%}
 {%- if field.getset_type == "string_name" %}
 	const char* {{field.struct_name}}_name = NULL;

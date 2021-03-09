@@ -37,6 +37,30 @@ EXPORT_SYM const section_t *ppelib_section_get(ppelib_file_t *pe, uint16_t secti
 	return pe->sections[section_index];
 }
 
+size_t section_rva_to_offset(const section_t *section, size_t rva) {
+	size_t rva_base = 0;
+
+	if (section->pointer_to_raw_data > section->virtual_address) {
+		rva_base = section->pointer_to_raw_data - section->virtual_address;
+	} else {
+		rva_base = section->virtual_address - section->pointer_to_raw_data;
+	}
+	rva_base += section->pointer_to_raw_data;
+
+	if (rva - rva_base > section->contents_size) {
+		ppelib_set_error("RVA out of range");
+		return 0;
+	}
+
+	return rva - rva_base;
+}
+
+void *section_rva_to_pointer(const section_t *section, size_t rva) {
+	size_t offset = section_rva_to_offset(section, rva);
+
+	return section->contents + offset;
+}
+
 section_t *section_find_by_virtual_address(ppelib_file_t *pe, size_t va) {
 	for (uint16_t i = 0; i < pe->header.number_of_sections; ++i) {
 		section_t *section = pe->sections[i];

@@ -11,3 +11,7 @@ fields:
      pe_type: uint32_t
    - name: ImportAddressTableRva
      pe_type: uint32_t
+extra_fields:
+   - name: dll_name
+     type: char*
+     format: string

@@ -23,6 +23,9 @@
 #include "main.h"
 #include "platform.h"
 #include "ppe_error.h"
+#include "ppelib_internal.h"
+
+#include "generated/section_private.h"
 
 #include "import_table.h"
 
@@ -33,11 +36,14 @@ EXPORT_SYM void ppelib_import_table_print(import_table_t *import_table) {
 }
 
 void import_table_free(import_table_t *import_table) {
+	for (size_t i = 0; i < import_table->size; ++i) {
+		free(import_table->import_directory_tables[i].dll_name);
+	}
 	free(import_table->import_directory_tables);
 }
 
-void parse_import_table(const uint8_t *buffer, size_t size, size_t offset, import_table_t *import_table) {
-	if (size < IMPORT_DIRECTORY_TABLE_SIZE * 2) {
+void parse_import_table(const section_t *section, size_t offset, import_table_t *import_table) {
+	if (section->contents_size < IMPORT_DIRECTORY_TABLE_SIZE * 2) {
 		ppelib_set_error("Not enough space for directory table");
 		return;
 	}
@@ -45,10 +51,10 @@ void parse_import_table(const uint8_t *buffer, size_t size, size_t offset, impor
 	size_t scan_offset = offset;
 	import_table->import_directory_tables = NULL;
 
-	while (size - scan_offset >= IMPORT_DIRECTORY_TABLE_SIZE) {
+	while (section->contents_size - scan_offset >= IMPORT_DIRECTORY_TABLE_SIZE) {
 		import_directory_table_t import_directory_table;
 
-		ppelib_import_directory_table_deserialize(buffer, size, scan_offset, &import_directory_table);
+		ppelib_import_directory_table_deserialize(section->contents, section->contents_size, scan_offset, &import_directory_table);
 		if (ppelib_error_peek()) {
 			return;
 		}
@@ -56,6 +62,19 @@ void parse_import_table(const uint8_t *buffer, size_t size, size_t offset, impor
 		if (ppelib_import_directory_table_is_null(&import_directory_table)) {
 			break; // null buffer
 		}
+
+		size_t dll_name_offset = section_rva_to_offset(section, import_directory_table.name_rva);
+		if (ppelib_error_peek()) {
+			return;
+		}
+
+		size_t dll_name_max_size = section->contents_size - dll_name_offset;
+		size_t dll_name_size = strnlen((const char *)section->contents + dll_name_offset, dll_name_max_size);
+		if (dll_name_size == dll_name_max_size) {
+			ppelib_set_error("DLL name outside of section");
+			return;
+		}
+		import_directory_table.dll_name = strdup((const char *)section->contents + dll_name_offset);
 
 		++import_table->size;
 		size_t new_size = sizeof(import_directory_table_t) * import_table->size;

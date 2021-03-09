@@ -326,7 +326,7 @@ EXPORT_SYM ppelib_file_t *ppelib_create_from_buffer(const uint8_t *buffer, size_
 		size_t offset = pe->data_directories[DIR_IMPORT_TABLE].offset;
 
 		if (section) {
-			parse_import_table(section->contents, section->contents_size, offset, &pe->import_table);
+			parse_import_table(section, offset, &pe->import_table);
 			if (ppelib_error_peek()) {
 				goto out;
 			}
