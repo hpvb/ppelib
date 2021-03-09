@@ -1,0 +1,35 @@
+---
+structure: export_directory_table
+fields:
+   - name: ExportFlags
+     pe_type: uint32_t
+   - name: TimeDateStamp
+     pe_type: uint32_t
+     format: time
+   - name: MajorVersion
+     pe_type: uint16_t
+   - name: MinorVersion
+     pe_type: uint16_t
+   - name: NameRva
+     pe_type: uint32_t
+     format: hex
+   - name: OrdinalBase
+     pe_type: uint32_t
+   - name: AddressTableEntries
+     pe_type: uint32_t
+   - name: NumberOfNamePointers
+     pe_type: uint32_t
+   - name: ExportAddressTableRva
+     pe_type: uint32_t
+     format: hex
+   - name: NamePointerRVA
+     pe_type: uint32_t
+     format: hex
+   - name: OrdinalTableRVA
+     pe_type: uint32_t
+     format: hex
+
+extra_fields:
+   - name: dll_name
+     type: char*
+     format: string

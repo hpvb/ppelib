@@ -1,6 +1,7 @@
 structures_gen = [
 	'structures/coff_symbol.yaml',
 	'structures/dos_header.yaml',
+	'structures/export_directory_table.yaml',
 	'structures/header.yaml',
 	'structures/import_directory_table.yaml',
 	'structures/section.yaml',
