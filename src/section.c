@@ -66,7 +66,7 @@ section_t *section_find_by_virtual_address(ppelib_file_t *pe, size_t va) {
 		section_t *section = pe->sections[i];
 		size_t section_va_end = section->virtual_address + section->size_of_raw_data;
 
-		if (section->virtual_address <= va && section_va_end >= va) {
+		if (section->virtual_address <= va && section_va_end > va) {
 			return section;
 		}
 	}

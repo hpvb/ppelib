@@ -20,10 +20,26 @@
 
 #include "generated/import_directory_table_private.h"
 
+typedef struct import_table_name {
+	uint16_t hint;
+	char *name;
+	uint16_t ordinal;
+} import_table_name_t;
+
+typedef struct import_table_entry {
+	size_t size;
+	char *dll_name;
+
+	uint32_t forwarder_chain;
+	uint32_t date_time_stamp;
+
+	import_table_name_t *names;
+} import_table_entry_t;
+
 typedef struct import_table {
 	size_t size;
 
-	import_directory_table_t *import_directory_tables;
+	import_table_entry_t *entries;
 } import_table_t;
 
 #endif /* PPELIB_IMPORT_TABLE_H_ */
